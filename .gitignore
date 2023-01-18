@@ -2,6 +2,7 @@
 *.nc4
 *.ft
 *.parquet
+*urls.txt
 
 # IDE-specific ignores
 .idea/*
