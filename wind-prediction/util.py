@@ -1,3 +1,6 @@
+import time
+
+
 def format_bytes(size: int, unit, si: bool = False) -> str:
     """
     Converts bytes to common units such as kb, kib, KB, mb, mib, MB
@@ -49,3 +52,7 @@ def format_bytes(size: int, unit, si: bool = False) -> str:
         divisor = float(1 << divisors[0])
     value = size / divisor
     return f"{value:,.0f} {unit_name}{(value != 1 and len(unit_name) > 3) * 's'}"
+
+
+def log(*args) -> None:
+    print(f"[{time.strftime('%H:%M:%S')}] LOG:", *args)
