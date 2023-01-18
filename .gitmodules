@@ -1,0 +1,3 @@
+[submodule "pymerra2"]
+	path = pymerra2
+	url = https://github.com/BhavyeMathur/pymerra2

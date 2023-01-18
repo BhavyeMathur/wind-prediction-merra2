@@ -1,0 +1,9 @@
+# Data files
+*.nc4
+*.ft
+*.parquet
+
+# IDE-specific ignores
+.idea/*
+.vscode/
+.ipynb_checkpoints/
