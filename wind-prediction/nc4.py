@@ -35,6 +35,11 @@ def print_nc4_metadata(filename: str, folder: str = ".") -> None:
         print(dataset)
 
 
-def print_variable_metadata(filename: str, variable: str, folder: str = ".") -> None:
-    with open_xarray_dataset(filename, folder=f"{folder}/{variable}") as dataset:
+def print_file_metadata(filename: str, folder: str = ".") -> None:
+    with open_xarray_dataset(filename, folder=folder) as dataset:
         print(dataset)
+
+
+def print_variable_metadata(filename: str, variable: str, folder: str = ".") -> None:
+    with open_xarray_dataset(filename, folder=folder) as dataset:
+        print(dataset[variable])

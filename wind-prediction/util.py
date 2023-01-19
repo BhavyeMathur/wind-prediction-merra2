@@ -1,4 +1,4 @@
-import time
+from time import strftime
 
 
 def format_bytes(size: int, unit, si: bool = False) -> str:
@@ -55,4 +55,4 @@ def format_bytes(size: int, unit, si: bool = False) -> str:
 
 
 def log(*args) -> None:
-    print(f"[{time.strftime('%H:%M:%S')}] LOG:", *args)
+    print(f"[{strftime('%H:%M:%S')}] LOG:", *args)
