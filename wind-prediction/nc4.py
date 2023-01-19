@@ -11,8 +11,6 @@ def open_xarray_dataset(filename: str, folder: str = "raw") -> xr.Dataset:
         os.makedirs(folder)
 
     filepath = f"{folder}/{filename}"
-
-    log(f"Loading {filepath}")
     return xr.open_dataset(filepath)
 
 
@@ -21,8 +19,6 @@ def open_nc4_dataset(filename: str, folder: str = "raw", mode: str = "r") -> nc.
         os.makedirs(folder)
 
     filepath = f"{folder}/{filename}"
-
-    log(f"Loading {filepath}")
 
     if mode == "w" and os.path.isfile(filename):
         os.remove(filename)

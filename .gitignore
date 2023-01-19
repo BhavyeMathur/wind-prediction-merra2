@@ -4,6 +4,10 @@
 *.parquet
 *urls.txt
 
+# Media files
+*.gif
+*.mp4
+
 # IDE-specific ignores
 .idea/*
 .vscode/
