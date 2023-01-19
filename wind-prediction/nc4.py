@@ -30,11 +30,11 @@ def open_nc4_dataset(filename: str, folder: str = "raw", mode: str = "r") -> nc.
     return nc.Dataset(filepath, mode=mode)
 
 
-def print_nc4_metadata(filename: str) -> None:
-    with open_xarray_dataset(filename) as dataset:
+def print_nc4_metadata(filename: str, folder: str = ".") -> None:
+    with open_xarray_dataset(filename, folder) as dataset:
         print(dataset)
 
 
-def print_variable_metadata(filename: str, variable: str) -> None:
-    with open_xarray_dataset(filename, folder=f"compressed/{variable}") as dataset:
+def print_variable_metadata(filename: str, variable: str, folder: str = ".") -> None:
+    with open_xarray_dataset(filename, folder=f"{folder}/{variable}") as dataset:
         print(dataset)
