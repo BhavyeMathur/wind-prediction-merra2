@@ -828,3 +828,14 @@ def lcc_projection_to_coord(x: float,
             return lat, math.atan(x / (1 - y)) / n + math.pi / n
     else:
         return lat, math.atan(x / (1 - y)) / n
+
+
+"""Error Functions"""
+
+
+def mse(data, prediction):
+    return ((data - prediction) ** 2).mean()
+
+
+def rmse(data, prediction):
+    return math.sqrt(mse(data, prediction))
