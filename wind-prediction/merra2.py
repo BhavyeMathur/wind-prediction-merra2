@@ -1,3 +1,6 @@
+from maths import height_from_pressure
+
+
 def get_merra_stream_from_year(year: int) -> int:
     if year < 1992:
         return 100
@@ -15,7 +18,7 @@ def get_merra_variables(variables):
     return variables
 
 
-def get_pressure_from_level(level, total_levels: int = 72):
+def get_pressure_from_level(level, total_levels: int = 72) -> float:
     if total_levels == 72:
         return [0.01, 0.02, 0.0327, 0.0476, 0.0660, 0.0893, 0.1197, 0.1595, 0.2113, 0.2785,
                 0.3650, 0.4758, 0.6168, 0.7951, 1.0194, 1.3005, 1.6508, 2.0850, 2.6202,
@@ -31,4 +34,38 @@ def get_pressure_from_level(level, total_levels: int = 72):
     else:
         raise ValueError("Unknown levels in MERRA-2 data")
 
-#%%
+
+def get_units_from_variable(variable: str) -> str:
+    match variable:
+        case "U":
+            return "m/s"
+        case "V":
+            return "m/s"
+
+
+def format_level(level, total_levels=72) -> str:
+    pressure = get_pressure_from_level(level, total_levels=total_levels)
+    return f"{pressure:.2f} hPa (~{height_from_pressure(100 * pressure):.2f} m)"
+
+
+def format_latitude(latitude) -> str:
+    return f"{latitude * 0.05 - 90}° lat"
+
+
+def format_longitude(longitude) -> str:
+    return f"{longitude * 0.0625 - 180}° lon"
+
+
+def _format_month(month: int) -> str:
+    return ["January", "February", "March", "April", "May", "June", "July",
+            "August", "September", "October", "November", "December"][month]
+
+
+def format_date(filename: str) -> str:
+    # MERRA2_100.tavg3_3d_asm_Nv.19800101.nc4
+    date = filename.split(".")[-2]
+    return f"{int(date[7:])} {_format_month(int(date[4:6]) - 1)} {date[:4]}"
+
+
+def format_time(time: int) -> str:
+    return f"{time * 3 + 1:0>2}:30"
