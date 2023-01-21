@@ -81,26 +81,13 @@ SECONDARY_LIGHT = (213, 87, 89)
 ACCENT_DARK = (255, 182, 0)
 ACCENT = (246, 212, 61)
 
-primary_light_dark = create_gradient(colour1=PRIMARY_DARK,
-                                     colour2=PRIMARY_LIGHT)
-secondary_light_dark = create_gradient(colour1=SECONDARY_DARK,
-                                       colour2=SECONDARY_LIGHT)
-accent_light_dark = create_gradient(colour1=ACCENT_DARK,
-                                    colour2=ACCENT)
-
-gradient: Final[ListedColormap] = primary_light_dark
-colour_order: Final[list[tuple[int, int, int]]] = [PRIMARY, SECONDARY, ACCENT]
+gradient = create_gradient(colour1=PRIMARY_DARK,
+                           colour2=PRIMARY_LIGHT)
+colour_order = [PRIMARY, SECONDARY, ACCENT, (78, 140, 217)]
 
 
-def _get_colour(series: dict, i: int):
-    if "colour" in series:
-        if isinstance(series["colour"], tuple):
-            return rgb_to_hex(*series["colour"])
-        elif isinstance(series["colour"], str):
-            return series["colour"]
-        else:
-            return None
-    elif i < len(colour_order):
+def _get_colour(i: int):
+    if i < len(colour_order):
         return rgb_to_hex(*colour_order[i])
     else:
         return None
@@ -170,17 +157,13 @@ def plot_histogram(data: list[DataDictionary],
     for i, series in enumerate(data):
         series_list.append(series["data"])
         labels.append(series.get("label", ""))
-        colours.append(_get_colour(series=series, i=i))
+        colours.append(series.get("colour", _get_colour(i)))
 
-    if bins is None:
-        n, bins, patches = plt.hist(series_list, label=labels, color=colours)
-    else:
-        n, bins, patches = plt.hist(series_list, bins=bins, label=labels, color=colours)
+    n, bins, patches = plt.hist(series_list, bins=bins, label=labels, color=colours, linewidth=0)
 
     if len(series_list) == 1:
-        if "colour" not in series_list[0]:
-            for i in range(len(patches)):
-                patches[i].set_facecolor(gradient(n[i] / max(n)))
+        for i in range(len(patches)):
+            patches[i].set_facecolor(gradient(n[i] / max(n)))
 
     setup_plot(title=title, xlabel=xlabel, ylabel=ylabel, subtitle=subtitle)
 
@@ -215,27 +198,40 @@ def create_2_interactive_sliders_with_color_bar(title: str, valmin1, valmax1, va
     return fig, ax, color_bar_ax, vertical_slider, horizontal_slider
 
 
-def create_shared_2_column_plot(title: str):
+def create_shared_1x2_plot(title: str):
+    fig, (ax11, ax12) \
+        = plt.subplots(nrows=1,
+                       ncols=2,
+                       num=title,
+                       figsize=(12, 5),
+                       sharey=True,
+                       tight_layout=True)
+
+    return fig, ax11, ax12
+
+
+def create_1x2_plot(title: str):
     fig, (left_ax, right_ax) \
         = plt.subplots(nrows=1,
+                       ncols=2,
+                       num=title,
+                       figsize=(12, 5),
+                       tight_layout=True)
+
+    return fig, left_ax, right_ax
+
+
+def create_shared_2x2_plot(title: str):
+    fig, ((ax11, ax12), (ax21, ax22)) \
+        = plt.subplots(nrows=2,
                        ncols=2,
                        num=title,
                        figsize=(8, 5),
                        sharey=True,
+                       sharex=True,
                        tight_layout=True)
 
-    return fig, left_ax, right_ax
-
-
-def create_2_column_plot(title: str):
-    fig, (left_ax, right_ax) \
-        = plt.subplots(nrows=1,
-                       ncols=2,
-                       num=title,
-                       figsize=(8, 5),
-                       tight_layout=True)
-
-    return fig, left_ax, right_ax
+    return fig, ax11, ax12, ax21, ax22
 
 
 def contourf(ax, levels, *args, **kwargs):
@@ -334,4 +330,4 @@ def plot_interactive_variable_at_time(filename: str, variable: str, time: int, t
     update(0)
     plt.show()
 
-#%%
+# %%
