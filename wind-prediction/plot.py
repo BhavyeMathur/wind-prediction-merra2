@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib.widgets import Slider
+from matplotlib.colors import ListedColormap
 from matplotlib import rc
 import seaborn
 
@@ -10,6 +11,38 @@ from merra2 import *
 seaborn.set_theme()
 
 rc("font", family="serif", serif=["Verdana"])
+
+
+def create_gradient(colour1: tuple[int, int, int],
+                    colour2: tuple[int, int, int]) -> ListedColormap:
+    """Creates a linear colour gradient between 2 colours
+
+    @param colour1: the start colour as an RGB tuple
+    @param colour2: the end colour as an RGB tuple
+    @return: a matplotlib ListedColormap gradient
+    """
+    vals: np.ndarray = np.ones((256, 4))  # creates a list of 256 tuples of size 4 (RGBA) with 1s for Alpha
+    vals[:, 0] = np.linspace(colour1[0] / 255, colour2[0] / 255, 256)
+    vals[:, 1] = np.linspace(colour1[1] / 255, colour2[1] / 255, 256)
+    vals[:, 2] = np.linspace(colour1[2] / 255, colour2[2] / 255, 256)
+
+    return ListedColormap(vals)
+
+
+def combine_gradients(gradient1: ListedColormap,
+                      gradient2: ListedColormap,
+                      prop: int | float = 0.5) -> ListedColormap:
+    """Combines 2 colour gradients into 1
+
+    @param gradient1: the first colour gradient
+    @param gradient2: the second colour gradient
+    @param prop: proportion representing the influence of the first gradient
+
+    @return: a matplotlib ListedColormap gradient
+    """
+
+    return ListedColormap(np.vstack((gradient1(np.linspace(0, 1, int(prop * 256))),
+                                     gradient2(np.linspace(0, 1, 256 - int(prop * 256))))))
 
 
 def create_2_interactive_sliders_with_color_bar(title: str, valmin1, valmax1, valmin2, valmax2):
