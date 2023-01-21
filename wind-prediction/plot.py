@@ -2,9 +2,12 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib.widgets import Slider
 from matplotlib import rc
+import seaborn
 
 from data_loading import *
 from merra2 import *
+
+seaborn.set_theme()
 
 rc("font", family="serif", serif=["Verdana"])
 
@@ -37,6 +40,29 @@ def create_2_interactive_sliders_with_color_bar(title: str, valmin1, valmax1, va
     horizontal_slider.label.set_visible(False)
 
     return fig, ax, color_bar_ax, vertical_slider, horizontal_slider
+
+
+def create_shared_2_column_plot(title: str):
+    fig, (left_ax, right_ax) \
+        = plt.subplots(nrows=1,
+                       ncols=2,
+                       num=title,
+                       figsize=(8, 5),
+                       sharey=True,
+                       tight_layout=True)
+
+    return fig, left_ax, right_ax
+
+
+def create_2_column_plot(title: str):
+    fig, (left_ax, right_ax) \
+        = plt.subplots(nrows=1,
+                       ncols=2,
+                       num=title,
+                       figsize=(8, 5),
+                       tight_layout=True)
+
+    return fig, left_ax, right_ax
 
 
 def contourf(ax, levels, *args, **kwargs):
