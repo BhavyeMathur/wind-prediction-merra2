@@ -1,3 +1,5 @@
+from typing import TypedDict, Final, Callable, Sequence
+
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib.widgets import Slider
@@ -11,6 +13,29 @@ from merra2 import *
 seaborn.set_theme()
 
 rc("font", family="serif", serif=["Verdana"])
+
+
+class DataDictionary(TypedDict, total=False):
+    """Class representing the data format for the plotting functions
+    """
+    data: Sequence
+    label: str | None
+    size: float | None
+    colour: tuple[int, int, int] | Sequence[tuple[int, int, int]] | None
+
+
+# Color & Gradient Functions
+
+
+def rgb_to_hex(r: int, g: int, b: int) -> str:
+    """Converts an RGB colour to a Hex string
+
+    @param r: red value of the colour (0-255)
+    @param g: green value of the colour (0-255)
+    @param b: blue value of the colour (0-255)
+    @return: a hex string representing the input colour
+    """
+    return "#%02x%02x%02x" % (r, g, b)
 
 
 def create_gradient(colour1: tuple[int, int, int],
@@ -31,7 +56,7 @@ def create_gradient(colour1: tuple[int, int, int],
 
 def combine_gradients(gradient1: ListedColormap,
                       gradient2: ListedColormap,
-                      prop: int | float = 0.5) -> ListedColormap:
+                      prop: float = 0.5) -> ListedColormap:
     """Combines 2 colour gradients into 1
 
     @param gradient1: the first colour gradient
@@ -43,6 +68,121 @@ def combine_gradients(gradient1: ListedColormap,
 
     return ListedColormap(np.vstack((gradient1(np.linspace(0, 1, int(prop * 256))),
                                      gradient2(np.linspace(0, 1, 256 - int(prop * 256))))))
+
+
+PRIMARY_DARK = (111, 194, 75)
+PRIMARY = (150, 213, 87)
+PRIMARY_LIGHT = (189, 226, 92)
+
+SECONDARY_DARK = (192, 61, 63)
+SECONDARY = (220, 61, 70)
+SECONDARY_LIGHT = (213, 87, 89)
+
+ACCENT_DARK = (255, 182, 0)
+ACCENT = (246, 212, 61)
+
+primary_light_dark = create_gradient(colour1=PRIMARY_DARK,
+                                     colour2=PRIMARY_LIGHT)
+secondary_light_dark = create_gradient(colour1=SECONDARY_DARK,
+                                       colour2=SECONDARY_LIGHT)
+accent_light_dark = create_gradient(colour1=ACCENT_DARK,
+                                    colour2=ACCENT)
+
+gradient: Final[ListedColormap] = primary_light_dark
+colour_order: Final[list[tuple[int, int, int]]] = [PRIMARY, SECONDARY, ACCENT]
+
+
+def _get_colour(series: dict, i: int):
+    if "colour" in series:
+        if isinstance(series["colour"], tuple):
+            return rgb_to_hex(*series["colour"])
+        elif isinstance(series["colour"], str):
+            return series["colour"]
+        else:
+            return None
+    elif i < len(colour_order):
+        return rgb_to_hex(*colour_order[i])
+    else:
+        return None
+
+
+# Basic Plot Functions
+
+def setup_plot(title: str,
+               xlabel: str | None,
+               ylabel: str | None,
+               subtitle: str | None,
+               xlabel_rotation: int = 0,
+               legend: bool = True) -> None:
+    """Adds the title, labels, and other elements to the plot and then shows/saves it
+
+    For internal use by the other plotting functions
+
+    @param title: the title of the graph
+    @param subtitle: the optional subtitle of the graph
+    @param xlabel_rotation: the rotation (degrees) of the x labels
+    @param legend: show the legend?
+
+    @param xlabel: the label of the x-axis
+    @param ylabel: the label of the y-axis
+    """
+    if subtitle is None:
+        plt.title(title, fontsize=8)
+    else:
+        plt.suptitle(title, fontsize=15)
+        plt.title(subtitle, pad="15.0")
+
+    if xlabel is not None:
+        plt.xlabel(xlabel)
+    if ylabel is not None:
+        plt.ylabel(ylabel)
+
+    plt.xticks(rotation=xlabel_rotation)
+
+    if legend:
+        plt.legend()
+
+    plt.show()
+
+
+def plot_histogram(data: list[DataDictionary],
+                   title: str,
+                   xlabel: str | None = None,
+                   ylabel: str | None = None,
+                   subtitle: str | None = None,
+                   bins: int | None = None) -> None:
+    """Plots a histogram with the data supplied
+
+    @param data: a dictionary represent the data, labels, and colours for the histogram
+
+    @param title: the title of the graph
+    @param subtitle: the optional subtitle of the graph
+
+    @param xlabel: the label of the x-axis
+    @param ylabel: the label of the y-axis
+    @param bins: the number of bins to create in the histogram
+    """
+
+    series_list = []
+    labels = []
+    colours = []
+
+    for i, series in enumerate(data):
+        series_list.append(series["data"])
+        labels.append(series.get("label", ""))
+        colours.append(_get_colour(series=series, i=i))
+
+    if bins is None:
+        n, bins, patches = plt.hist(series_list, label=labels, color=colours)
+    else:
+        n, bins, patches = plt.hist(series_list, bins=bins, label=labels, color=colours)
+
+    if len(series_list) == 1:
+        if "colour" not in series_list[0]:
+            for i in range(len(patches)):
+                patches[i].set_facecolor(gradient(n[i] / max(n)))
+
+    setup_plot(title=title, xlabel=xlabel, ylabel=ylabel, subtitle=subtitle)
 
 
 def create_2_interactive_sliders_with_color_bar(title: str, valmin1, valmax1, valmin2, valmax2):
@@ -193,3 +333,5 @@ def plot_interactive_variable_at_time(filename: str, variable: str, time: int, t
 
     update(0)
     plt.show()
+
+#%%
