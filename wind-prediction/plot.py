@@ -210,13 +210,14 @@ def create_shared_1x2_plot(title: str):
     return fig, ax11, ax12
 
 
-def create_1x2_plot(title: str):
+def create_1x2_plot(title: str, figsize=(12, 5), **kwargs):
     fig, (left_ax, right_ax) \
         = plt.subplots(nrows=1,
                        ncols=2,
                        num=title,
-                       figsize=(12, 5),
-                       tight_layout=True)
+                       figsize=figsize,
+                       tight_layout=True,
+                       **kwargs)
 
     return fig, left_ax, right_ax
 
@@ -293,7 +294,10 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
     plt.show()
 
 
-def plot_contour_at_time_and_level(filename: str, variable: str, time: int, level: int,
+def plot_contour_at_time_and_level(filename: str,
+                                   variable: str,
+                                   time: int,
+                                   level: int,
                                    folder: str = "compressed") -> None:
     data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
 
@@ -304,8 +308,13 @@ def plot_contour_at_time_and_level(filename: str, variable: str, time: int, leve
     plt.show()
 
 
-def plot_interactive_variable_at_time(filename: str, variable: str, time: int, title: str, folder: str = "compressed",
-                                      latitude_samples: int = 180, longitude_samples: int | None = None):
+def plot_interactive_variable_at_time(filename: str,
+                                      variable: str,
+                                      time: int,
+                                      title: str,
+                                      folder: str = "compressed",
+                                      latitude_samples: int = 180,
+                                      longitude_samples: int | None = None):
     data = load_variable_at_time(filename, variable, time, folder=folder)
     data = interpolate_variable_at_time(data, latitude_samples, longitude_samples)
 
@@ -329,5 +338,3 @@ def plot_interactive_variable_at_time(filename: str, variable: str, time: int, t
 
     update(0)
     plt.show()
-
-# %%
