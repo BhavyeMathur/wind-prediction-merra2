@@ -291,6 +291,8 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
                                                           level: int,
                                                           latitude: int,
                                                           folder: str = "compressed"):
+    # mpl_style(dark=True)
+
     data = load_variable_at_time_level_and_latitude(filename, variable, time, level, latitude, folder=folder)
 
     plt.plot(np.linspace(-180, 180, 576), data)
@@ -306,6 +308,7 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
                                                           level: int,
                                                           longitude: int,
                                                           folder: str = "compressed"):
+
     data = load_variable_at_time_level_and_longitude(filename, variable, time, level, longitude, folder=folder)
 
     plt.plot(np.linspace(-90, 90, 361), data)
@@ -323,7 +326,10 @@ def plot_variable_at_time_and_level(filename: str = "",
                                     lat_start: int = 0,
                                     lat_end: int = 361,
                                     lat_step: int = 1,
-                                    fig_ax1_ax2=None):
+                                    fig_ax1_ax2=None,
+                                    linewidth=0.2):
+    # mpl_style(dark=True)
+
     if isinstance(level, int):
         data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
     else:
@@ -340,7 +346,9 @@ def plot_variable_at_time_and_level(filename: str = "",
         plt.show()
 
     for latitude in range(lat_start, lat_end, lat_step):
-        ax1.plot(np.linspace(-180, 180, 576), data[latitude], color=plt.cm.coolwarm(latitude / 361), linewidth=0.2)
+        ax1.plot(np.linspace(-180, 180, 576), data[latitude],
+                 color=plt.cm.coolwarm(latitude / 361),
+                 linewidth=linewidth)
 
     bar = mpl.colorbar.Colorbar(ax2, cmap="coolwarm", orientation="vertical", values=np.linspace(-90, 90, 50))
     bar.set_ticks([-90, -60, -30, 0, 30, 60, 90])
