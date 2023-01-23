@@ -47,8 +47,13 @@ def interpolate_variable_at_time(data: np.ndarray, latitude_samples: int = 180, 
 def load_variable_at_time_and_level(filename: str,
                                     variable: str,
                                     time: int,
-                                    level: int,
+                                    level: int | float,
                                     folder: str = "compressed") -> np.array:
+    if isinstance(level, float):
+        data = load_variable_at_time_and_level(filename, variable, time, int(level), folder) * (1 - level % 1)
+        data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1, folder) * (level % 1)
+        return data
+
     with open_xarray_dataset(filename, folder=folder) as dataset:
         data = np.array(dataset[variable][time][level])
 

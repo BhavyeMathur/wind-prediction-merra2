@@ -13,8 +13,6 @@ from merra2 import *
 
 seaborn.set_theme()
 
-mpl.rc("font", family="serif", serif=["Verdana"])
-
 
 class DataDictionary(TypedDict, total=False):
     """Class representing the data format for the plotting functions
@@ -277,10 +275,12 @@ def draw_map(ax, coastlines, latitudes, longitudes):
 def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
                                                           variable: str,
                                                           time: int,
-                                                          level: int,
+                                                          level: int | float,
                                                           latitude: int,
-                                                          folder: str = "compressed"):
-    data = load_variable_at_time_level_and_latitude(filename, variable, time, level, latitude, folder=folder)
+                                                          folder: str = "compressed",
+                                                          data: np.ndarray = None):
+    if data is None:
+        data = load_variable_at_time_level_and_latitude(filename, variable, time, level, latitude, folder=folder)
 
     plt.plot(np.linspace(-180, 180, 576), data)
 
@@ -292,10 +292,12 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
 def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
                                                           variable: str,
                                                           time: int,
-                                                          level: int,
+                                                          level: int | float,
                                                           longitude: int,
-                                                          folder: str = "compressed"):
-    data = load_variable_at_time_level_and_longitude(filename, variable, time, level, longitude, folder=folder)
+                                                          folder: str = "compressed",
+                                                          data: np.ndarray = None):
+    if data is None:
+        data = load_variable_at_time_level_and_longitude(filename, variable, time, level, longitude, folder=folder)
 
     plt.plot(np.linspace(-90, 90, 361), data)
 
@@ -304,23 +306,19 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
     plt.show()
 
 
-def plot_variable_at_time_and_level(filename: str = "",
-                                    variable: str = "",
-                                    time: int = 0,
-                                    level: int = 71,
-                                    folder: str = "compressed",
-                                    lat_start: int = 0,
-                                    lat_end: int = 361,
-                                    lat_step: int = 1,
-                                    fig_ax1_ax2=None,
-                                    data: np.ndarray = None,
-                                    linewidth=0.2):
+def plot_variable_at_time_and_level_vs_longitude(filename: str = "",
+                                                 variable: str = "",
+                                                 time: int = 0,
+                                                 level: int | float = 71,
+                                                 folder: str = "compressed",
+                                                 lat_start: int = 0,
+                                                 lat_end: int = 361,
+                                                 lat_step: int = 1,
+                                                 fig_ax1_ax2=None,
+                                                 data: np.ndarray = None,
+                                                 linewidth=0.2):
     if data is None:
-        if isinstance(level, int):
-            data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
-        else:
-            data = load_variable_at_time_and_level(filename, variable, time, int(level), folder) * (1 - level % 1)
-            data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1, folder) * (level % 1)
+        data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
             f" on {format_date(filename)} at {format_time(time)}"
@@ -353,7 +351,7 @@ def plot_variable_at_time_and_level(filename: str = "",
 def plot_contour_at_time_and_level(filename: str,
                                    variable: str,
                                    time: int,
-                                   level: int,
+                                   level: int | float,
                                    folder: str = "compressed",
                                    data: np.ndarray | None = None,
                                    **kwargs) -> None:
