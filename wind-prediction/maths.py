@@ -837,6 +837,10 @@ def me(data, prediction):
     return (data - prediction).mean()
 
 
+def mae(data, prediction):
+    return abs(data - prediction).mean()
+
+
 def mse(data, prediction):
     return ((data - prediction) ** 2).mean()
 
