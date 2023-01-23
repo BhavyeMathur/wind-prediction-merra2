@@ -46,6 +46,8 @@ def get_units_from_variable(variable: str) -> str:
             return "m/s"
         case "V":
             return "m/s"
+        case "Wind Speed":
+            return "m/s"
 
 
 def format_level(level, total_levels=72) -> str:

@@ -355,14 +355,23 @@ def plot_contour_at_time_and_level(filename: str,
                                    level: int | float,
                                    folder: str = "compressed",
                                    data: np.ndarray | None = None,
+                                   show_map: bool = False,
                                    **kwargs) -> None:
     if data is None:
         data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
 
-    plt.contourf(np.linspace(-180, 180, 576), np.linspace(-90, 90, 361), data, cmap="viridis", **kwargs)
+    fig, ax1, ax2 = create_1x2_plot(f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}"
+                                    f" on {format_date(filename)} at {format_time(time)}",
+                                    figsize=(8, 5), width_ratios=(98, 2))
+    ax1.set_yticks([])
+    ax1.set_xticks([])
 
-    plt.title(f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}"
-              f" on {format_date(filename)} at {format_time(time)}", fontsize=8)
+    contour = ax1.imshow(data, cmap="viridis", origin="lower", aspect="auto", **kwargs)
+    fig.colorbar(contour, cax=ax2, fraction=0.05, pad=0.02)
+
+    if show_map:
+        draw_map(ax1, *load_map(data.shape))
+
     plt.show()
 
 
