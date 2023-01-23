@@ -19,6 +19,11 @@ def get_merra_variables(variables):
 
 
 def get_pressure_from_level(level, total_levels: int = 72) -> float:
+    if isinstance(level, float):
+        pressure = get_pressure_from_level(int(level), total_levels=total_levels) * (1 - level % 1)
+        pressure += get_pressure_from_level(int(level) + 1, total_levels=total_levels) * (level % 1)
+        return pressure
+
     if total_levels == 72:
         return [0.01, 0.02, 0.0327, 0.0476, 0.0660, 0.0893, 0.1197, 0.1595, 0.2113, 0.2785,
                 0.3650, 0.4758, 0.6168, 0.7951, 1.0194, 1.3005, 1.6508, 2.0850, 2.6202,

@@ -169,6 +169,26 @@ def plot_histogram(data: list[DataDictionary],
     setup_plot(title=title, xlabel=xlabel, ylabel=ylabel, subtitle=subtitle)
 
 
+def create_interactive_slider_with_color_bar(title: str, valmin1, valmax1, width_ratios=(2, 98, 3)):
+    fig, (level_slider_axis, ax, color_bar_ax), \
+        = plt.subplots(nrows=1,
+                       ncols=3,
+                       num=title,
+                       figsize=(8, 5),
+                       width_ratios=width_ratios,
+                       tight_layout=True,
+                       gridspec_kw={"left": 0.025, "right": 0.9, "bottom": 0.045, "top": 0.95, "hspace": 0.1,
+                                    "wspace": 0.1})
+
+    vertical_slider = Slider(ax=level_slider_axis, label="", orientation="vertical",
+                             valmin=valmin1, valmax=valmax1, valinit=0, valstep=1,
+                             color=(0.2, 0.2, 0.2))
+    vertical_slider.valtext.set_visible(False)
+    vertical_slider.label.set_visible(False)
+
+    return fig, ax, color_bar_ax, vertical_slider
+
+
 def create_2_interactive_sliders_with_color_bar(title: str, valmin1, valmax1, valmin2, valmax2):
     fig, ((level_slider_axis, ax, color_bar_ax), (corner1, resolution_slider_axis, corner2)) \
         = plt.subplots(nrows=2,
@@ -295,20 +315,29 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
     plt.show()
 
 
-def plot_variable_at_time_and_level(filename: str,
-                                    variable: str,
-                                    time: int,
-                                    level: int,
+def plot_variable_at_time_and_level(filename: str = "",
+                                    variable: str = "",
+                                    time: int = 0,
+                                    level: int = 71,
                                     folder: str = "compressed",
                                     lat_start: int = 0,
                                     lat_end: int = 361,
-                                    lat_step: int = 1):
-    data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
+                                    lat_step: int = 1,
+                                    fig_ax1_ax2=None):
+    if isinstance(level, int):
+        data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
+    else:
+        data = load_variable_at_time_and_level(filename, variable, time, int(level), folder=folder) * (1 - level % 1)
+        data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1, folder=folder) * (level % 1)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
             f" on {format_date(filename)} at {format_time(time)}"
 
-    fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
+    if fig_ax1_ax2:
+        fig, ax1, ax2 = fig_ax1_ax2
+    else:
+        fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
+        plt.show()
 
     for latitude in range(lat_start, lat_end, lat_step):
         ax1.plot(np.linspace(-180, 180, 576), data[latitude], color=plt.cm.coolwarm(latitude / 361), linewidth=0.2)
@@ -323,8 +352,6 @@ def plot_variable_at_time_and_level(filename: str,
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d°"))
 
     ax2.tick_params(labelsize=7, right=False, direction="in")
-
-    plt.show()
 
 
 def plot_contour_at_time_and_level(filename: str,
