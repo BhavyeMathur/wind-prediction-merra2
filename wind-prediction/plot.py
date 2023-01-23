@@ -213,6 +213,7 @@ def create_2_interactive_sliders_with_color_bar(title: str,
                                                 valmax1: float,
                                                 valmin2: float,
                                                 valmax2: float,
+                                                valinit2: float,
                                                 width_ratios: tuple[int, int, int] = (2, 98, 3),
                                                 height_ratios: tuple[int, int] = (98, 2),
                                                 figsize=(8, 5),
@@ -239,7 +240,7 @@ def create_2_interactive_sliders_with_color_bar(title: str,
     vertical_slider.label.set_visible(False)
 
     horizontal_slider = Slider(ax=resolution_slider_axis, label="",
-                               valmin=valmin2, valmax=valmax2, valstep=1, valinit=16,
+                               valmin=valmin2, valmax=valmax2, valinit=valinit2,
                                color=(0.2, 0.2, 0.2))
     horizontal_slider.valtext.set_visible(False)
     horizontal_slider.label.set_visible(False)
@@ -261,7 +262,7 @@ def create_2x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
 # Drawing Methods
 
 def load_map(shape):
-    coastlines = mpimg.imread("assets/equirectangular_projection.png")[:, :, 0]
+    coastlines = mpimg.imread("assets/equirectangular_projection.png")[::-1, :, 0]
     coastline_latitudes = np.linspace(0, shape[0], coastlines.shape[0])
     coastline_longitudes = np.linspace(0, shape[1], coastlines.shape[1])
 
@@ -269,7 +270,7 @@ def load_map(shape):
 
 
 def draw_map(ax, coastlines, latitudes, longitudes):
-    ax.contour(longitudes, latitudes, coastlines, levels=1, colors=[(0, 0, 0, 0), (0, 0, 0, 0.2)])
+    ax.contourf(longitudes, latitudes, coastlines, levels=1, colors=[(0, 0, 0, 0), (0, 0, 0, 0.2)])
 
 
 def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
@@ -355,7 +356,8 @@ def plot_contour_at_time_and_level(filename: str,
                                    folder: str = "compressed",
                                    data: np.ndarray | None = None,
                                    **kwargs) -> None:
-    data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
+    if data is None:
+        data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
 
     plt.contourf(np.linspace(-180, 180, 576), np.linspace(-90, 90, 361), data, cmap="viridis", **kwargs)
 
@@ -369,28 +371,31 @@ def plot_interactive_contour_at_time(filename: str,
                                      time: int,
                                      title: str,
                                      folder: str = "compressed",
-                                     latitude_samples: int = 180,
-                                     longitude_samples: int | None = None):
-    data = load_variable_at_time(filename, variable, time, folder=folder)
+                                     latitude_samples: int = 150,
+                                     longitude_samples: int | None = None,
+                                     data: np.ndarray | None = None):
+
+    if data is None:
+        data = load_variable_at_time(filename, variable, time, folder=folder)
     data = interpolate_variable_at_time(data, latitude_samples, longitude_samples)
 
-    fig, ax, color_bar_ax, level_slider, resolution_slider = create_2_interactive_sliders_with_color_bar(
-        title, 0, 71, 2, 32)
+    fig, ax, color_bar_ax, level_slider = create_interactive_slider_with_color_bar(title, 0, 71)
+    ax.set_yticks([])
+    ax.set_xticks([])
 
-    def update(_):
-        color_bar_ax.clear()
+    def update_contour(val):
         ax.clear()
         ax.set_yticks([])
         ax.set_xticks([])
 
-        subdata = data[71 - level_slider.val]
-        vmin, vmax = get_vmin_and_vmax(subdata)
+        color_bar_ax.clear()
 
-        contour = contourf(ax, resolution_slider.val, subdata, vmin=vmin, vmax=vmax)
+        contour = ax.imshow(data[71 - val], cmap="viridis", aspect="auto", origin="lower")
         fig.colorbar(contour, cax=color_bar_ax, fraction=0.05, pad=0.02)
 
-    level_slider.on_changed(update)
-    resolution_slider.on_changed(update)
+    level_slider.on_changed(update_contour)
 
-    update(0)
+    update_contour(0)
     plt.show()
+
+    return level_slider
