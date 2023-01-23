@@ -833,6 +833,10 @@ def lcc_projection_to_coord(x: float,
 """Error Functions"""
 
 
+def me(data, prediction):
+    return (data - prediction).mean()
+
+
 def mse(data, prediction):
     return ((data - prediction) ** 2).mean()
 
