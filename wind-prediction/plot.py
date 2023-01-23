@@ -94,6 +94,19 @@ def _get_colour(i: int):
         return None
 
 
+def get_vmin_and_vmax(data):
+    vmin = np.min(data)
+    vmax = np.max(data)
+
+    if vmin < 0 < vmax:
+        if abs(vmin) > vmax:
+            vmax = -vmin
+        elif vmax > abs(vmin):
+            vmin = -vmax
+
+    return vmin, vmax
+
+
 # Basic Plot Functions
 
 def setup_plot(title: str,
@@ -169,16 +182,24 @@ def plot_histogram(data: list[DataDictionary],
     setup_plot(title=title, xlabel=xlabel, ylabel=ylabel, subtitle=subtitle)
 
 
-def create_interactive_slider_with_color_bar(title: str, valmin1, valmax1, width_ratios=(2, 98, 3)):
+# Plotting templates
+
+def create_interactive_slider_with_color_bar(title: str,
+                                             valmin1: float,
+                                             valmax1: float,
+                                             width_ratios: tuple[int, int, int] = (2, 98, 3),
+                                             figsize: tuple[int, int] = (8, 5),
+                                             **kwargs):
     fig, (level_slider_axis, ax, color_bar_ax), \
         = plt.subplots(nrows=1,
                        ncols=3,
                        num=title,
-                       figsize=(8, 5),
+                       figsize=figsize,
                        width_ratios=width_ratios,
                        tight_layout=True,
                        gridspec_kw={"left": 0.025, "right": 0.9, "bottom": 0.045, "top": 0.95, "hspace": 0.1,
-                                    "wspace": 0.1})
+                                    "wspace": 0.1},
+                       **kwargs)
 
     vertical_slider = Slider(ax=level_slider_axis, label="", orientation="vertical",
                              valmin=valmin1, valmax=valmax1, valinit=0, valstep=1,
@@ -189,23 +210,32 @@ def create_interactive_slider_with_color_bar(title: str, valmin1, valmax1, width
     return fig, ax, color_bar_ax, vertical_slider
 
 
-def create_2_interactive_sliders_with_color_bar(title: str, valmin1, valmax1, valmin2, valmax2):
+def create_2_interactive_sliders_with_color_bar(title: str,
+                                                valmin1: float,
+                                                valmax1: float,
+                                                valmin2: float,
+                                                valmax2: float,
+                                                width_ratios: tuple[int, int, int] = (2, 98, 3),
+                                                height_ratios: tuple[int, int] = (98, 2),
+                                                figsize=(8, 5),
+                                                **kwargs):
     fig, ((level_slider_axis, ax, color_bar_ax), (corner1, resolution_slider_axis, corner2)) \
         = plt.subplots(nrows=2,
                        ncols=3,
                        num=title,
-                       figsize=(8, 5),
-                       width_ratios=(2, 98, 3),
-                       height_ratios=(98, 2),
+                       figsize=figsize,
+                       width_ratios=width_ratios,
+                       height_ratios=height_ratios,
                        tight_layout=True,
                        gridspec_kw={"left": 0.025, "right": 0.9, "bottom": 0.045, "top": 0.95, "hspace": 0.1,
-                                    "wspace": 0.1})
+                                    "wspace": 0.1},
+                       **kwargs)
 
     corner1.set_visible(False)
     corner2.set_visible(False)
 
     vertical_slider = Slider(ax=level_slider_axis, label="", orientation="vertical",
-                             valmin=valmin1, valmax=valmax1, valinit=0, valstep=1,
+                             valmin=valmin1, valmax=valmax1, valstep=1, valinit=0,
                              color=(0.2, 0.2, 0.2))
     vertical_slider.valtext.set_visible(False)
     vertical_slider.label.set_visible(False)
@@ -219,49 +249,21 @@ def create_2_interactive_sliders_with_color_bar(title: str, valmin1, valmax1, va
     return fig, ax, color_bar_ax, vertical_slider, horizontal_slider
 
 
-def create_shared_1x2_plot(title: str):
-    fig, (ax11, ax12) \
-        = plt.subplots(nrows=1,
-                       ncols=2,
-                       num=title,
-                       figsize=(12, 5),
-                       sharey=True,
-                       tight_layout=True)
-
+def create_1x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
+    fig, (ax11, ax12) = plt.subplots(nrows=1, ncols=2, num=title, figsize=figsize, tight_layout=True, **kwargs)
     return fig, ax11, ax12
 
 
-def create_1x2_plot(title: str, figsize=(12, 5), **kwargs):
-    fig, (left_ax, right_ax) \
-        = plt.subplots(nrows=1,
-                       ncols=2,
-                       num=title,
-                       figsize=figsize,
-                       tight_layout=True,
-                       **kwargs)
-
-    return fig, left_ax, right_ax
-
-
-def create_shared_2x2_plot(title: str):
-    fig, ((ax11, ax12), (ax21, ax22)) \
-        = plt.subplots(nrows=2,
-                       ncols=2,
-                       num=title,
-                       figsize=(8, 5),
-                       sharey=True,
-                       sharex=True,
-                       tight_layout=True)
-
+def create_2x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
+    fig, ((ax11, ax12), (ax21, ax22)) = plt.subplots(nrows=2, ncols=2, num=title, figsize=figsize, tight_layout=True,
+                                                     **kwargs)
     return fig, ax11, ax12, ax21, ax22
 
 
-def contourf(ax, levels, *args, **kwargs):
-    return ax.contourf(*args, levels=levels, antialiased=False, algorithm="threaded", **kwargs)
-
+# Drawing Methods
 
 def load_map(shape):
-    coastlines = mpimg.imread("assets/equirectangular_projection.png")[::-1, :, 0]
+    coastlines = mpimg.imread("assets/equirectangular_projection.png")[:, :, 0]
     coastline_latitudes = np.linspace(0, shape[0], coastlines.shape[0])
     coastline_longitudes = np.linspace(0, shape[1], coastlines.shape[1])
 
@@ -269,20 +271,7 @@ def load_map(shape):
 
 
 def draw_map(ax, coastlines, latitudes, longitudes):
-    contourf(ax, 1, longitudes, latitudes, coastlines, colors=[(0, 0, 0, 0), (0, 0, 0, 0.2)])
-
-
-def get_vmin_and_vmax(data):
-    vmin = np.min(data)
-    vmax = np.max(data)
-
-    if vmin < 0 < vmax:
-        if abs(vmin) > vmax:
-            vmax = -vmin
-        elif vmax > abs(vmin):
-            vmin = -vmax
-
-    return vmin, vmax
+    ax.contour(longitudes, latitudes, coastlines, levels=1, colors=[(0, 0, 0, 0), (0, 0, 0, 0.2)])
 
 
 def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
@@ -291,8 +280,6 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
                                                           level: int,
                                                           latitude: int,
                                                           folder: str = "compressed"):
-    # mpl_style(dark=True)
-
     data = load_variable_at_time_level_and_latitude(filename, variable, time, level, latitude, folder=folder)
 
     plt.plot(np.linspace(-180, 180, 576), data)
@@ -308,7 +295,6 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
                                                           level: int,
                                                           longitude: int,
                                                           folder: str = "compressed"):
-
     data = load_variable_at_time_level_and_longitude(filename, variable, time, level, longitude, folder=folder)
 
     plt.plot(np.linspace(-90, 90, 361), data)
@@ -327,14 +313,14 @@ def plot_variable_at_time_and_level(filename: str = "",
                                     lat_end: int = 361,
                                     lat_step: int = 1,
                                     fig_ax1_ax2=None,
+                                    data: np.ndarray = None,
                                     linewidth=0.2):
-    # mpl_style(dark=True)
-
-    if isinstance(level, int):
-        data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
-    else:
-        data = load_variable_at_time_and_level(filename, variable, time, int(level), folder=folder) * (1 - level % 1)
-        data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1, folder=folder) * (level % 1)
+    if data is None:
+        if isinstance(level, int):
+            data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
+        else:
+            data = load_variable_at_time_and_level(filename, variable, time, int(level), folder) * (1 - level % 1)
+            data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1, folder) * (level % 1)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
             f" on {format_date(filename)} at {format_time(time)}"
@@ -361,15 +347,19 @@ def plot_variable_at_time_and_level(filename: str = "",
 
     ax2.tick_params(labelsize=7, right=False, direction="in")
 
+    return fig, ax1, ax2
+
 
 def plot_contour_at_time_and_level(filename: str,
                                    variable: str,
                                    time: int,
                                    level: int,
-                                   folder: str = "compressed") -> None:
+                                   folder: str = "compressed",
+                                   data: np.ndarray | None = None,
+                                   **kwargs) -> None:
     data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
 
-    plt.contourf(np.linspace(-180, 180, 576), np.linspace(-90, 90, 361), data)
+    plt.contourf(np.linspace(-180, 180, 576), np.linspace(-90, 90, 361), data, cmap="viridis", **kwargs)
 
     plt.title(f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}"
               f" on {format_date(filename)} at {format_time(time)}", fontsize=8)
