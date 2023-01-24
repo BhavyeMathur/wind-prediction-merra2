@@ -28,10 +28,9 @@ def load_variable_at_time(filename: str,
     return data
 
 
-def interpolate_variable_at_time(data: np.ndarray, latitude_samples: int = 180, longitude_samples: int | None = None):
-    if longitude_samples is None:
-        longitude_samples = latitude_samples * 2
-
+def interpolate_variable_at_time(data: np.ndarray,
+                                 latitude_samples: int,
+                                 longitude_samples: int):
     interpolated_data = np.empty((data.shape[0], latitude_samples, longitude_samples), "float16")
 
     latitudes = np.linspace(0, data.shape[1], latitude_samples)
@@ -49,16 +48,27 @@ def load_variable_at_time_and_level(filename: str,
                                     time: int,
                                     level: int | float,
                                     folder: str = "compressed") -> np.array:
-    if isinstance(level, float):
+    if level % 1 != 0:
         data = load_variable_at_time_and_level(filename, variable, time, int(level), folder) * (1 - level % 1)
         data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1, folder) * (level % 1)
         return data
 
     with open_xarray_dataset(filename, folder=folder) as dataset:
-        data = np.array(dataset[variable][time][level])
+        data = np.array(dataset[variable][time][int(level)])
 
     data = data.view("float16").astype("float16")
     return data
+
+
+def interpolate_variable_at_time_and_level(data: np.ndarray,
+                                           latitude_samples: int,
+                                           longitude_samples: int):
+    latitudes = np.linspace(0, data.shape[0], latitude_samples)
+    longitudes = np.linspace(0, data.shape[1], longitude_samples)
+
+    interpolation = interp.RectBivariateSpline(range(data.shape[0]), range(data.shape[1]), data)
+
+    return interpolation(latitudes, longitudes)
 
 
 def load_variable_at_time_level_and_latitude(filename: str,

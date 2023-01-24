@@ -92,9 +92,9 @@ def _get_colour(i: int):
         return None
 
 
-def get_vmin_and_vmax(data):
-    vmin = np.min(data)
-    vmax = np.max(data)
+def get_vmin_and_vmax(data, quantile: float = 0):
+    vmin = np.quantile(data, quantile)
+    vmax = np.quantile(data, 1 - quantile)
 
     if vmin < 0 < vmax:
         if abs(vmin) > vmax:
@@ -248,6 +248,10 @@ def create_2_interactive_sliders_with_color_bar(title: str,
     return fig, ax, color_bar_ax, vertical_slider, horizontal_slider
 
 
+def create_1x1_plot(title: str, figsize: tuple[int, int] = (8, 5), **kwargs):
+    return plt.subplots(nrows=1, ncols=1, num=title, figsize=figsize, tight_layout=True, **kwargs)
+
+
 def create_1x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
     fig, (ax11, ax12) = plt.subplots(nrows=1, ncols=2, num=title, figsize=figsize, tight_layout=True, **kwargs)
     return fig, ax11, ax12
@@ -263,8 +267,8 @@ def create_2x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
 
 def load_map(shape):
     coastlines = mpimg.imread("assets/equirectangular_projection.png")[::-1, :, 0]
-    coastline_latitudes = np.linspace(0, shape[0], coastlines.shape[0])
-    coastline_longitudes = np.linspace(0, shape[1], coastlines.shape[1])
+    coastline_latitudes = np.linspace(-90, 90, coastlines.shape[0])
+    coastline_longitudes = np.linspace(-180, 180, coastlines.shape[1])
 
     return coastlines, coastline_latitudes, coastline_longitudes
 
@@ -424,12 +428,11 @@ def plot_interactive_contour_at_time(filename: str,
                                      time: int,
                                      title: str,
                                      folder: str = "compressed",
-                                     latitude_samples: int = 150,
-                                     longitude_samples: int | None = None,
+                                     samples: int = 150,
                                      data: np.ndarray | None = None):
     if data is None:
         data = load_variable_at_time(filename, variable, time, folder=folder)
-    data = interpolate_variable_at_time(data, latitude_samples, longitude_samples)
+    data = interpolate_variable_at_time(data, samples, samples * 2)
 
     fig, ax, color_bar_ax, level_slider = create_interactive_slider_with_color_bar(title, 0, 71)
     ax.set_yticks([])
