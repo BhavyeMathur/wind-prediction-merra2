@@ -349,6 +349,50 @@ def plot_variable_at_time_and_level_vs_longitude(filename: str = "",
     return fig, ax1, ax2
 
 
+# noinspection PyPep8Naming
+def plot_3D_variable_at_time_and_level(filename: str = "",
+                                       variable: str = "",
+                                       time: int = 0,
+                                       level: int | float = 71,
+                                       folder: str = "compressed",
+                                       ax=None,
+                                       data: np.ndarray = None,
+                                       linewidth: float = 0,
+                                       alpha: float = 0.5,
+                                       elevation: float = 30,
+                                       azimuth: float = -130):
+    if data is None:
+        data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
+
+    title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
+            f" on {format_date(filename)} at {format_time(time)}"
+
+    if ax is None:
+        ax = plt.axes(projection="3d")
+        plt.show()
+
+    lons, lats = np.meshgrid(np.linspace(-180, 180, 576), np.linspace(-90, 90, 361))
+    ax.plot_surface(lons, lats, data, antialiased=False, cmap="coolwarm", linewidth=linewidth, alpha=alpha)
+
+    ax.elev = elevation
+    ax.azim = azimuth
+
+    ax.set_xlim((-180, 180))
+    ax.set_ylim((-90, 90))
+    ax.tick_params(labelsize=9, color=(1, 1, 1, 0.1))
+    ax.set_title(title, fontsize=9)
+    ax.xaxis.set_major_formatter(FormatStrFormatter("%d°"))
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%d°"))
+    ax.zaxis.set_ticks([])
+
+    ax.xaxis.set_pane_color((0, 0, 0, 0))
+    ax.yaxis.set_pane_color((0, 0, 0, 0))
+    ax.zaxis.set_pane_color((0, 0, 0, 0))
+    ax.xaxis.line.set_color((0, 0, 0, 0))
+    ax.yaxis.line.set_color((0, 0, 0, 0))
+    ax.zaxis.line.set_color((0, 0, 0, 0))
+
+
 def plot_contour_at_time_and_level(filename: str,
                                    variable: str,
                                    time: int,
@@ -383,7 +427,6 @@ def plot_interactive_contour_at_time(filename: str,
                                      latitude_samples: int = 150,
                                      longitude_samples: int | None = None,
                                      data: np.ndarray | None = None):
-
     if data is None:
         data = load_variable_at_time(filename, variable, time, folder=folder)
     data = interpolate_variable_at_time(data, latitude_samples, longitude_samples)
