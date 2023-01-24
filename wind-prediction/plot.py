@@ -372,7 +372,7 @@ def plot_3D_variable_at_time_and_level(filename: str = "",
         plt.show()
 
     lons, lats = np.meshgrid(np.linspace(-180, 180, 576), np.linspace(-90, 90, 361))
-    ax.plot_surface(lons, lats, data, antialiased=False, cmap="coolwarm", linewidth=linewidth, alpha=alpha)
+    ax.plot_surface(lons, lats, data, antialiased=True, cmap="coolwarm", linewidth=linewidth, alpha=alpha)
 
     ax.elev = elevation
     ax.azim = azimuth
