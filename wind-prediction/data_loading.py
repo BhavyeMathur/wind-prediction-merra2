@@ -5,6 +5,9 @@ import scipy.interpolate as interp
 from nc4 import *
 
 
+data_cache = {}
+
+
 def load_nc4_to_dataframe(filename: str, variable: str, folder: str = "compressed") -> pd.DataFrame:
     with open_xarray_dataset(filename, folder=folder) as dataset:
         packed_data = dataset.to_dataframe()[variable].array
@@ -22,9 +25,14 @@ def load_variable_at_time(filename: str,
                           variable: str,
                           time: int,
                           folder: str = "compressed"):
+    if (filename, variable, time) in data_cache:
+        return data_cache[(filename, variable, time)]
+
     with open_xarray_dataset(filename, folder=folder) as dataset:
         data = np.array(dataset[variable][time])
         data = data.view("float16").astype("float16")
+
+    data_cache[(filename, variable, time)] = data
     return data
 
 
@@ -48,6 +56,9 @@ def load_variable_at_time_and_level(filename: str,
                                     time: int,
                                     level: int | float,
                                     folder: str = "compressed") -> np.array:
+    if (filename, variable, time, level) in data_cache:
+        return data_cache[(filename, variable, time, level)]
+
     if level % 1 != 0:
         data = load_variable_at_time_and_level(filename, variable, time, int(level), folder) * (1 - level % 1)
         data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1, folder) * (level % 1)
@@ -57,6 +68,7 @@ def load_variable_at_time_and_level(filename: str,
         data = np.array(dataset[variable][time][int(level)])
 
     data = data.view("float16").astype("float16")
+    data_cache[(filename, variable, time, level)] = data
     return data
 
 
