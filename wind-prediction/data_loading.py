@@ -55,8 +55,8 @@ def load_variable_at_time_and_level(filename: str,
                                     time: int,
                                     level: int | float,
                                     folder: str = "compressed") -> np.array:
-    if (filename, variable, time, level) in data_cache:
-        return data_cache[(filename, variable, time, level)]
+    if (key := (filename, variable, time, level, None, None)) in data_cache:
+        return data_cache[key]
 
     if level % 1 != 0:
         data = load_variable_at_time_and_level(filename, variable, time, int(level), folder) * (1 - level % 1)
@@ -67,7 +67,7 @@ def load_variable_at_time_and_level(filename: str,
         data = np.array(dataset[variable, time, int(level)])
 
     data = data.view("float16").astype("float16")
-    data_cache[(filename, variable, time, level)] = data
+    data_cache[key] = data
     return data
 
 
@@ -87,10 +87,19 @@ def load_variable_at_time_and_latitude(filename: str,
                                        time: int,
                                        latitude: int,
                                        folder: str = "compressed") -> np.array:
+    if (key := (filename, variable, time, None, latitude, None)) in data_cache:
+        return data_cache[key]
+
+    if latitude % 1 != 0:
+        data = load_variable_at_time_and_level(filename, variable, time, int(latitude), folder) * (1 - latitude % 1)
+        data += load_variable_at_time_and_level(filename, variable, time, int(latitude) + 1, folder) * (latitude % 1)
+        return data
+
     with open_xarray_dataset(filename, folder=folder) as dataset:
         data = np.array(dataset[variable][time, :, latitude])
 
     data = data.view("float16").astype("float16")
+    data_cache[key] = data
     return data
 
 
@@ -99,11 +108,20 @@ def load_variable_at_time_and_longitude(filename: str,
                                         time: int,
                                         longitude: int,
                                         folder: str = "compressed") -> np.array:
+    if (key := (filename, variable, time, None, None, longitude)) in data_cache:
+        return data_cache[key]
+
+    if longitude % 1 != 0:
+        data = load_variable_at_time_and_level(filename, variable, time, int(longitude), folder) * (1 - longitude % 1)
+        data += load_variable_at_time_and_level(filename, variable, time, int(longitude) + 1, folder) * (longitude % 1)
+        return data
+
     with open_xarray_dataset(filename, folder=folder) as dataset:
         data = np.array(dataset[variable][time])
 
-    data = data.view("float16").astype("float16")
-    return data[:, :, longitude]
+    data = data.view("float16").astype("float16")[:, :, longitude]
+    data_cache[key] = data
+    return data
 
 
 def load_variable_at_time_level_and_latitude(filename: str,
