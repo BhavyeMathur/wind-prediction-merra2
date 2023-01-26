@@ -390,6 +390,42 @@ def _plot_variable_at_time_and_longitude_vs_vertical(filename: str,
     return fig, ax1, ax2
 
 
+def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
+                                                    variable: str,
+                                                    time: int,
+                                                    latitude: int,
+                                                    verticals: list[float] | np.ndarray,
+                                                    folder: str = "compressed",
+                                                    lon_start: int = 0,
+                                                    lon_end: int = 576,
+                                                    lon_step: int = 1,
+                                                    data: np.ndarray = None,
+                                                    linewidth=0.2):
+    if data is None:
+        data = load_variable_at_time_and_latitude(filename, variable, time, latitude, folder=folder)
+
+    title = f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}" \
+            f" on {format_date(filename)} at {format_time(time)}"
+
+    fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
+
+    for longitude in range(lon_start, lon_end, lon_step):
+        ax1.plot(verticals, data[:, longitude],
+                 color=plt.cm.coolwarm(longitude / 576),
+                 linewidth=linewidth)
+
+    bar = mpl.colorbar.Colorbar(ax2, cmap="coolwarm", orientation="vertical", values=np.linspace(-180, 180, 50))
+    bar.set_ticks([-180, -120, -60, 0, 60, 120, 180])
+    bar.set_ticklabels(["-180°", "-120°", "-60°", " 0°", "60°", "120°", "180°"])
+
+    ax1.tick_params(labelsize=9)
+    ax1.set_title(title, fontsize=9)
+
+    ax2.tick_params(labelsize=7, right=False, direction="in")
+
+    return fig, ax1, ax2
+
+
 def plot_variable_at_time_and_longitude_vs_level(filename: str,
                                                  variable: str,
                                                  time: int,
@@ -419,6 +455,39 @@ def plot_variable_at_time_and_longitude_vs_height(filename: str,
     heights = [height_from_pressure(get_pressure_from_level(lev) * 100) / 1000 for lev in range(72)]
     fig, ax1, ax2 = _plot_variable_at_time_and_longitude_vs_vertical(filename, variable, time, longitude, heights,
                                                                      **kwargs)
+    ax1.xaxis.set_major_formatter(FormatStrFormatter("%d km"))
+    return fig, ax1, ax2
+
+
+def plot_variable_at_time_and_latitude_vs_level(filename: str,
+                                                variable: str,
+                                                time: int,
+                                                latitude: int,
+                                                **kwargs):
+    return _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude, np.arange(0, 72),
+                                                           **kwargs)
+
+
+def plot_variable_at_time_and_latitude_vs_pressure(filename: str,
+                                                   variable: str,
+                                                   time: int,
+                                                   latitude: int,
+                                                   **kwargs):
+    fig, ax1, ax2 = _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude,
+                                                                    [get_pressure_from_level(lev)
+                                                                     for lev in range(72)], **kwargs)
+    ax1.xaxis.set_major_formatter(FormatStrFormatter("%d hPa"))
+    return fig, ax1, ax2
+
+
+def plot_variable_at_time_and_latitude_vs_height(filename: str,
+                                                 variable: str,
+                                                 time: int,
+                                                 latitude: int,
+                                                 **kwargs):
+    heights = [height_from_pressure(get_pressure_from_level(lev) * 100) / 1000 for lev in range(72)]
+    fig, ax1, ax2 = _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude, heights,
+                                                                    **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d km"))
     return fig, ax1, ax2
 
