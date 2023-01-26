@@ -56,11 +56,11 @@ def format_level(level, total_levels=72) -> str:
 
 
 def format_latitude(latitude) -> str:
-    return f"{latitude * 0.5 - 90}° lat"
+    return f"{latitude * 0.5 - 90:0>2}° lat"
 
 
 def format_longitude(longitude) -> str:
-    return f"{longitude * 0.625 - 180}° lon"
+    return f"{longitude * 0.625 - 180:0>2}° lon"
 
 
 def _format_month(month: int) -> str:
