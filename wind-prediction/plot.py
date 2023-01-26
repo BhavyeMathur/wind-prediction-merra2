@@ -311,10 +311,10 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
     plt.show()
 
 
-def plot_variable_at_time_and_level_vs_longitude(filename: str = "",
-                                                 variable: str = "",
-                                                 time: int = 0,
-                                                 level: int | float = 71,
+def plot_variable_at_time_and_level_vs_longitude(filename: str,
+                                                 variable: str,
+                                                 time: int,
+                                                 level: int | float,
                                                  folder: str = "compressed",
                                                  lat_start: int = 0,
                                                  lat_end: int = 361,
@@ -353,10 +353,10 @@ def plot_variable_at_time_and_level_vs_longitude(filename: str = "",
     return fig, ax1, ax2
 
 
-def plot_variable_at_time_and_latitude_vs_level(filename: str = "",
-                                                variable: str = "",
-                                                time: int = 0,
-                                                level: int | float = 71,
+def plot_variable_at_time_and_latitude_vs_level(filename: str,
+                                                variable: str,
+                                                time: int,
+                                                latitude: int,
                                                 folder: str = "compressed",
                                                 lat_start: int = 0,
                                                 lat_end: int = 361,
@@ -367,7 +367,7 @@ def plot_variable_at_time_and_latitude_vs_level(filename: str = "",
     if data is None:
         data = load_variable_at_time_and_latitude(filename, variable, time, level, folder=folder)
 
-    title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
+    title = f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}" \
             f" on {format_date(filename)} at {format_time(time)}"
 
     if fig_ax1_ax2:
@@ -396,10 +396,10 @@ def plot_variable_at_time_and_latitude_vs_level(filename: str = "",
 
 
 # noinspection PyPep8Naming
-def plot_3D_variable_at_time_and_level(filename: str = "",
-                                       variable: str = "",
-                                       time: int = 0,
-                                       level: int | float = 71,
+def plot_3D_variable_at_time_and_level(filename: str,
+                                       variable: str,
+                                       time: int,
+                                       level: int | float,
                                        folder: str = "compressed",
                                        ax=None,
                                        data: np.ndarray = None,
