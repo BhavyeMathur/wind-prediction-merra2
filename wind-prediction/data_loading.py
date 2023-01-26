@@ -4,7 +4,6 @@ import scipy.interpolate as interp
 
 from nc4 import *
 
-
 data_cache = {}
 
 
@@ -65,7 +64,7 @@ def load_variable_at_time_and_level(filename: str,
         return data
 
     with open_xarray_dataset(filename, folder=folder) as dataset:
-        data = np.array(dataset[variable][time][int(level)])
+        data = np.array(dataset[variable, time, int(level)])
 
     data = data.view("float16").astype("float16")
     data_cache[(filename, variable, time, level)] = data
@@ -83,6 +82,18 @@ def interpolate_variable_at_time_and_level(data: np.ndarray,
     return interpolation(latitudes, longitudes)
 
 
+def load_variable_at_time_and_latitude(filename: str,
+                                       variable: str,
+                                       time: int,
+                                       latitude: int,
+                                       folder: str = "compressed") -> np.array:
+    with open_xarray_dataset(filename, folder=folder) as dataset:
+        data = np.array(dataset[variable][time, :, latitude])
+
+    data = data.view("float16").astype("float16")
+    return data
+
+
 def load_variable_at_time_level_and_latitude(filename: str,
                                              variable: str,
                                              time: int,
@@ -90,7 +101,7 @@ def load_variable_at_time_level_and_latitude(filename: str,
                                              latitude: int,
                                              folder: str = "compressed") -> np.array:
     with open_xarray_dataset(filename, folder=folder) as dataset:
-        data = np.array(dataset[variable][time][level][latitude])
+        data = np.array(dataset[variable, time, level, latitude])
 
     data = data.view("float16").astype("float16")
     return data
@@ -103,7 +114,7 @@ def load_variable_at_time_level_and_longitude(filename: str,
                                               longitude: int,
                                               folder: str = "compressed") -> np.array:
     with open_xarray_dataset(filename, folder=folder) as dataset:
-        data = np.array(dataset[variable][time][level][:, longitude: longitude + 1])
+        data = np.array(dataset[variable, time, level, :, longitude])
 
     data = data.view("float16").astype("float16")
     return data[:, 0]

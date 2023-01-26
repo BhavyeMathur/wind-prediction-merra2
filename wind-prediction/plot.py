@@ -353,6 +353,48 @@ def plot_variable_at_time_and_level_vs_longitude(filename: str = "",
     return fig, ax1, ax2
 
 
+def plot_variable_at_time_and_latitude_vs_level(filename: str = "",
+                                                variable: str = "",
+                                                time: int = 0,
+                                                level: int | float = 71,
+                                                folder: str = "compressed",
+                                                lat_start: int = 0,
+                                                lat_end: int = 361,
+                                                lat_step: int = 1,
+                                                fig_ax1_ax2=None,
+                                                data: np.ndarray = None,
+                                                linewidth=0.2):
+    if data is None:
+        data = load_variable_at_time_and_latitude(filename, variable, time, level, folder=folder)
+
+    title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
+            f" on {format_date(filename)} at {format_time(time)}"
+
+    if fig_ax1_ax2:
+        fig, ax1, ax2 = fig_ax1_ax2
+    else:
+        fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
+        plt.show()
+
+    for latitude in range(lat_start, lat_end, lat_step):
+        ax1.plot(np.linspace(-180, 180, 576), data[latitude],
+                 color=plt.cm.coolwarm(latitude / 361),
+                 linewidth=linewidth)
+
+    bar = mpl.colorbar.Colorbar(ax2, cmap="coolwarm", orientation="vertical", values=np.linspace(-90, 90, 50))
+    bar.set_ticks([-90, -60, -30, 0, 30, 60, 90])
+    bar.set_ticklabels(["-90°", "-60°", "-30°", " 0°", "30°", "60°", "90°"])
+
+    ax1.set_xlim((-180, 180))
+    ax1.tick_params(labelsize=9)
+    ax1.set_title(title, fontsize=9)
+    ax1.xaxis.set_major_formatter(FormatStrFormatter("%d°"))
+
+    ax2.tick_params(labelsize=7, right=False, direction="in")
+
+    return fig, ax1, ax2
+
+
 # noinspection PyPep8Naming
 def plot_3D_variable_at_time_and_level(filename: str = "",
                                        variable: str = "",
