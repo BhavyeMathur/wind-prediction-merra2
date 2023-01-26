@@ -400,6 +400,7 @@ def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
                                                     lon_end: int = 576,
                                                     lon_step: int = 1,
                                                     data: np.ndarray = None,
+                                                    fig_ax1_ax2=None,
                                                     linewidth=0.2):
     if data is None:
         data = load_variable_at_time_and_latitude(filename, variable, time, latitude, folder=folder)
@@ -407,7 +408,11 @@ def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}" \
             f" on {format_date(filename)} at {format_time(time)}"
 
-    fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
+    if fig_ax1_ax2:
+        fig, ax1, ax2 = fig_ax1_ax2
+    else:
+        fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
+        plt.show()
 
     for longitude in range(lon_start, lon_end, lon_step):
         ax1.plot(verticals, data[:, longitude],
