@@ -100,10 +100,10 @@ def load_variable_at_time_and_longitude(filename: str,
                                         longitude: int,
                                         folder: str = "compressed") -> np.array:
     with open_xarray_dataset(filename, folder=folder) as dataset:
-        data = np.array(dataset[variable][time, :, :, longitude])
+        data = np.array(dataset[variable][time])
 
     data = data.view("float16").astype("float16")
-    return data
+    return data[:, :, longitude]
 
 
 def load_variable_at_time_level_and_latitude(filename: str,
