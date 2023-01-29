@@ -3,7 +3,6 @@ from typing import TypedDict, Sequence
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-import numpy as np
 from matplotlib.widgets import Slider
 from matplotlib.colors import ListedColormap
 from matplotlib.ticker import FormatStrFormatter
@@ -283,10 +282,9 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
                                                           time: int,
                                                           level: int | float,
                                                           latitude: int,
-                                                          folder: str = "compressed",
                                                           data: np.ndarray = None):
     if data is None:
-        data = load_variable_at_time_level_and_latitude(filename, variable, time, level, latitude, folder=folder)
+        data = load_variable_at_time_level_and_latitude(filename, variable, time, level, latitude)
 
     plt.plot(np.linspace(-180, 180, 576), data)
 
@@ -300,10 +298,9 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
                                                           time: int,
                                                           level: int | float,
                                                           longitude: int,
-                                                          folder: str = "compressed",
                                                           data: np.ndarray = None):
     if data is None:
-        data = load_variable_at_time_level_and_longitude(filename, variable, time, level, longitude, folder=folder)
+        data = load_variable_at_time_level_and_longitude(filename, variable, time, level, longitude)
 
     plt.plot(np.linspace(-90, 90, 361), data)
 
@@ -316,7 +313,6 @@ def plot_variable_at_time_and_level_vs_longitude(filename: str,
                                                  variable: str,
                                                  time: int,
                                                  level: int | float,
-                                                 folder: str = "compressed",
                                                  lat_start: int = 0,
                                                  lat_end: int = 361,
                                                  lat_step: int = 1,
@@ -324,7 +320,7 @@ def plot_variable_at_time_and_level_vs_longitude(filename: str,
                                                  data: np.ndarray = None,
                                                  linewidth=0.2):
     if data is None:
-        data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
+        data = load_variable_at_time_and_level(filename, variable, time, level)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
             f" on {format_date(filename)} at {format_time(time)}"
@@ -359,7 +355,6 @@ def _plot_variable_at_time_and_longitude_vs_vertical(filename: str,
                                                      time: int,
                                                      longitude: int,
                                                      verticals: list[float] | np.ndarray,
-                                                     folder: str = "compressed",
                                                      lat_start: int = 0,
                                                      lat_end: int = 361,
                                                      lat_step: int = 1,
@@ -367,7 +362,7 @@ def _plot_variable_at_time_and_longitude_vs_vertical(filename: str,
                                                      fig_ax1_ax2=None,
                                                      linewidth=0.2):
     if data is None:
-        data = load_variable_at_time_and_longitude(filename, variable, time, longitude, folder=folder)
+        data = load_variable_at_time_and_longitude(filename, variable, time, longitude)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_longitude(longitude)}" \
             f" on {format_date(filename)} at {format_time(time)}"
@@ -400,7 +395,6 @@ def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
                                                     time: int,
                                                     latitude: int,
                                                     verticals: list[float] | np.ndarray,
-                                                    folder: str = "compressed",
                                                     lon_start: int = 0,
                                                     lon_end: int = 576,
                                                     lon_step: int = 1,
@@ -408,7 +402,7 @@ def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
                                                     fig_ax1_ax2=None,
                                                     linewidth=0.2):
     if data is None:
-        data = load_variable_at_time_and_latitude(filename, variable, time, latitude, folder=folder)
+        data = load_variable_at_time_and_latitude(filename, variable, time, latitude)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}" \
             f" on {format_date(filename)} at {format_time(time)}"
@@ -507,7 +501,6 @@ def plot_3D_variable_at_time_and_level(filename: str,
                                        variable: str,
                                        time: int,
                                        level: int | float,
-                                       folder: str = "compressed",
                                        ax=None,
                                        data: np.ndarray = None,
                                        linewidth: float = 0,
@@ -515,7 +508,7 @@ def plot_3D_variable_at_time_and_level(filename: str,
                                        elevation: float = 30,
                                        azimuth: float = -130):
     if data is None:
-        data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
+        data = load_variable_at_time_and_level(filename, variable, time, level)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
             f" on {format_date(filename)} at {format_time(time)}"
@@ -550,12 +543,11 @@ def plot_contour_at_time_and_level(filename: str,
                                    variable: str,
                                    time: int,
                                    level: int | float,
-                                   folder: str = "compressed",
                                    data: np.ndarray | None = None,
                                    show_map: bool = False,
                                    **kwargs) -> None:
     if data is None:
-        data = load_variable_at_time_and_level(filename, variable, time, level, folder=folder)
+        data = load_variable_at_time_and_level(filename, variable, time, level)
 
     fig, ax1, ax2 = create_1x2_plot(f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}"
                                     f" on {format_date(filename)} at {format_time(time)}",
@@ -576,11 +568,10 @@ def plot_interactive_contour_at_time(filename: str,
                                      variable: str,
                                      time: int,
                                      title: str,
-                                     folder: str = "compressed",
                                      samples: int = 150,
                                      data: np.ndarray | None = None):
     if data is None:
-        data = load_variable_at_time(filename, variable, time, folder=folder)
+        data = load_variable_at_time(filename, variable, time)
     data = interpolate_variable_at_time(data, samples, samples * 2)
 
     fig, ax, color_bar_ax, level_slider = create_interactive_slider_with_color_bar(title, 0, 71)

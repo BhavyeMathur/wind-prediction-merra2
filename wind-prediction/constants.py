@@ -1,13 +1,15 @@
 """
-Contains all constants defined throughout the CFR Calculator
+Contains all constants used throughout the code
 """
 
 from typing import Final
 import math
-import os
-from pathlib import Path
 
-"""CFR Constant Variables -------------------------------------------------------------------------------------------"""
+"""Filepaths --------------------------------------------------------------------------------------------------------"""
+
+COMPRESSED_FOLDER = "/Volumes/MERRA-2/compressed-wind/"
+
+"""Constant Variables -----------------------------------------------------------------------------------------------"""
 
 # kgCO2e/kg Fuel = 3.157 from https://www.eci.ox.ac.uk/research/energy/downloads/jardine09-carboninflights.pdf
 AVIATION_CONVERSION_FACTOR: Final[float] = 3.157
