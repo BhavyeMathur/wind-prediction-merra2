@@ -293,7 +293,7 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
     plt.show()
 
 
-def plot_tavg_variable_at_time_level_and_latitude_vs_longitude(filename: str,
+def plot_yavg_variable_at_time_level_and_latitude_vs_longitude(filename: str,
                                                                variable: str,
                                                                time: int,
                                                                level: int | float,

@@ -36,7 +36,7 @@ def load_variable_at_time(filename: str,
     return data
 
 
-def load_tavg_variable_at_time(filename: str,
+def load_yavg_variable_at_time(filename: str,
                                *args,
                                years: tuple[int, ...] = (1980, 1981, 1990, 1991,
                                                          2000, 2001, 2010, 2011)) -> np.array:
@@ -82,7 +82,7 @@ def load_variable_at_time_and_level(filename: str,
     return data
 
 
-def load_tavg_variable_at_time_and_level(filename: str,
+def load_yavg_variable_at_time_and_level(filename: str,
                                          *args,
                                          years: tuple[int, ...] = (1980, 1981, 1990, 1991,
                                                                    2000, 2001, 2010, 2011)) -> np.array:
@@ -156,7 +156,7 @@ def load_variable_at_time_level_and_latitude(filename: str,
     return data
 
 
-def load_tavg_variable_at_time_level_and_latitude(filename: str,
+def load_yavg_variable_at_time_level_and_latitude(filename: str,
                                                   *args,
                                                   years: tuple[int, ...] = (1980, 1981, 1990, 1991,
                                                                             2000, 2001, 2010, 2011)) -> np.array:
@@ -179,7 +179,7 @@ def load_variable_at_time_level_and_longitude(filename: str,
     return data[:, 0]
 
 
-def load_tavg_variable_at_time_level_and_longitude(filename: str,
+def load_yavg_variable_at_time_level_and_longitude(filename: str,
                                                    *args,
                                                    years: tuple[int, ...] = (1980, 1981, 1990, 1991,
                                                                              2000, 2001, 2010, 2011)) -> np.array:
