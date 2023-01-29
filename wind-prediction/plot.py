@@ -293,6 +293,29 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
     plt.show()
 
 
+def plot_tavg_variable_at_time_level_and_latitude_vs_longitude(filename: str,
+                                                               variable: str,
+                                                               time: int,
+                                                               level: int | float,
+                                                               latitude: int,
+                                                               years: tuple[int, ...] = [1980, 1981, 1990, 1991,
+                                                                                         2000, 2001, 2010, 2011]):
+    avg = np.zeros((576,), dtype="float64")
+    for i, year in enumerate(years):
+        data = load_variable_at_time_level_and_latitude(filename.format(get_merra_stream_from_year(year), year),
+                                                        variable, time, level, latitude)
+        avg += data
+        plt.plot(np.linspace(-180, 180, 576), data, label=year,
+                 linewidth=0.5, color=plt.cm.tab20b(i / len(years)), alpha=0.5)
+
+    avg /= len(years)
+    plt.plot(np.linspace(-180, 180, 576), avg, linestyle="dashed", label="Average", color="#fff")
+
+    plt.title(f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}, {format_level(level)}"
+              f" at {format_time(time)}", fontsize=8)
+    plt.show()
+
+
 def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
                                                           variable: str,
                                                           time: int,
