@@ -298,8 +298,8 @@ def plot_tavg_variable_at_time_level_and_latitude_vs_longitude(filename: str,
                                                                time: int,
                                                                level: int | float,
                                                                latitude: int,
-                                                               years: tuple[int, ...] = [1980, 1981, 1990, 1991,
-                                                                                         2000, 2001, 2010, 2011]):
+                                                               years: tuple[int, ...] = (1980, 1981, 1990, 1991,
+                                                                                         2000, 2001, 2010, 2011)):
     avg = np.zeros((576,), dtype="float64")
     for i, year in enumerate(years):
         data = load_variable_at_time_level_and_latitude(filename.format(get_merra_stream_from_year(year), year),

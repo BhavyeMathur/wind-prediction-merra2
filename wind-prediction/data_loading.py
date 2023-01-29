@@ -3,6 +3,7 @@ import pandas as pd
 import scipy.interpolate as interp
 
 from nc4 import *
+from merra2 import get_merra_stream_from_year
 from constants import COMPRESSED_FOLDER
 
 data_cache = {}
@@ -26,13 +27,24 @@ def load_variable_at_time(filename: str,
                           time: int):
     if (filename, variable, time) in data_cache:
         return data_cache[(filename, variable, time)]
- 
+
     with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
         data = np.array(dataset[variable][time])
         data = data.view("float16").astype("float16")
 
     data_cache[(filename, variable, time)] = data
     return data
+
+
+def load_tavg_variable_at_time(filename: str,
+                               *args,
+                               years: tuple[int, ...] = (1980, 1981, 1990, 1991,
+                                                         2000, 2001, 2010, 2011)) -> np.array:
+    data = np.zeros((72, 361, 576), dtype="float64")
+    for year in years:
+        data += load_variable_at_time(filename.format(get_merra_stream_from_year(year), year), *args)
+
+    return (data / len(years)).astype("float16")
 
 
 def interpolate_variable_at_time(data: np.ndarray,
@@ -68,6 +80,17 @@ def load_variable_at_time_and_level(filename: str,
     data = data.view("float16").astype("float16")
     data_cache[key] = data
     return data
+
+
+def load_tavg_variable_at_time_and_level(filename: str,
+                                         *args,
+                                         years: tuple[int, ...] = (1980, 1981, 1990, 1991,
+                                                                   2000, 2001, 2010, 2011)) -> np.array:
+    data = np.zeros((361, 576), dtype="float64")
+    for year in years:
+        data += load_variable_at_time_and_level(filename.format(get_merra_stream_from_year(year), year), *args)
+
+    return (data / len(years)).astype("float16")
 
 
 def interpolate_variable_at_time_and_level(data: np.ndarray,
@@ -133,6 +156,17 @@ def load_variable_at_time_level_and_latitude(filename: str,
     return data
 
 
+def load_tavg_variable_at_time_level_and_latitude(filename: str,
+                                                  *args,
+                                                  years: tuple[int, ...] = (1980, 1981, 1990, 1991,
+                                                                            2000, 2001, 2010, 2011)) -> np.array:
+    data = np.zeros((576,), dtype="float64")
+    for year in years:
+        data += load_variable_at_time_level_and_latitude(filename.format(get_merra_stream_from_year(year), year), *args)
+
+    return (data / len(years)).astype("float16")
+
+
 def load_variable_at_time_level_and_longitude(filename: str,
                                               variable: str,
                                               time: int,
@@ -143,3 +177,15 @@ def load_variable_at_time_level_and_longitude(filename: str,
 
     data = data.view("float16").astype("float16")
     return data[:, 0]
+
+
+def load_tavg_variable_at_time_level_and_longitude(filename: str,
+                                                   *args,
+                                                   years: tuple[int, ...] = (1980, 1981, 1990, 1991,
+                                                                             2000, 2001, 2010, 2011)) -> np.array:
+    data = np.zeros((361,), dtype="float64")
+    for year in years:
+        data += load_variable_at_time_level_and_longitude(filename.format(get_merra_stream_from_year(year), year),
+                                                          *args)
+
+    return (data / len(years)).astype("float16")
