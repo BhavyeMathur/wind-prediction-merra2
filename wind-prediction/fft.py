@@ -79,3 +79,48 @@ def dft3_at_time(data: np.ndarray, quantile: float = 0.75):
                  for i in range(72) if amplitudes[i, j, k] > cutoff_amp}
 
     return transform
+
+
+DFT3_LEVEL_CACHE = {}
+
+
+def dft3_at_level(data: np.ndarray, level:int, quantile: float = 0.75):
+    if level in DFT3_LEVEL_CACHE:
+        fft = DFT3_LEVEL_CACHE[level]
+    else:
+        fft = np.fft.rfftn(data)
+        DFT3_LEVEL_CACHE[level] = fft
+
+    amplitudes = np.abs(fft)
+
+    fft_real = []
+    fft_imag = []
+    fft_i_indices = []
+    fft_j_indices = []
+    fft_k_indices = []
+
+    cutoff_amp = np.quantile(amplitudes, quantile)
+
+    for i in range(365 * 8):
+        for j in range(361):
+            for k in range(256):
+                if amplitudes[i, j, k] < cutoff_amp:
+                    continue
+
+                fft_real.append(fft[i, j, k].real / 2048)
+                fft_imag.append(fft[i, j, k].imag / 2048)
+                fft_i_indices.append(i)
+                fft_j_indices.append(j)
+                fft_k_indices.append(k)
+
+    return np.array(fft_real, dtype="float16"), np.array(fft_imag, dtype="float16"), \
+        np.array(fft_i_indices, dtype="uint16"), np.array(fft_j_indices, dtype="uint16"), np.array(fft_k_indices, dtype="uint8")
+
+
+def idft3_at_time_and_level(fft_real, fft_imag, fft_i_indices, fft_j_indices, fft_k_indices):
+    fft = np.zeros((365 * 8, 361, 289), dtype="complex128")
+
+    for k in range(len(fft_i_indices)):
+        fft[fft_i_indices[k], fft_j_indices[k], fft_k_indices[k]] = 2048 * fft_real[k] + 2048j * fft_imag[k]
+
+    return np.fft.irfftn(fft)

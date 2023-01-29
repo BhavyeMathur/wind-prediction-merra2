@@ -1,3 +1,5 @@
+from calendar import monthrange
+
 import numpy as np
 import pandas as pd
 import scipy.interpolate as interp
@@ -25,14 +27,14 @@ def load_nc4_to_dataframe(filename: str, variable: str) -> pd.DataFrame:
 def load_variable_at_time(filename: str,
                           variable: str,
                           time: int):
-    if (filename, variable, time) in data_cache:
-        return data_cache[(filename, variable, time)]
+    if (key := (filename, variable, time, None, None, None)) in data_cache:
+        return data_cache[key]
 
     with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
         data = np.array(dataset[variable][time])
         data = data.view("float16").astype("float16")
 
-    data_cache[(filename, variable, time)] = data
+    data_cache[key] = data
     return data
 
 
@@ -60,6 +62,45 @@ def interpolate_variable_at_time(data: np.ndarray,
         interpolated_data[lev] = interpolation(latitudes, longitudes)
 
     return interpolated_data
+
+
+def load_variable_at_level(filename: str,
+                           variable: str,
+                           level: int,
+                           cache: bool = True):
+    if (key := (filename, variable, None, level, None, None)) in data_cache:
+        return data_cache[key]
+
+    yyyy = int(filename.split(".")[-2][:4])
+    data = np.zeros((365 * 8, 361, 576), dtype="float64")
+
+    for mm in range(1, 13):
+        for dd in range(1, monthrange(yyyy, mm)[1] + 1):
+            if mm == 2 and dd == 29:
+                continue  # let's just skip February 29th
+
+            with open_xarray_dataset(filename.format(mm, dd), folder=COMPRESSED_FOLDER) as dataset:
+                for t in range(8):
+                    subdata = np.array(dataset[variable][t, level])
+                    data[(dd - 1) * 8 + t] = subdata.view("float16").astype("float16")
+
+    if cache:
+        data_cache[key] = data
+    return data
+
+
+def load_yavg_variable_at_level(filename: str,
+                                *args,
+                                years: tuple[int, ...] = (1980, 1981, 1990, 1991,
+                                                          2000, 2001, 2010, 2011)):
+    data = np.zeros((365 * 8, 361, 576), dtype="float64")
+
+    for year in years:
+        path = filename.format(get_merra_stream_from_year(year), year)
+        path = path.replace("mmdd", "{:0>2}{:0>2}")
+        data += load_variable_at_level(path, *args)
+
+    return (data / len(years)).astype("float16")
 
 
 def load_variable_at_time_and_level(filename: str,
