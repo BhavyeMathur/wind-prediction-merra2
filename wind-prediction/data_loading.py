@@ -74,6 +74,7 @@ def load_variable_at_level(filename: str,
     yyyy = int(filename.split(".")[-2][:4])
     data = np.zeros((365 * 8, 361, 576), dtype="float64")
 
+    i = 0
     for mm in range(1, 13):
         for dd in range(1, monthrange(yyyy, mm)[1] + 1):
             if mm == 2 and dd == 29:
@@ -82,7 +83,8 @@ def load_variable_at_level(filename: str,
             with open_xarray_dataset(filename.format(mm, dd), folder=COMPRESSED_FOLDER) as dataset:
                 for t in range(8):
                     subdata = np.array(dataset[variable][t, level])
-                    data[(dd - 1) * 8 + t] = subdata.view("float16").astype("float16")
+                    data[i] = subdata.view("float16").astype("float16")
+                    i += 1
 
     if cache:
         data_cache[key] = data
