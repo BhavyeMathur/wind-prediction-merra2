@@ -1,5 +1,6 @@
 # Data files
 *.nc4
+*.nc
 *.ft
 *.parquet
 *urls.txt
