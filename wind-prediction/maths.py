@@ -841,6 +841,10 @@ def mae(data, prediction):
     return abs(data - prediction).mean()
 
 
+def mape(data, prediction):
+    ((data - prediction) / data).mean()
+
+
 def mse(data, prediction):
     return ((data - prediction) ** 2).mean()
 
