@@ -50,6 +50,16 @@ def get_units_from_variable(variable: str) -> str:
             return "m/s"
 
 
+def get_variable_name_from_code(variable: str) -> str:
+    match variable:
+        case "U":
+            return "East Wind"
+        case "V":
+            return "North Wind"
+        case "T":
+            return "Temperature"
+
+
 def format_level(level, total_levels=72) -> str:
     pressure = get_pressure_from_level(level, total_levels=total_levels)
     return f"{pressure:.2f} hPa (~{height_from_pressure(100 * pressure):.2f} m)"
