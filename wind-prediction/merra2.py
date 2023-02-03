@@ -60,8 +60,10 @@ def get_variable_name_from_code(variable: str) -> str:
             return "Temperature"
 
 
-def format_level(level, total_levels=72) -> str:
+def format_level(level, total_levels=72, filename=False) -> str:
     pressure = get_pressure_from_level(level, total_levels=total_levels)
+    if filename:
+        return f"{pressure:.2f}hPa"
     return f"{pressure:.2f} hPa (~{height_from_pressure(100 * pressure):.2f} m)"
 
 
