@@ -110,7 +110,7 @@ def get_vmin_and_vmax(data, quantile: float = 0):
 def setup_plot(title: str,
                xlabel: str | None,
                ylabel: str | None,
-               subtitle: str | None,
+               subtitle: str | None = None,
                xlabel_rotation: int = 0,
                legend: bool = True) -> None:
     """Adds the title, labels, and other elements to the plot and then shows/saves it
@@ -617,3 +617,24 @@ def plot_interactive_contour_at_time(filename: str,
     plt.show()
 
     return level_slider
+
+
+def plot_ppc_by_varying_argument(function: callable,
+                                 arg_name: str,
+                                 arg_min: float,
+                                 arg_max: float,
+                                 title: str,
+                                 xlabel: str,
+                                 ylabel: str,
+                                 n: int = 100,
+                                 *args, **kwargs):
+    x = []
+    y = []
+
+    for arg in np.linspace(arg_min, arg_max, n):
+        x_val, y_val = function(*args, **{arg_name: arg}, **kwargs)
+        x.append(x_val)
+        y.append(y_val)
+
+    plt.plot(x, y)
+    setup_plot(title, xlabel, ylabel)
