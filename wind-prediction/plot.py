@@ -338,7 +338,7 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
     plt.plot(np.linspace(-180, 180, 576), data)
 
     plt.title(f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}, {format_level(level)}"
-              f" on {format_date(filename)} at {format_time(time)}", fontsize=8)
+              f" on {format_date(filename)} at {format_time(time, filename)}", fontsize=8)
     plt.show()
 
 
@@ -361,7 +361,7 @@ def plot_yavg_variable_at_time_level_and_latitude_vs_longitude(filename: str,
     plt.plot(np.linspace(-180, 180, 576), avg, linestyle="dashed", label="Average", color="#fff")
 
     plt.title(f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}, {format_level(level)}"
-              f" at {format_time(time)}", fontsize=8)
+              f" at {format_time(time, filename)}", fontsize=8)
     plt.show()
 
 
@@ -377,7 +377,7 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
     plt.plot(np.linspace(-90, 90, 361), data)
 
     plt.title(f"{variable} ({get_units_from_variable(variable)}) at {format_longitude(longitude)}, "
-              f"{format_level(level)} on {format_date(filename)} at {format_time(time)}", fontsize=8)
+              f"{format_level(level)} on {format_date(filename)} at {format_time(time, filename)}", fontsize=8)
     plt.show()
 
 
@@ -395,7 +395,7 @@ def plot_variable_at_time_and_level_vs_longitude(filename: str,
         data = load_variable_at_time_and_level(filename, variable, time, level)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
-            f" on {format_date(filename)} at {format_time(time)}"
+            f" on {format_date(filename)} at {format_time(time, filename)}"
 
     if fig_ax1_ax2:
         fig, ax1, ax2 = fig_ax1_ax2
@@ -437,7 +437,7 @@ def _plot_variable_at_time_and_longitude_vs_vertical(filename: str,
         data = load_variable_at_time_and_longitude(filename, variable, time, longitude)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_longitude(longitude)}" \
-            f" on {format_date(filename)} at {format_time(time)}"
+            f" on {format_date(filename)} at {format_time(time, filename)}"
 
     if fig_ax1_ax2:
         fig, ax1, ax2 = fig_ax1_ax2
@@ -477,7 +477,7 @@ def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
         data = load_variable_at_time_and_latitude(filename, variable, time, latitude)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}" \
-            f" on {format_date(filename)} at {format_time(time)}"
+            f" on {format_date(filename)} at {format_time(time, filename)}"
 
     if fig_ax1_ax2:
         fig, ax1, ax2 = fig_ax1_ax2
@@ -583,7 +583,7 @@ def plot_3D_variable_at_time_and_level(filename: str,
         data = load_variable_at_time_and_level(filename, variable, time, level)
 
     title = f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}" \
-            f" on {format_date(filename)} at {format_time(time)}"
+            f" on {format_date(filename)} at {format_time(time, filename)}"
 
     if ax is None:
         ax = plt.axes(projection="3d")
