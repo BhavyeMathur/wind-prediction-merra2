@@ -118,11 +118,16 @@ def load_variable_at_time_and_level(filename: str,
         data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1) * (level % 1)
         return data
 
+    if time % 1 != 0:
+        data = load_variable_at_time_and_level(filename, variable, int(time), level) * (1 - time % 1)
+        data += load_variable_at_time_and_level(filename, variable, int(time) + 1, level) * (time % 1)
+        return data
+
     with open_xarray_dataset(filename, folder=folder) as dataset:
         if get_nc4_dimensions(filename, folder=folder) == 3:
-            data = np.array(dataset[variable][time])
+            data = np.array(dataset[variable][int(time)])
         else:
-            data = np.array(dataset[variable][time, int(level)])
+            data = np.array(dataset[variable][int(time), int(level)])
 
     if is_nc4_packed_as_float32(filename, folder=folder):
         data = data.view("float16").astype("float16")

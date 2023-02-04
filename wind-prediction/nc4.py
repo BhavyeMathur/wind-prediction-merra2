@@ -3,10 +3,10 @@ import os
 import xarray as xr
 import netCDF4 as nc
 
-from util import *
+from constants import COMPRESSED_FOLDER
 
 
-def open_xarray_dataset(filename: str, folder: str) -> xr.Dataset:
+def open_xarray_dataset(filename: str, folder: str = COMPRESSED_FOLDER) -> xr.Dataset:
     if not os.path.isdir(folder):
         os.makedirs(folder)
 
@@ -30,14 +30,19 @@ def open_nc4_dataset(filename: str, folder: str = "raw", mode: str = "r") -> nc.
     return nc.Dataset(filepath, mode=mode)
 
 
-def print_nc4_metadata(filename: str, folder: str) -> None:
+def print_nc4_metadata(filename: str, folder: str = COMPRESSED_FOLDER) -> None:
     with open_xarray_dataset(filename, folder) as dataset:
         print(dataset)
 
 
-def get_nc4_dimensions(filename: str, folder: str) -> int:
+def get_nc4_dimensions(filename: str, folder: str = COMPRESSED_FOLDER) -> int:
     with open_xarray_dataset(filename, folder) as dataset:
         return len(dataset.dims)
+
+
+def get_nc4_dimension_size(filename: str, dimension: str, folder: str = COMPRESSED_FOLDER) -> int:
+    with open_xarray_dataset(filename, folder) as dataset:
+        return dataset.dims[dimension]
 
 
 def is_nc4_packed_as_float32(filename: str, folder: str) -> bool:

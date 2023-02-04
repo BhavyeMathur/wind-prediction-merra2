@@ -660,7 +660,6 @@ def plot_contour_at_time_and_level(filename: str,
     ax2.tick_params(labelsize=7, right=False, direction="in")
 
     plt.savefig("assets/contours/" + output + ".png", dpi=300)
-    plt.show()
 
 
 def plot_contour_grid_at_level(filename: str,
@@ -670,8 +669,12 @@ def plot_contour_grid_at_level(filename: str,
                                cmap="viridis",
                                diverging: bool = False,
                                **kwargs) -> None:
-    output = f"{variable}-{get_year_from_filename(filename)}"
-    title = f"{format_variable(variable)} during {get_year_from_filename(filename)}"
+    if get_nc4_dimensions(filename.format(1), **kwargs) == 3:
+        output = f"{variable}-{get_year_from_filename(filename)}"
+        title = f"{format_variable(variable)} during {get_year_from_filename(filename)}"
+    else:
+        output = f"{variable}-{format_level(level, for_output=True)}-{get_year_from_filename(filename)}"
+        title = f"{format_variable(variable)} during {get_year_from_filename(filename)} at {format_level(level)}"
 
     fig, axes = create_6x6_plot(title)
 
@@ -683,19 +686,31 @@ def plot_contour_grid_at_level(filename: str,
     axes[0][0].set_xticks([])
     axes[0][0].set_yticks([])
 
-    axes[0][0].set_ylabel("00:30", fontsize=9)
-    axes[1][0].set_ylabel("04:30", fontsize=9)
-    axes[2][0].set_ylabel("08:30", fontsize=9)
-    axes[3][0].set_ylabel("12:30", fontsize=9)
-    axes[4][0].set_ylabel("16:30", fontsize=9)
-    axes[5][0].set_ylabel("20:30", fontsize=9)
+    hours = get_nc4_dimension_size(filename.format(1), "time", **kwargs)
+
+    if hours == 24:
+        axes[0][0].set_ylabel("00:30", fontsize=9)
+        axes[1][0].set_ylabel("04:30", fontsize=9)
+        axes[2][0].set_ylabel("08:30", fontsize=9)
+        axes[3][0].set_ylabel("12:30", fontsize=9)
+        axes[4][0].set_ylabel("16:30", fontsize=9)
+        axes[5][0].set_ylabel("20:30", fontsize=9)
+        hours = [0, 4, 8, 12, 16, 20]
+    else:
+        axes[0][0].set_ylabel("01:30", fontsize=9)
+        axes[1][0].set_ylabel("04:30", fontsize=9)
+        axes[2][0].set_ylabel("10:30", fontsize=9)
+        axes[3][0].set_ylabel("13:30", fontsize=9)
+        axes[4][0].set_ylabel("19:30", fontsize=9)
+        axes[5][0].set_ylabel("22:30", fontsize=9)
+        hours = [0, 1, 3, 4, 6, 7]
 
     for month in range(1, 13, 2):
 
         x_index = (month - 1) // 2
         axes[0][x_index].set_title(format_month(month - 1), fontsize=9)
 
-        for hour in range(0, 24, 4):
+        for i, hour in enumerate(hours):
             current_file = filename.format(month)
             data = load_variable_at_time_and_level(current_file, variable, hour, level, **kwargs)
             data = data_processing(data)
@@ -712,11 +727,10 @@ def plot_contour_grid_at_level(filename: str,
             else:
                 vmin, vmax = None, None
 
-            axes[hour // 4][x_index].imshow(data, cmap=cmap, origin="lower", aspect="auto",
-                                            vmin=vmin, vmax=vmax, extent=[-180, 180, -90, 90])
+            axes[i][x_index].imshow(data, cmap=cmap, origin="lower", aspect="auto",
+                                    vmin=vmin, vmax=vmax, extent=[-180, 180, -90, 90])
 
     plt.savefig("assets/contours/" + output + ".png", dpi=300)
-    plt.show()
 
 
 def plot_interactive_contour_at_time(filename: str,
