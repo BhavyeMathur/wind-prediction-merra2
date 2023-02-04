@@ -119,7 +119,7 @@ def load_variable_at_time_and_level(filename: str,
         return data
 
     with open_xarray_dataset(filename, folder=folder) as dataset:
-        if get_nc4_dimensions(filename, folder=folder) == 0:
+        if get_nc4_dimensions(filename, folder=folder) == 3:
             data = np.array(dataset[variable][time])
         else:
             data = np.array(dataset[variable][time, int(level)])

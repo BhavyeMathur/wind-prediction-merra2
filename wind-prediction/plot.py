@@ -103,6 +103,12 @@ def get_vmin_and_vmax(data, quantile: float = 0):
         elif vmax > abs(vmin):
             vmin = -vmax
 
+    if vmin >= 0:
+        vmin = -vmax
+
+    if vmax <= 0:
+        vmax = -vmin
+
     return vmin, vmax
 
 
@@ -265,6 +271,12 @@ def create_1x3_plot(title: str,
     fig, (ax11, ax12, ax13) = plt.subplots(nrows=1, ncols=3, num=title, figsize=figsize, tight_layout=True,
                                            width_ratios=width_ratios, **kwargs)
     return fig, ax11, ax12, ax13
+
+
+def create_4x6_plot(title: str,
+                    figsize: tuple[int, int] = (11.69, 8.27),
+                    **kwargs):
+    return plt.subplots(nrows=4, ncols=6, num=title, figsize=figsize, tight_layout=True, **kwargs)
 
 
 def create_2x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
@@ -578,23 +590,91 @@ def plot_contour_at_time_and_level(filename: str,
                                    level: int | float,
                                    data: np.ndarray | None = None,
                                    show_map: bool = False,
-                                   data_kwargs: dict = {},
+                                   data_processing: callable = lambda data: data,
+                                   cmap="viridis",
+                                   diverging: bool = False,
                                    **kwargs) -> None:
     if data is None:
-        data = load_variable_at_time_and_level(filename, variable, time, level, **data_kwargs)
+        data = load_variable_at_time_and_level(filename, variable, time, level, **kwargs)
+    data = data_processing(data)
 
-    fig, ax1, ax2 = create_1x2_plot(f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}"
-                                    f" on {format_date(filename)} at {format_time(time)}",
-                                    figsize=(8, 5), width_ratios=(98, 2))
-    ax1.set_yticks([])
-    ax1.set_xticks([])
+    if get_nc4_dimensions(filename, **kwargs) == 3:
+        output = f"{variable}" \
+                 f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}"
+        title = f"{format_variable(variable)} on {format_date(filename)} at {format_time(time, filename)}"
+    else:
+        output = f"{variable}-{format_level(level, for_output=True)}" \
+                 f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}"
+        title = f"{format_variable(variable)} at {format_level(level)}" \
+                f" on {format_date(filename)} at {format_time(time, filename)}"
 
-    contour = ax1.imshow(data, cmap="viridis", origin="lower", aspect="auto", **kwargs)
+    fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
+
+    if diverging:
+        vmin, vmax = get_vmin_and_vmax(data)
+    else:
+        vmin, vmax = None, None
+
+    contour = ax1.imshow(data, cmap=cmap, origin="lower", aspect="auto",
+                         vmin=vmin, vmax=vmax, extent=[-180, 180, -90, 90])
     fig.colorbar(contour, cax=ax2, fraction=0.05, pad=0.02)
 
     if show_map:
+        output += "-map"
         draw_map(ax1, *load_map(data.shape))
 
+    ax1.tick_params(labelsize=9)
+    ax1.set_title(title, fontsize=9)
+    ax1.xaxis.set_major_formatter(FormatStrFormatter("%d°"))
+    ax1.yaxis.set_major_formatter(FormatStrFormatter("%d°"))
+    ax1.set_xlim((-180, 180))
+    ax1.set_ylim((-90, 90))
+
+    ax2.tick_params(labelsize=7, right=False, direction="in")
+
+    plt.savefig("assets/contours/" + output + ".png", dpi=300)
+    plt.show()
+
+
+def plot_contour_grid_at_level(filename: str,
+                               variable: str,
+                               level: int | float,
+                               data_processing: callable = lambda data: data,
+                               cmap="viridis",
+                               diverging: bool = False,
+                               **kwargs) -> None:
+    output = f"{variable}-{get_year_from_filename(filename)}"
+    title = f"{format_variable(variable)} during {get_year_from_filename(filename)}"
+
+    fig, axes = create_4x6_plot(title, figsize=(8, 5), sharex=True, sharey=True)
+    fig.suptitle(title, fontsize=9)
+
+    for month in range(1, 13, 2):
+        for hour in range(0, 24, 6):
+            data = load_variable_at_time_and_level(filename.format(month), variable, hour, level, **kwargs)
+            data = data_processing(data)
+
+            if get_nc4_dimensions(filename, **kwargs) == 3:
+                title = f"{format_variable(variable)} on {format_date(filename)} at {format_time(hour, filename)}"
+            else:
+                title = f"{format_variable(variable)} at {format_level(level)}" \
+                        f" on {format_date(filename)} at {format_time(hour, filename)}"
+
+            if diverging:
+                vmin, vmax = get_vmin_and_vmax(data)
+            else:
+                vmin, vmax = None, None
+
+            axes[(month - 1) // 2][hour].imshow(data, cmap=cmap, origin="lower", aspect="auto",
+                                                vmin=vmin, vmax=vmax, extent=[-180, 180, -90, 90])
+
+    axes[0].tick_params(labelsize=9)
+    axes[0].xaxis.set_major_formatter(FormatStrFormatter("%d°"))
+    axes[0].yaxis.set_major_formatter(FormatStrFormatter("%d°"))
+    axes[0].set_xlim((-180, 180))
+    axes[0].set_ylim((-90, 90))
+
+    plt.savefig("assets/contours/" + output + ".png", dpi=300)
     plt.show()
 
 

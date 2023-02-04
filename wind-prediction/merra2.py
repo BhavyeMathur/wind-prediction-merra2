@@ -41,6 +41,14 @@ def get_pressure_from_level(level, total_levels: int = 72) -> float:
 
 
 def get_units_from_variable(variable: str) -> str:
+    if variable in {"AUTCNVRN", "COLCNVRN", "COLCNVSN", "CUCNVCI", "CUCNVCL", "CUCNVRN"}\
+            or variable.startswith("DOXDT") or variable.startswith("DQ"):
+        return "kg/m²/s"
+
+    if variable in {"BKGERR"} or variable.startswith("DHDT") or variable.startswith("DKDT") \
+            or variable.startswith("DPDT"):
+        return "W/m²"
+
     match variable:
         case "U":
             return "m/s"
@@ -58,23 +66,37 @@ def get_variable_name_from_code(variable: str) -> str:
             return "North Wind"
         case "T":
             return "Temperature"
+    return variable
 
 
-def format_level(level, total_levels=72, filename=False) -> str:
+def get_year_from_filename(filename: str) -> int:
+    if filename.endswith(".SUB.nc"):
+        date = filename.split(".")[-3]
+    else:
+        date = filename.split(".")[-2]
+
+    return int(date[:4])
+
+
+def format_variable(variable: str) -> str:
+    return f"{get_variable_name_from_code(variable)} ({get_units_from_variable(variable)})"
+
+
+def format_level(level, total_levels=72, for_output=False) -> str:
     pressure = get_pressure_from_level(level, total_levels=total_levels)
-    if filename:
+    if for_output:
         return f"{pressure:.2f}hPa"
     return f"{pressure:.2f} hPa (~{height_from_pressure(100 * pressure):.2f} m)"
 
 
-def format_latitude(latitude, filename: bool = False) -> str:
-    if filename:
+def format_latitude(latitude, for_output: bool = False) -> str:
+    if for_output:
         return f"{latitude * 5 - 900:03d}"
     return f"{latitude * 0.5 - 90:0>2}° lat"
 
 
-def format_longitude(longitude, filename: bool = False) -> str:
-    if filename:
+def format_longitude(longitude, for_output: bool = False) -> str:
+    if for_output:
         return f"{longitude * 625 - 18000:03d}"
     return f"{longitude * 0.625 - 180:0>2}° lon"
 
@@ -84,11 +106,21 @@ def _format_month(month: int) -> str:
             "August", "September", "October", "November", "December"][month]
 
 
-def format_date(filename: str) -> str:
+def format_date(filename: str, for_output=False) -> str:
     # MERRA2_100.tavg3_3d_asm_Nv.19800101.nc4
-    date = filename.split(".")[-2]
+    if filename.endswith(".SUB.nc"):
+        date = filename.split(".")[-3]
+    else:
+        date = filename.split(".")[-2]
+
+    if for_output:
+        return date
     return f"{int(date[7:])} {_format_month(int(date[4:6]) - 1)} {date[:4]}"
 
 
-def format_time(time: int) -> str:
-    return f"{time * 3 + 1:0>2}:30"
+def format_time(time: int, filename: str) -> str:
+    match int(filename.split('.')[1][4]):
+        case 1:
+            return f"{time:0>2}:30"
+        case 3:
+            return f"{time * 3 + 1:0>2}:30"
