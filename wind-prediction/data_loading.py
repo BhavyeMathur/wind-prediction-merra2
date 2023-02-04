@@ -108,7 +108,8 @@ def load_yavg_variable_at_level(filename: str,
 def load_variable_at_time_and_level(filename: str,
                                     variable: str,
                                     time: int,
-                                    level: int | float) -> np.array:
+                                    level: int | float,
+                                    folder: str = COMPRESSED_FOLDER) -> np.array:
     if (key := (filename, variable, time, level, None, None)) in data_cache:
         return data_cache[key]
 
@@ -117,10 +118,15 @@ def load_variable_at_time_and_level(filename: str,
         data += load_variable_at_time_and_level(filename, variable, time, int(level) + 1) * (level % 1)
         return data
 
-    with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
-        data = np.array(dataset[variable][time, int(level)])
+    with open_xarray_dataset(filename, folder=folder) as dataset:
+        if get_nc4_dimensions(filename, folder=folder) == 0:
+            data = np.array(dataset[variable][time])
+        else:
+            data = np.array(dataset[variable][time, int(level)])
 
-    data = data.view("float16").astype("float16")
+    if is_nc4_packed_as_float32(filename, folder=folder):
+        data = data.view("float16").astype("float16")
+
     data_cache[key] = data
     return data
 

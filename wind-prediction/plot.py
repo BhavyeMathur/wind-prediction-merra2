@@ -578,9 +578,10 @@ def plot_contour_at_time_and_level(filename: str,
                                    level: int | float,
                                    data: np.ndarray | None = None,
                                    show_map: bool = False,
+                                   data_kwargs: dict = {},
                                    **kwargs) -> None:
     if data is None:
-        data = load_variable_at_time_and_level(filename, variable, time, level)
+        data = load_variable_at_time_and_level(filename, variable, time, level, **data_kwargs)
 
     fig, ax1, ax2 = create_1x2_plot(f"{variable} ({get_units_from_variable(variable)}) at {format_level(level)}"
                                     f" on {format_date(filename)} at {format_time(time)}",
@@ -607,7 +608,7 @@ def plot_interactive_contour_at_time(filename: str,
     data = interpolate_variable_at_time(data, samples, samples * 2)
 
     title = f"{get_variable_name_from_code(variable)} ({get_units_from_variable(variable)})"
-    fig, ax, color_bar_ax, level_slider = create_interactive_slider_with_color_bar(title, 0, 71)
+    fig, ax, color_bar_ax, level_slider = create_interactive_slider_with_color_bar(title, 0, data.shape[0] - 1)
     ax.set_yticks([])
     ax.set_xticks([])
 
@@ -618,7 +619,7 @@ def plot_interactive_contour_at_time(filename: str,
 
         color_bar_ax.clear()
 
-        contour = ax.imshow(data[71 - val], cmap="viridis", aspect="auto", origin="lower")
+        contour = ax.imshow(data[data.shape[0] - 1 - val], cmap="viridis", aspect="auto", origin="lower")
         fig.colorbar(contour, cax=color_bar_ax, fraction=0.05, pad=0.02)
 
     level_slider.on_changed(update_contour)
