@@ -10,6 +10,11 @@ from constants import COMPRESSED_FOLDER
 
 data_cache = {}
 
+YAVG_YEARS = (1980, 1981, 1982, 1983,
+              1990, 1991, 1992, 1993,
+              2000, 2001, 2002, 2003,
+              2010, 2011, 2012, 2013)
+
 
 def load_nc4_to_dataframe(filename: str, variable: str) -> pd.DataFrame:
     with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
@@ -26,12 +31,13 @@ def load_nc4_to_dataframe(filename: str, variable: str) -> pd.DataFrame:
 
 def load_variable_at_time(filename: str,
                           variable: str,
-                          time: int):
+                          time: int,
+                          levels: int = 36):
     if (key := (filename, variable, time, None, None, None)) in data_cache:
-        return data_cache[key]
+        return data_cache[key][-levels:]
 
     with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
-        data = np.array(dataset[variable][time])
+        data = np.array(dataset[variable][time, -levels:])
         data = data.view("float16").astype("float16")
 
     data_cache[key] = data
@@ -40,11 +46,11 @@ def load_variable_at_time(filename: str,
 
 def load_yavg_variable_at_time(filename: str,
                                *args,
-                               years: tuple[int, ...] = (1980, 1981, 1990, 1991,
-                                                         2000, 2001, 2010, 2011)) -> np.array:
-    data = np.zeros((72, 361, 576), dtype="float64")
+                               years: tuple[int, ...] = YAVG_YEARS,
+                               levels: int = 36) -> np.array:
+    data = np.zeros((levels, 361, 576), dtype="float64")
     for year in years:
-        data += load_variable_at_time(filename.format(get_merra_stream_from_year(year), year), *args)
+        data += load_variable_at_time(filename.format(get_merra_stream_from_year(year), year), *args, levels=levels)
 
     return (data / len(years)).astype("float16")
 
@@ -93,8 +99,7 @@ def load_variable_at_level(filename: str,
 
 def load_yavg_variable_at_level(filename: str,
                                 *args,
-                                years: tuple[int, ...] = (1980, 1981, 1990, 1991,
-                                                          2000, 2001, 2010, 2011)):
+                                years: tuple[int, ...] = YAVG_YEARS):
     data = np.zeros((365 * 8, 361, 576), dtype="float64")
 
     for year in years:
@@ -138,8 +143,7 @@ def load_variable_at_time_and_level(filename: str,
 
 def load_yavg_variable_at_time_and_level(filename: str,
                                          *args,
-                                         years: tuple[int, ...] = (1980, 1981, 1990, 1991,
-                                                                   2000, 2001, 2010, 2011)) -> np.array:
+                                         years: tuple[int, ...] = YAVG_YEARS) -> np.array:
     data = np.zeros((361, 576), dtype="float64")
     for year in years:
         data += load_variable_at_time_and_level(filename.format(get_merra_stream_from_year(year), year), *args)
@@ -212,8 +216,7 @@ def load_variable_at_time_level_and_latitude(filename: str,
 
 def load_yavg_variable_at_time_level_and_latitude(filename: str,
                                                   *args,
-                                                  years: tuple[int, ...] = (1980, 1981, 1990, 1991,
-                                                                            2000, 2001, 2010, 2011)) -> np.array:
+                                                  years: tuple[int, ...] = YAVG_YEARS) -> np.array:
     data = np.zeros((576,), dtype="float64")
     for year in years:
         data += load_variable_at_time_level_and_latitude(filename.format(get_merra_stream_from_year(year), year), *args)
@@ -235,8 +238,7 @@ def load_variable_at_time_level_and_longitude(filename: str,
 
 def load_yavg_variable_at_time_level_and_longitude(filename: str,
                                                    *args,
-                                                   years: tuple[int, ...] = (1980, 1981, 1990, 1991,
-                                                                             2000, 2001, 2010, 2011)) -> np.array:
+                                                   years: tuple[int, ...] = YAVG_YEARS) -> np.array:
     data = np.zeros((361,), dtype="float64")
     for year in years:
         data += load_variable_at_time_level_and_longitude(filename.format(get_merra_stream_from_year(year), year),

@@ -10,7 +10,7 @@ def dft_at_time_level_and_latitude(data: np.ndarray, quantile: float = 0.75):
     fft_imag = []
     fft_indices = []
 
-    for i, val in enumerate(fft[:256]):
+    for i, val in enumerate(fft):
         if amplitudes[i] < cutoff_amp:
             continue
 
