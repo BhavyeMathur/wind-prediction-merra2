@@ -600,13 +600,13 @@ def plot_contour_at_time_and_level(filename: str,
 def plot_interactive_contour_at_time(filename: str,
                                      variable: str,
                                      time: int,
-                                     title: str,
                                      samples: int = 150,
                                      data: np.ndarray | None = None):
     if data is None:
         data = load_variable_at_time(filename, variable, time)
     data = interpolate_variable_at_time(data, samples, samples * 2)
 
+    title = f"{get_variable_name_from_code(variable)} ({get_units_from_variable(variable)})"
     fig, ax, color_bar_ax, level_slider = create_interactive_slider_with_color_bar(title, 0, 71)
     ax.set_yticks([])
     ax.set_xticks([])
