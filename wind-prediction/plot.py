@@ -273,10 +273,37 @@ def create_1x3_plot(title: str,
     return fig, ax11, ax12, ax13
 
 
+def create_4x3_plot(title: str,
+                    figsize: tuple[int, int] = (11.69, 8.27),
+                    **kwargs):
+    return plt.subplots(nrows=4, ncols=3, num=title, figsize=figsize, sharex=True, sharey=True,
+                        **kwargs)
+
+
+def create_4x4_plot(title: str,
+                    figsize: tuple[int, int] = (11.69, 8.27),
+                    **kwargs):
+    return plt.subplots(nrows=4, ncols=4, num=title, figsize=figsize, sharex=True, sharey=True,
+                        **kwargs)
+
+
 def create_4x6_plot(title: str,
                     figsize: tuple[int, int] = (11.69, 8.27),
                     **kwargs):
-    return plt.subplots(nrows=4, ncols=6, num=title, figsize=figsize, tight_layout=True, **kwargs)
+    return plt.subplots(nrows=4, ncols=6, num=title, figsize=figsize, sharex=True, sharey=True,
+                        **kwargs)
+
+
+def create_6x6_plot(title: str,
+                    figsize: tuple[int, int] = (11.69, 8.27),
+                    **kwargs):
+    return plt.subplots(nrows=6, ncols=6, num=title, figsize=figsize, sharex=True, sharey=True, **kwargs)
+
+
+def create_8x6_plot(title: str,
+                    figsize: tuple[int, int] = (11.69, 8.27),
+                    **kwargs):
+    return plt.subplots(nrows=8, ncols=6, num=title, figsize=figsize, sharex=True, sharey=True, **kwargs)
 
 
 def create_2x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
@@ -646,33 +673,47 @@ def plot_contour_grid_at_level(filename: str,
     output = f"{variable}-{get_year_from_filename(filename)}"
     title = f"{format_variable(variable)} during {get_year_from_filename(filename)}"
 
-    fig, axes = create_4x6_plot(title, figsize=(8, 5), sharex=True, sharey=True)
-    fig.suptitle(title, fontsize=9)
+    fig, axes = create_6x6_plot(title)
+
+    plt.subplots_adjust(left=0.03, right=0.97,
+                        bottom=0.15, top=0.85,
+                        wspace=0.01, hspace=0.01)
+    fig.suptitle(title, fontsize=12, y=0.95)
+
+    axes[0][0].set_xticks([])
+    axes[0][0].set_yticks([])
+
+    axes[0][0].set_ylabel("00:30", fontsize=9)
+    axes[1][0].set_ylabel("04:30", fontsize=9)
+    axes[2][0].set_ylabel("08:30", fontsize=9)
+    axes[3][0].set_ylabel("12:30", fontsize=9)
+    axes[4][0].set_ylabel("16:30", fontsize=9)
+    axes[5][0].set_ylabel("20:30", fontsize=9)
 
     for month in range(1, 13, 2):
-        for hour in range(0, 24, 6):
-            data = load_variable_at_time_and_level(filename.format(month), variable, hour, level, **kwargs)
+
+        x_index = (month - 1) // 2
+        axes[0][x_index].set_title(format_month(month - 1), fontsize=9)
+
+        for hour in range(0, 24, 4):
+            current_file = filename.format(month)
+            data = load_variable_at_time_and_level(current_file, variable, hour, level, **kwargs)
             data = data_processing(data)
 
-            if get_nc4_dimensions(filename, **kwargs) == 3:
-                title = f"{format_variable(variable)} on {format_date(filename)} at {format_time(hour, filename)}"
+            if get_nc4_dimensions(current_file, **kwargs) == 3:
+                title = f"{format_variable(variable)} on {format_date(current_file)} " \
+                        f"at {format_time(hour, current_file)}"
             else:
                 title = f"{format_variable(variable)} at {format_level(level)}" \
-                        f" on {format_date(filename)} at {format_time(hour, filename)}"
+                        f" on {format_date(current_file)} at {format_time(hour, current_file)}"
 
             if diverging:
                 vmin, vmax = get_vmin_and_vmax(data)
             else:
                 vmin, vmax = None, None
 
-            axes[(month - 1) // 2][hour].imshow(data, cmap=cmap, origin="lower", aspect="auto",
-                                                vmin=vmin, vmax=vmax, extent=[-180, 180, -90, 90])
-
-    axes[0].tick_params(labelsize=9)
-    axes[0].xaxis.set_major_formatter(FormatStrFormatter("%d°"))
-    axes[0].yaxis.set_major_formatter(FormatStrFormatter("%d°"))
-    axes[0].set_xlim((-180, 180))
-    axes[0].set_ylim((-90, 90))
+            axes[hour // 4][x_index].imshow(data, cmap=cmap, origin="lower", aspect="auto",
+                                            vmin=vmin, vmax=vmax, extent=[-180, 180, -90, 90])
 
     plt.savefig("assets/contours/" + output + ".png", dpi=300)
     plt.show()

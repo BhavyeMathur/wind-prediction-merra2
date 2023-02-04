@@ -101,7 +101,7 @@ def format_longitude(longitude, for_output: bool = False) -> str:
     return f"{longitude * 0.625 - 180:0>2}° lon"
 
 
-def _format_month(month: int) -> str:
+def format_month(month: int) -> str:
     return ["January", "February", "March", "April", "May", "June", "July",
             "August", "September", "October", "November", "December"][month]
 
@@ -115,7 +115,7 @@ def format_date(filename: str, for_output=False) -> str:
 
     if for_output:
         return date
-    return f"{int(date[7:])} {_format_month(int(date[4:6]) - 1)} {date[:4]}"
+    return f"{int(date[7:])} {format_month(int(date[4:6]) - 1)} {date[:4]}"
 
 
 def format_time(time: int, filename: str) -> str:
