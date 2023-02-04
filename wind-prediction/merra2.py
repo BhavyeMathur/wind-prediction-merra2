@@ -67,11 +67,15 @@ def format_level(level, total_levels=72, filename=False) -> str:
     return f"{pressure:.2f} hPa (~{height_from_pressure(100 * pressure):.2f} m)"
 
 
-def format_latitude(latitude) -> str:
+def format_latitude(latitude, filename: bool = False) -> str:
+    if filename:
+        return f"{latitude * 5 - 900:03d}"
     return f"{latitude * 0.5 - 90:0>2}° lat"
 
 
-def format_longitude(longitude) -> str:
+def format_longitude(longitude, filename: bool = False) -> str:
+    if filename:
+        return f"{longitude * 625 - 18000:03d}"
     return f"{longitude * 0.625 - 180:0>2}° lon"
 
 

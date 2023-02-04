@@ -7,6 +7,7 @@ from matplotlib.widgets import Slider
 from matplotlib.colors import ListedColormap
 from matplotlib.ticker import FormatStrFormatter
 import seaborn
+import cmasher as cmr
 
 from data_loading import *
 from merra2 import *
@@ -255,6 +256,15 @@ def create_1x1_plot(title: str, figsize: tuple[int, int] = (8, 5), **kwargs):
 def create_1x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
     fig, (ax11, ax12) = plt.subplots(nrows=1, ncols=2, num=title, figsize=figsize, tight_layout=True, **kwargs)
     return fig, ax11, ax12
+
+
+def create_1x3_plot(title: str,
+                    figsize: tuple[int, int] = (12, 5),
+                    width_ratios: tuple[int, int, int] = (50, 50, 3),
+                    **kwargs):
+    fig, (ax11, ax12, ax13) = plt.subplots(nrows=1, ncols=3, num=title, figsize=figsize, tight_layout=True,
+                                           width_ratios=width_ratios, **kwargs)
+    return fig, ax11, ax12, ax13
 
 
 def create_2x2_plot(title: str, figsize: tuple[int, int] = (12, 5), **kwargs):
