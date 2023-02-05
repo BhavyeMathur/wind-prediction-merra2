@@ -115,7 +115,10 @@ def format_date(filename: str, for_output=False) -> str:
 
     if for_output:
         return date
-    return f"{int(date[7:])} {format_month(int(date[4:6]) - 1)} {date[:4]}"
+    year = date[:4]
+    if year == "YAVG":
+        return f"{int(date[7:])} {format_month(int(date[4:6]) - 1)}"
+    return f"{int(date[7:])} {format_month(int(date[4:6]) - 1)} {year}"
 
 
 def format_time(time: int, filename: str) -> str:

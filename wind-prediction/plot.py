@@ -447,7 +447,7 @@ def _plot_variable_at_time_and_longitude_vs_vertical(filename: str,
         plt.show()
 
     for latitude in range(lat_start, lat_end, lat_step):
-        ax1.plot(verticals, data[:, latitude],
+        ax1.plot(verticals[-data.shape[0]:], data[:, latitude],
                  color=plt.cm.coolwarm(latitude / 361),
                  linewidth=linewidth)
 
@@ -487,7 +487,7 @@ def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
         plt.show()
 
     for longitude in range(lon_start, lon_end, lon_step):
-        ax1.plot(verticals, data[:, longitude],
+        ax1.plot(verticals[-data.shape[0]:], data[:, longitude],
                  color=plt.cm.coolwarm(longitude / 576),
                  linewidth=linewidth)
 
