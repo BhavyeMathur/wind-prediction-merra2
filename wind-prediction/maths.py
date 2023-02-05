@@ -851,3 +851,77 @@ def mse(data, prediction):
 
 def rmse(data, prediction):
     return math.sqrt(mse(data, prediction))
+
+
+"""Interpolation Functions"""
+
+
+def linear_interpolate(values, index: int, mu: float):
+    return values[index] * (1 - mu) + values[index + 1] * mu
+
+
+def cosine_interpolate(values, index: int, mu: float):
+    return linear_interpolate(values, index, (1 - math.cos(mu * math.pi)) / 2)
+
+
+def cubic_interpolate(values, index: int, mu: float):
+    p0 = values[max(0, index - 1)]
+    p1 = values[index]
+    p2 = values[index + 1]
+    p3 = values[min(len(values) - 1, index + 2)]
+
+    mu2 = mu * mu
+    a0 = p3 - p2 - p0 + p1
+    a1 = p0 - p1 - a0
+    a2 = p2 - p0
+    a3 = p1
+
+    return a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3
+
+
+def catmull_rom_interpolate(values, index: int, mu: float):
+    p0 = values[max(0, index - 1)]
+    p1 = values[index]
+    p2 = values[index + 1]
+    p3 = values[min(len(values) - 1, index + 2)]
+    
+    mu2 = mu * mu
+
+    a0 = -0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3
+    a1 = p0 - 2.5 * p1 + 2 * p2 - 0.5 * p3
+    a2 = -0.5 * p0 + 0.5 * p2
+    a3 = p1
+
+    return a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3
+
+
+def hermite_interpolate(values, index: int, mu: float, tension: float = 0, bias: float = 0):
+    p0 = values[max(0, index - 1)]
+    p1 = values[index]
+    p2 = values[index + 1]
+    p3 = values[min(len(values) - 1, index + 2)]
+    
+    mu2 = mu * mu
+    mu3 = mu2 * mu
+
+    m0 = (p1 - p0) * (1 + bias) * (1 - tension)
+    m0 += (p2 - p1) * (1 - bias) * (1 - tension)
+
+    m1 = (p2 - p1) * (1 + bias) * (1 - tension)
+    m1 += (p3 - p2) * (1 - bias) * (1 - tension)
+    m0 /= 2
+    m1 /= 2
+
+    a0 = 2 * mu3 - 3 * mu2 + 1
+    a1 = mu3 - 2 * mu2 + mu
+    a2 = mu3 - mu2
+    a3 = -2 * mu3 + 3 * mu2
+
+    return a0 * p1 + a1 * m0 + a2 * m1 + a3 * p2
+
+
+def get_hermite_interpolate(tension: float = 0, bias: float = 0):
+    def _interpolate(*args):
+        return hermite_interpolate(*args, tension=tension, bias=bias)
+
+    return _interpolate
