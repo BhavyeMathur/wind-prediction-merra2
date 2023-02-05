@@ -1,0 +1,11 @@
+
+    Original Standard Dev (m/s):  3.0703125
+    Predicted MAE (m/s):  0.730487813553555
+    Predicted RMSE (m/s): 1.0570913529151231
+
+    Frequencies: 6
+    Size/level: 0.01083 MB
+    Size/time: 0.38988 MB
+    Size/day: 3.11904 MB
+    Size/year: 1138.4496 MB
+    

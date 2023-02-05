@@ -32,6 +32,8 @@ def get_pressure_from_level(level, total_levels: int = 72) -> float:
                 78.5123, 92.3657, 108.663, 127.837, 150.393, 176.930, 208.152, 244.875,
                 288.083, 337.5, 375, 412, 450, 487.5, 525, 562.5, 600, 637.5, 675, 700, 725,
                 750, 775, 800, 820, 835, 850, 865, 880, 895, 910, 925, 940, 955, 970, 985][level]
+    elif total_levels == 36:
+        return get_pressure_from_level(level + 36, total_levels=72)
     elif total_levels == 42:
         return [0.1, 0.3, 0.4, 0.5, 0.7, 1, 2, 3, 4, 5, 7, 10, 20, 30, 40, 50, 70, 100,
                 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 725, 750,
@@ -69,20 +71,20 @@ def get_variable_name_from_code(variable: str) -> str:
     return variable
 
 
-def get_year_from_filename(filename: str) -> int:
+def get_year_from_filename(filename: str) -> str:
     if filename.endswith(".SUB.nc"):
         date = filename.split(".")[-3]
     else:
         date = filename.split(".")[-2]
 
-    return int(date[:4])
+    return date[:4]
 
 
 def format_variable(variable: str) -> str:
     return f"{get_variable_name_from_code(variable)} ({get_units_from_variable(variable)})"
 
 
-def format_level(level, total_levels=72, for_output=False) -> str:
+def format_level(level, total_levels=36, for_output=False) -> str:
     pressure = get_pressure_from_level(level, total_levels=total_levels)
     if for_output:
         return f"{pressure:.2f}hPa"
