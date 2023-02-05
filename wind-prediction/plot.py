@@ -331,9 +331,10 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
                                                           time: int,
                                                           level: int | float,
                                                           latitude: int,
-                                                          data: np.ndarray = None):
+                                                          data: np.ndarray = None,
+                                                          **kwargs):
     if data is None:
-        data = load_variable_at_time_level_and_latitude(filename, variable, time, level, latitude)
+        data = load_variable_at_time_level_and_latitude(filename, variable, time, level, latitude, **kwargs)
 
     plt.plot(np.linspace(-180, 180, 576), data)
 

@@ -3,6 +3,7 @@ from calendar import monthrange
 import numpy as np
 import pandas as pd
 import scipy.interpolate as interp
+from tqdm.notebook import tqdm
 
 from nc4 import *
 from merra2 import get_merra_stream_from_year
@@ -12,8 +13,8 @@ data_cache = {}
 
 YAVG_YEARS = (1980, 1981, 1982, 1983,
               1990, 1991, 1992, 1993,
-              2000, 2001, 2002, 2003,
-              2010, 2011, 2012, 2013)
+              2000, 2001, 2002,
+              2010, 2011, 2013)
 
 
 def load_nc4_to_dataframe(filename: str, variable: str) -> pd.DataFrame:
@@ -27,6 +28,27 @@ def load_nc4_to_dataframe(filename: str, variable: str) -> pd.DataFrame:
         dataframe.dropna(how="all", inplace=True)
 
     return dataframe
+
+
+def load_variable_on_day(filename: str,
+                         variable: str,
+                         levels: int = 36):
+    with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
+        data = np.array(dataset[variable][:, -levels:])
+        data = data.view("float16").astype("float16")
+
+    return data
+
+
+def load_yavg_variable_on_day(filename: str,
+                              *args,
+                              years: tuple[int, ...] = YAVG_YEARS,
+                              levels: int = 36) -> np.array:
+    data = np.zeros((8, levels, 361, 576), dtype="float64")
+    for year in years:
+        data += load_variable_on_day(filename.format(get_merra_stream_from_year(year), year), *args, levels=levels)
+
+    return (data / len(years)).astype("float16")
 
 
 def load_variable_at_time(filename: str,
@@ -102,7 +124,7 @@ def load_yavg_variable_at_level(filename: str,
                                 years: tuple[int, ...] = YAVG_YEARS):
     data = np.zeros((365 * 8, 361, 576), dtype="float64")
 
-    for year in years:
+    for year in tqdm(years):
         path = filename.format(get_merra_stream_from_year(year), year)
         path = path.replace("mmdd", "{:0>2}{:0>2}")
         data += load_variable_at_level(path, *args)
@@ -206,8 +228,9 @@ def load_variable_at_time_level_and_latitude(filename: str,
                                              variable: str,
                                              time: int,
                                              level: int,
-                                             latitude: int) -> np.array:
-    with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
+                                             latitude: int,
+                                             folder=COMPRESSED_FOLDER) -> np.array:
+    with open_xarray_dataset(filename, folder=folder) as dataset:
         data = np.array(dataset[variable][time, level, latitude])
 
     data = data.view("float16").astype("float16")
