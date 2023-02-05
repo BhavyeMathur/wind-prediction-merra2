@@ -1,5 +1,5 @@
 
-    Original Stdev: inf m/s
+    Original Stdev: 10.063274383544922 m/s
     Predicted MAE:  0.7777054164717866 m/s
     Predicted RMSE: 1.106368608661116 m/s
 

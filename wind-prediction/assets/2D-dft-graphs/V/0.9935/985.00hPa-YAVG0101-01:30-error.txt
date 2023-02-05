@@ -1,0 +1,10 @@
+
+    Original Stdev: 2.9572482109069824 m/s
+    Predicted MAE:  0.5725460765027736 m/s
+    Predicted RMSE: 0.8181009457936212 m/s
+
+    Frequencies: 679
+    Size/time: 0.146664 MB
+    Size/day: 1.173312 MB
+    Size/year: 428.25888 MB
+    
