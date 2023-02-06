@@ -6,7 +6,7 @@ import scipy.interpolate as interp
 from tqdm.notebook import tqdm
 
 from nc4 import *
-from merra2 import get_merra_stream_from_year
+from merra2 import *
 from constants import COMPRESSED_FOLDER
 
 data_cache = {}
@@ -99,16 +99,17 @@ def load_variable_at_level(filename: str,
     if (key := (filename, variable, None, level, None, None)) in data_cache:
         return data_cache[key]
 
-    yyyy = int(filename.split(".")[-2][:4])
+    yyyy = get_year_from_filename(filename)
     data = np.zeros((365 * 8, 361, 576), dtype="float64")
 
     i = 0
     for mm in range(1, 13):
-        for dd in range(1, monthrange(yyyy, mm)[1] + 1):
+        for dd in range(1, monthrange(2001 if yyyy == "YAVG" else yyyy, mm)[1] + 1):
             if mm == 2 and dd == 29:
                 continue  # let's just skip February 29th
 
             with open_xarray_dataset(filename.format(mm, dd), folder=COMPRESSED_FOLDER) as dataset:
+                print(dataset.variables)
                 for t in range(8):
                     subdata = np.array(dataset[variable][t, level])
                     data[i] = subdata.view("float16").astype("float16")

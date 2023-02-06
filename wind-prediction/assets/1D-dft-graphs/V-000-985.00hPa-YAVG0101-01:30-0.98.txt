@@ -1,7 +1,7 @@
 
-    Original Standard Dev (m/s):  2.580078125
-    Predicted MAE (m/s):  0.6981967277601596
-    Predicted RMSE (m/s): 0.9500878722431374
+    Original Stdev: 2.595703125 m/s
+    Predicted MAE:  0.7050672935219898 m/s
+    Predicted RMSE: 0.9326451107767076 m/s
 
     Frequencies: 6
     Size/level: 0.01083 MB
