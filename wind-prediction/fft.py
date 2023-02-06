@@ -1,37 +1,45 @@
 import numpy as np
 
 
-def dft_at_time_level_and_latitude(data: np.ndarray, quantile: float = 0.75):
-    fft = np.fft.rfft(data)
-    amplitudes = np.abs(fft)
+def encode_difference_uint8(ia):
+    last_i = 0
+    out = []
 
-    cutoff_amp = np.quantile(amplitudes, quantile)
-    fft_real = []
-    fft_imag = []
-    fft_indices = []
+    for i in ia:
+        while (di := i - last_i) > 253:
+            out.append(254)
+            last_i += 253
 
-    for i, val in enumerate(fft):
-        if amplitudes[i] < cutoff_amp:
+        if di < 0:
+            out.append(255)
+            di = i
+
+        last_i = i
+        out.append(di)
+
+    return np.array(out, dtype="uint8")
+
+
+def decode_difference_uint8(ia):
+    i = 0
+    out = []
+
+    for di in ia:
+        if di == 254:
+            i += 253
             continue
 
-        fft_real.append(fft[i].real)
-        fft_imag.append(fft[i].imag)
-        fft_indices.append(i)
+        if di == 255:
+            i = 0
+            continue
 
-    return np.array(fft_real, dtype="float16"), np.array(fft_imag, dtype="float16"), \
-        np.array(fft_indices, dtype="uint16")
+        i += di
+        out.append(i)
 
-
-def idft_at_time_level_and_latitude(fft_real, fft_imag, fft_indices):
-    fft = np.zeros((289,), dtype="complex64")
-
-    for k in range(len(fft_indices)):
-        fft[fft_indices[k]] = fft_real[k] + 1j * fft_imag[k]
-
-    return np.fft.irfft(fft)
+    return np.array(out, dtype="uint16")
 
 
-def rlen_encode_array(ia, encoded_val: int):
+def encode_rlen(ia, encoded_val: int):
     out = []
     val_count = 0
     for val in ia:
@@ -46,7 +54,7 @@ def rlen_encode_array(ia, encoded_val: int):
     return np.array(out, dtype="uint8")
 
 
-def rlen_decode_array(ia, encoded_val: int):
+def decode_rlen(ia, encoded_val: int):
     out = []
     for i in range(0, len(ia), 2):
         for _ in range(ia[i]):
