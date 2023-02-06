@@ -14,7 +14,7 @@ data_cache = {}
 YAVG_YEARS = (1980, 1981, 1982, 1983,
               1990, 1991, 1992, 1993,
               2000, 2001, 2002, 2003,
-              2010, 2011, 2013)
+              2010, 2011, 2012, 2013)
 
 
 def load_nc4_to_dataframe(filename: str, variable: str) -> pd.DataFrame:

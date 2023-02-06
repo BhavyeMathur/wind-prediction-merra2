@@ -437,7 +437,7 @@ def _plot_variable_at_time_and_longitude_vs_vertical(filename: str,
     if data is None:
         data = load_variable_at_time_and_longitude(filename, variable, time, longitude)
 
-    title = f"{variable} ({get_units_from_variable(variable)}) at {format_longitude(longitude)}" \
+    title = f"{format_variable(variable)} at {format_longitude(longitude)}" \
             f" on {format_date(filename)} at {format_time(time, filename)}"
 
     if fig_ax1_ax2:
@@ -508,8 +508,14 @@ def plot_variable_at_time_and_longitude_vs_level(filename: str,
                                                  time: int,
                                                  longitude: int,
                                                  **kwargs):
-    return _plot_variable_at_time_and_longitude_vs_vertical(filename, variable, time, longitude, np.arange(0, 72),
-                                                            **kwargs)
+    output = f"{variable}/{format_longitude(longitude, for_output=True)}" \
+             f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}-vs-level"
+
+    values = _plot_variable_at_time_and_longitude_vs_vertical(filename, variable, time, longitude, np.arange(0, 72),
+                                                              **kwargs)
+
+    plt.savefig("assets/vs-vertical/" + output + ".png", dpi=300)
+    return values
 
 
 def plot_variable_at_time_and_longitude_vs_pressure(filename: str,
@@ -517,10 +523,15 @@ def plot_variable_at_time_and_longitude_vs_pressure(filename: str,
                                                     time: int,
                                                     longitude: int,
                                                     **kwargs):
+    output = f"{variable}/{format_longitude(longitude, for_output=True)}" \
+             f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}-vs-pressure"
+
     fig, ax1, ax2 = _plot_variable_at_time_and_longitude_vs_vertical(filename, variable, time, longitude,
                                                                      [get_pressure_from_level(lev)
                                                                       for lev in range(72)], **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d hPa"))
+
+    plt.savefig("assets/vs-vertical/" + output + ".png", dpi=300)
     return fig, ax1, ax2
 
 
@@ -529,10 +540,15 @@ def plot_variable_at_time_and_longitude_vs_height(filename: str,
                                                   time: int,
                                                   longitude: int,
                                                   **kwargs):
+    output = f"{variable}/{format_longitude(longitude, for_output=True)}" \
+             f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}-vs-height"
+
     heights = [height_from_pressure(get_pressure_from_level(lev) * 100) / 1000 for lev in range(72)]
     fig, ax1, ax2 = _plot_variable_at_time_and_longitude_vs_vertical(filename, variable, time, longitude, heights,
                                                                      **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d km"))
+
+    plt.savefig("assets/vs-vertical/" + output + ".png", dpi=300)
     return fig, ax1, ax2
 
 
@@ -541,8 +557,13 @@ def plot_variable_at_time_and_latitude_vs_level(filename: str,
                                                 time: int,
                                                 latitude: int,
                                                 **kwargs):
-    return _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude, np.arange(0, 72),
-                                                           **kwargs)
+    output = f"{variable}/{format_latitude(latitude, for_output=True)}" \
+             f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}-vs-level"
+
+    values = _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude, np.arange(0, 72),
+                                                             **kwargs)
+    plt.savefig("assets/vs-vertical/" + output + ".png", dpi=300)
+    return values
 
 
 def plot_variable_at_time_and_latitude_vs_pressure(filename: str,
@@ -550,10 +571,15 @@ def plot_variable_at_time_and_latitude_vs_pressure(filename: str,
                                                    time: int,
                                                    latitude: int,
                                                    **kwargs):
+    output = f"{variable}/{format_latitude(latitude, for_output=True)}" \
+             f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}-vs-pressure"
+
     fig, ax1, ax2 = _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude,
                                                                     [get_pressure_from_level(lev)
                                                                      for lev in range(72)], **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d hPa"))
+
+    plt.savefig("assets/vs-vertical/" + output + ".png", dpi=300)
     return fig, ax1, ax2
 
 
@@ -562,10 +588,15 @@ def plot_variable_at_time_and_latitude_vs_height(filename: str,
                                                  time: int,
                                                  latitude: int,
                                                  **kwargs):
+    output = f"{variable}/{format_latitude(latitude, for_output=True)}" \
+             f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}-vs-height"
+
     heights = [height_from_pressure(get_pressure_from_level(lev) * 100) / 1000 for lev in range(72)]
     fig, ax1, ax2 = _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude, heights,
                                                                     **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d km"))
+
+    plt.savefig("assets/vs-vertical/" + output + ".png", dpi=300)
     return fig, ax1, ax2
 
 
