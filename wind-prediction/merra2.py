@@ -1,15 +1,19 @@
 from maths import height_from_pressure
 
 
-def get_merra_stream_from_year(year: int) -> int:
+def get_merra_stream_from_year(year: int, month: int = 1) -> int:
     if year < 1992:
         return 100
     elif year < 2001:
         return 200
     elif year < 2011:
         return 300
-    else:
+    elif year == 2021 and month > 5:
+        return 401
+    elif year < 2022:
         return 400
+    else:
+        return 401
 
 
 def get_merra_variables(variables):
