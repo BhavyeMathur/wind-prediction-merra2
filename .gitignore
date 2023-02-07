@@ -2,6 +2,7 @@
 *.nc4
 *.nc
 *.ft
+*.bin
 *.parquet
 *urls.txt
 

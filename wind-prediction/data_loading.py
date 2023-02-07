@@ -101,17 +101,15 @@ def load_variable_at_level(filename: str,
     data = np.zeros((365 * 8, 361, 576), dtype="float64")
 
     i = 0
-    for mm in range(1, 13):
+    for mm in tqdm(range(1, 13)):
         for dd in range(1, monthrange(2001 if yyyy == "YAVG" else yyyy, mm)[1] + 1):
             if mm == 2 and dd == 29:
                 continue  # let's just skip February 29th
 
             with open_xarray_dataset(filename.format(mm, dd), folder=COMPRESSED_FOLDER) as dataset:
-                print(dataset.variables)
-                for t in range(8):
-                    subdata = np.array(dataset[variable][t, level])
-                    data[i] = subdata.view("float16").astype("float16")
-                    i += 1
+                subdata = np.array(dataset[variable][:, level])
+                data[i:i + 8] = subdata.view("float16").astype("float16")
+                i += 8
 
     if cache:
         data_cache[key] = data
