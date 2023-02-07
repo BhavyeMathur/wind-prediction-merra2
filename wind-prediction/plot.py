@@ -503,6 +503,39 @@ def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
     return fig, ax1, ax2
 
 
+def plot_variable_at_level_and_longitude_vs_time(filename: str,
+                                                 variable: str,
+                                                 level: int,
+                                                 longitude: int,
+                                                 fig_ax1_ax2=None,
+                                                 linewidth=0.2):
+    data = load_variable_at_level_and_longitude(filename, variable, longitude, level)
+
+    title = f"{format_variable(variable)} at {format_longitude(longitude)} at {format_level(level)}"
+
+    if fig_ax1_ax2:
+        fig, ax1, ax2 = fig_ax1_ax2
+    else:
+        fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
+        plt.show()
+
+    for latitude in range(361):
+        ax1.plot(data[:, latitude],
+                 color=plt.cm.coolwarm(latitude / 361),
+                 linewidth=linewidth)
+
+    bar = mpl.colorbar.Colorbar(ax2, cmap="coolwarm", orientation="vertical", values=np.linspace(-90, 90, 50))
+    bar.set_ticks([-90, -60, -30, 0, 30, 60, 90])
+    bar.set_ticklabels(["-90°", "-60°", "-30°", " 0°", "30°", "60°", "90°"])
+
+    ax1.tick_params(labelsize=9)
+    ax1.set_title(title, fontsize=9)
+
+    ax2.tick_params(labelsize=7, right=False, direction="in")
+
+    return fig, ax1, ax2
+
+
 def plot_variable_at_time_and_longitude_vs_level(filename: str,
                                                  variable: str,
                                                  time: int,

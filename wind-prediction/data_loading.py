@@ -93,12 +93,13 @@ def interpolate_variable_at_time(data: np.ndarray,
 def load_variable_at_level(filename: str,
                            variable: str,
                            level: int,
-                           cache: bool = True):
+                           cache: bool = True,
+                           folder: str = COMPRESSED_FOLDER):
     if (key := (filename, variable, None, level, None, None)) in data_cache:
         return data_cache[key]
 
     yyyy = get_year_from_filename(filename)
-    data = np.zeros((365 * 8, 361, 576), dtype="float64")
+    data = np.zeros((365 * 8, 361, 576), dtype="float16")
 
     i = 0
     for mm in tqdm(range(1, 13)):
@@ -106,7 +107,7 @@ def load_variable_at_level(filename: str,
             if mm == 2 and dd == 29:
                 continue  # let's just skip February 29th
 
-            with open_xarray_dataset(filename.format(mm, dd), folder=COMPRESSED_FOLDER) as dataset:
+            with open_xarray_dataset(filename.format(mm, dd), folder=folder) as dataset:
                 subdata = np.array(dataset[variable][:, level])
                 data[i:i + 8] = subdata.view("float16").astype("float16")
                 i += 8
@@ -127,6 +128,32 @@ def load_yavg_variable_at_level(filename: str,
         data += load_variable_at_level(path, *args)
 
     return (data / len(years)).astype("float16")
+
+
+def load_variable_at_level_and_longitude(filename: str,
+                                         variable: str,
+                                         longitude: int,
+                                         level: int,
+                                         folder: str = COMPRESSED_FOLDER):
+    if (key := (filename, variable, None, level, None, longitude)) in data_cache:
+        return data_cache[key]
+
+    yyyy = get_year_from_filename(filename)
+    data = np.zeros((365 * 8, 361), dtype="float16")
+
+    i = 0
+    for mm in tqdm(range(1, 13)):
+        for dd in range(1, monthrange(2001 if yyyy == "YAVG" else yyyy, mm)[1] + 1):
+            if mm == 2 and dd == 29:
+                continue  # let's just skip February 29th
+
+            with open_xarray_dataset(filename.format(mm, dd), folder=folder) as dataset:
+                subdata = np.array(dataset[variable][:, level, :, longitude: longitude + 1])
+                data[i:i + 8] = subdata.view("float16").astype("float16")[:, :, 0]
+                i += 8
+
+    data_cache[key] = data
+    return data
 
 
 def load_variable_at_time_and_level(filename: str,
