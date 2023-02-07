@@ -31,10 +31,9 @@ def load_nc4_to_dataframe(filename: str, variable: str) -> pd.DataFrame:
 
 
 def load_variable_on_day(filename: str,
-                         variable: str,
-                         levels: int = 36):
+                         variable: str):
     with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
-        data = np.array(dataset[variable][:, -levels:])
+        data = np.array(dataset[variable][:, -36:])
         data = data.view("float16").astype("float16")
 
     return data
@@ -42,11 +41,10 @@ def load_variable_on_day(filename: str,
 
 def load_yavg_variable_on_day(filename: str,
                               *args,
-                              years: tuple[int, ...] = YAVG_YEARS,
-                              levels: int = 36) -> np.array:
-    data = np.zeros((8, levels, 361, 576), dtype="float64")
+                              years: tuple[int, ...] = YAVG_YEARS) -> np.array:
+    data = np.zeros((8, 36, 361, 576), dtype="float64")
     for year in years:
-        data += load_variable_on_day(filename.format(get_merra_stream_from_year(year), year), *args, levels=levels)
+        data += load_variable_on_day(filename.format(get_merra_stream_from_year(year), year), *args)
 
     return (data / len(years)).astype("float16")
 
