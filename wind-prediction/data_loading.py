@@ -51,28 +51,16 @@ def load_yavg_variable_on_day(filename: str,
 
 def load_variable_at_time(filename: str,
                           variable: str,
-                          time: int,
-                          levels: int = 36):
+                          time: int):
     if (key := (filename, variable, time, None, None, None)) in data_cache:
-        return data_cache[key][-levels:]
+        return data_cache[key]
 
     with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
-        data = np.array(dataset[variable][time, -levels:])
+        data = np.array(dataset[variable][time])
         data = data.view("float16").astype("float16")
 
     data_cache[key] = data
     return data
-
-
-def load_yavg_variable_at_time(filename: str,
-                               *args,
-                               years: tuple[int, ...] = YAVG_YEARS,
-                               levels: int = 36) -> np.array:
-    data = np.zeros((levels, 361, 576), dtype="float64")
-    for year in years:
-        data += load_variable_at_time(filename.format(get_merra_stream_from_year(year), year), *args, levels=levels)
-
-    return (data / len(years)).astype("float16")
 
 
 def interpolate_variable_at_time(data: np.ndarray,
@@ -115,19 +103,6 @@ def load_variable_at_level(filename: str,
     if cache:
         data_cache[key] = data
     return data
-
-
-def load_yavg_variable_at_level(filename: str,
-                                *args,
-                                years: tuple[int, ...] = YAVG_YEARS):
-    data = np.zeros((365 * 8, 361, 576), dtype="float64")
-
-    for year in tqdm(years):
-        path = filename.format(get_merra_stream_from_year(year), year)
-        path = path.replace("mmdd", "{:0>2}{:0>2}")
-        data += load_variable_at_level(path, *args)
-
-    return (data / len(years)).astype("float16")
 
 
 def load_variable_at_level_and_longitude(filename: str,
@@ -185,16 +160,6 @@ def load_variable_at_time_and_level(filename: str,
 
     data_cache[key] = data
     return data
-
-
-def load_yavg_variable_at_time_and_level(filename: str,
-                                         *args,
-                                         years: tuple[int, ...] = YAVG_YEARS) -> np.array:
-    data = np.zeros((361, 576), dtype="float64")
-    for year in years:
-        data += load_variable_at_time_and_level(filename.format(get_merra_stream_from_year(year), year), *args)
-
-    return (data / len(years)).astype("float16")
 
 
 def interpolate_variable_at_time_and_level(data: np.ndarray,
@@ -261,16 +226,6 @@ def load_variable_at_time_level_and_latitude(filename: str,
     return data
 
 
-def load_yavg_variable_at_time_level_and_latitude(filename: str,
-                                                  *args,
-                                                  years: tuple[int, ...] = YAVG_YEARS) -> np.array:
-    data = np.zeros((576,), dtype="float64")
-    for year in years:
-        data += load_variable_at_time_level_and_latitude(filename.format(get_merra_stream_from_year(year), year), *args)
-
-    return (data / len(years)).astype("float16")
-
-
 def load_variable_at_time_level_and_longitude(filename: str,
                                               variable: str,
                                               time: int,
@@ -281,14 +236,3 @@ def load_variable_at_time_level_and_longitude(filename: str,
 
     data = data.view("float16").astype("float16")
     return data[:, 0]
-
-
-def load_yavg_variable_at_time_level_and_longitude(filename: str,
-                                                   *args,
-                                                   years: tuple[int, ...] = YAVG_YEARS) -> np.array:
-    data = np.zeros((361,), dtype="float64")
-    for year in years:
-        data += load_variable_at_time_level_and_longitude(filename.format(get_merra_stream_from_year(year), year),
-                                                          *args)
-
-    return (data / len(years)).astype("float16")
