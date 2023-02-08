@@ -51,7 +51,8 @@ def load_yavg_variable_on_day(filename: str,
 
 def load_variable_at_time(filename: str,
                           variable: str,
-                          time: int):
+                          time: int,
+                          cache: bool = True):
     if (key := (filename, variable, time, None, None, None)) in data_cache:
         return data_cache[key]
 
@@ -59,7 +60,8 @@ def load_variable_at_time(filename: str,
         data = np.array(dataset[variable][time])
         data = data.view("float16").astype("float16")
 
-    data_cache[key] = data
+    if cache:
+        data_cache[key] = data
     return data
 
 
