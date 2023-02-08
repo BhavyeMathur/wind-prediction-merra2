@@ -6,3 +6,300 @@
             Original Stdev: 11.38197934172047 m/s
             Predicted MAE:  0.09965647515987254 m/s
             Predicted RMSE: 0.1341450619757956 m/s
+
+[12:01:06] LOG: Interpolating DFT
+[12:01:08] LOG: Calculating Error
+[12:01:11] LOG:
+        Level 1:
+            Original Stdev: 11.579793338809257 m/s
+            Predicted MAE:  0.571019988823665 m/s
+            Predicted RMSE: 1.0191353409542854 m/s
+
+[12:01:46] LOG: Interpolating DFT
+[12:01:47] LOG: Calculating Error
+[12:01:50] LOG:
+        Level 2:
+            Original Stdev: 12.186177186825692 m/s
+            Predicted MAE:  0.6394137820287646 m/s
+            Predicted RMSE: 1.1452951518171026 m/s
+
+[12:00:01] LOG: Loading DFT
+[12:00:01] LOG: Performing IDFT
+[12:00:28] LOG: Calculating Error
+
+        Level 3:
+            Original Stdev: 12.885986973387809 m/s
+            Predicted MAE:  0.15934444036320133 m/s
+            Predicted RMSE: 0.21936457957497246 m/s
+
+[12:03:29] LOG: Interpolating DFT
+[12:03:31] LOG: Calculating Error
+[12:03:34] LOG:
+        Level 4:
+            Original Stdev: 13.456200650164964 m/s
+            Predicted MAE:  0.9342818968548541 m/s
+            Predicted RMSE: 1.362134670256098 m/s
+
+[12:04:08] LOG: Interpolating DFT
+[12:04:09] LOG: Calculating Error
+[12:04:12] LOG:
+        Level 5:
+            Original Stdev: 13.71315865199713 m/s
+            Predicted MAE:  0.973156760573604 m/s
+            Predicted RMSE: 1.402196353270533 m/s
+
+[12:02:25] LOG: Loading DFT
+[12:02:25] LOG: Performing IDFT
+[12:02:52] LOG: Calculating Error
+
+        Level 6:
+            Original Stdev: 13.372077979223045 m/s
+            Predicted MAE:  0.25617333927588615 m/s
+            Predicted RMSE: 0.3374529362853957 m/s
+
+[12:05:50] LOG: Interpolating DFT
+[12:05:51] LOG: Calculating Error
+[12:05:54] LOG:
+        Level 7:
+            Original Stdev: 12.477996992127657 m/s
+            Predicted MAE:  0.6744009841083345 m/s
+            Predicted RMSE: 0.8899932087790168 m/s
+
+[12:06:28] LOG: Interpolating DFT
+[12:06:29] LOG: Calculating Error
+[12:06:33] LOG:
+        Level 8:
+            Original Stdev: 11.344413800955282 m/s
+            Predicted MAE:  0.597549811248363 m/s
+            Predicted RMSE: 0.779012125926512 m/s
+
+[12:04:46] LOG: Loading DFT
+[12:04:46] LOG: Performing IDFT
+[12:05:13] LOG: Calculating Error
+
+        Level 9:
+            Original Stdev: 10.406084305644072 m/s
+            Predicted MAE:  0.3136316277531956 m/s
+            Predicted RMSE: 0.4043871811373609 m/s
+
+[12:08:12] LOG: Interpolating DFT
+[12:08:13] LOG: Calculating Error
+[12:08:16] LOG:
+        Level 10:
+            Original Stdev: 9.752047592735414 m/s
+            Predicted MAE:  0.413306482270061 m/s
+            Predicted RMSE: 0.5465748221602307 m/s
+
+[12:08:50] LOG: Interpolating DFT
+[12:08:51] LOG: Calculating Error
+[12:08:54] LOG:
+        Level 11:
+            Original Stdev: 9.171758127848864 m/s
+            Predicted MAE:  0.38795157129075075 m/s
+            Predicted RMSE: 0.5125898432878698 m/s
+
+[12:07:09] LOG: Loading DFT
+[12:07:09] LOG: Performing IDFT
+[12:07:35] LOG: Calculating Error
+
+        Level 12:
+            Original Stdev: 8.645025033203028 m/s
+            Predicted MAE:  0.27199249215327037 m/s
+            Predicted RMSE: 0.3515439508835796 m/s
+
+[12:10:32] LOG: Interpolating DFT
+[12:10:33] LOG: Calculating Error
+[12:10:36] LOG:
+        Level 13:
+            Original Stdev: 8.166585753163284 m/s
+            Predicted MAE:  0.3166215711177805 m/s
+            Predicted RMSE: 0.4128982323556156 m/s
+
+[12:11:10] LOG: Interpolating DFT
+[12:11:11] LOG: Calculating Error
+[12:11:14] LOG:
+        Level 14:
+            Original Stdev: 7.742530422526604 m/s
+            Predicted MAE:  0.30088803782990414 m/s
+            Predicted RMSE: 0.3924125346822039 m/s
+
+[12:09:28] LOG: Loading DFT
+[12:09:28] LOG: Performing IDFT
+[12:09:55] LOG: Calculating Error
+
+        Level 15:
+            Original Stdev: 7.371538287304178 m/s
+            Predicted MAE:  0.23774022613858423 m/s
+            Predicted RMSE: 0.30766597819255903 m/s
+
+[12:14:15] LOG: Interpolating DFT
+[12:14:16] LOG: Calculating Error
+[12:14:19] LOG:
+        Level 16:
+            Original Stdev: 7.038211072431521 m/s
+            Predicted MAE:  0.27325914752591624 m/s
+            Predicted RMSE: 0.360472404848916 m/s
+
+[12:14:53] LOG: Interpolating DFT
+[12:14:54] LOG: Calculating Error
+[12:14:57] LOG:
+        Level 17:
+            Original Stdev: 6.731332184441273 m/s
+            Predicted MAE:  0.269681299378081 m/s
+            Predicted RMSE: 0.3553239189447178 m/s
+
+[12:11:48] LOG: Loading DFT
+[12:11:48] LOG: Performing IDFT
+[12:12:15] LOG: Calculating Error
+
+        Level 18:
+            Original Stdev: 6.479860062206687 m/s
+            Predicted MAE:  0.21961458521849211 m/s
+            Predicted RMSE: 0.2849725771076872 m/s
+
+[12:16:35] LOG: Interpolating DFT
+[12:16:37] LOG: Calculating Error
+[12:16:40] LOG:
+        Level 19:
+            Original Stdev: 6.298925629090293 m/s
+            Predicted MAE:  0.22435851642323512 m/s
+            Predicted RMSE: 0.2912592896201122 m/s
+
+[12:17:13] LOG: Interpolating DFT
+[12:17:15] LOG: Calculating Error
+[12:17:18] LOG:
+        Level 20:
+            Original Stdev: 6.139713598275383 m/s
+            Predicted MAE:  0.22138783816640845 m/s
+            Predicted RMSE: 0.28754704014228155 m/s
+
+[12:15:31] LOG: Loading DFT
+[12:15:31] LOG: Performing IDFT
+[12:15:58] LOG: Calculating Error
+
+        Level 21:
+            Original Stdev: 6.0103419501444355 m/s
+            Predicted MAE:  0.2117385264290441 m/s
+            Predicted RMSE: 0.27567027738023203 m/s
+
+[12:19:00] LOG: Interpolating DFT
+[12:19:02] LOG: Calculating Error
+[12:19:05] LOG:
+        Level 22:
+            Original Stdev: 5.914747150656668 m/s
+            Predicted MAE:  0.22132072730224261 m/s
+            Predicted RMSE: 0.2877784277730654 m/s
+
+[12:19:38] LOG: Interpolating DFT
+[12:19:40] LOG: Calculating Error
+[12:19:43] LOG:
+        Level 23:
+            Original Stdev: 5.857590548588396 m/s
+            Predicted MAE:  0.22472098480186842 m/s
+            Predicted RMSE: 0.29190375235447713 m/s
+
+[12:17:56] LOG: Loading DFT
+[12:17:56] LOG: Performing IDFT
+[12:18:23] LOG: Calculating Error
+
+        Level 24:
+            Original Stdev: 5.827491050788622 m/s
+            Predicted MAE:  0.2096129413275214 m/s
+            Predicted RMSE: 0.2745280839501352 m/s
+
+[12:21:28] LOG: Interpolating DFT
+[12:21:30] LOG: Calculating Error
+[12:21:33] LOG:
+        Level 25:
+            Original Stdev: 5.8098867140737855 m/s
+            Predicted MAE:  0.20789449091687762 m/s
+            Predicted RMSE: 0.27315911388015185 m/s
+
+[12:22:09] LOG: Interpolating DFT
+[12:22:11] LOG: Calculating Error
+[12:22:14] LOG:
+        Level 26:
+            Original Stdev: 5.794404770806853 m/s
+            Predicted MAE:  0.20915556045272807 m/s
+            Predicted RMSE: 0.2753863656488652 m/s
+
+[12:20:20] LOG: Loading DFT
+[12:20:20] LOG: Performing IDFT
+[12:20:47] LOG: Calculating Error
+
+        Level 27:
+            Original Stdev: 5.775212615091475 m/s
+            Predicted MAE:  0.21261141555802435 m/s
+            Predicted RMSE: 0.2805476172213472 m/s
+
+[12:23:56] LOG: Interpolating DFT
+[12:23:57] LOG: Calculating Error
+[12:24:00] LOG:
+        Level 28:
+            Original Stdev: 5.747177094510318 m/s
+            Predicted MAE:  0.2152625582105414 m/s
+            Predicted RMSE: 0.28486553444487517 m/s
+
+[12:25:02] LOG: Interpolating DFT
+[12:25:04] LOG: Calculating Error
+[12:25:07] LOG:
+        Level 29:
+            Original Stdev: 5.707465038484892 m/s
+            Predicted MAE:  0.21967702303747066 m/s
+            Predicted RMSE: 0.2915055738317794 m/s
+
+[12:22:50] LOG: Loading DFT
+[12:22:50] LOG: Performing IDFT
+[12:23:17] LOG: Calculating Error
+
+        Level 30:
+            Original Stdev: 5.654282538572067 m/s
+            Predicted MAE:  0.2245458467698903 m/s
+            Predicted RMSE: 0.29830801319254585 m/s
+
+[12:26:48] LOG: Interpolating DFT
+[12:26:50] LOG: Calculating Error
+[12:26:53] LOG:
+        Level 31:
+            Original Stdev: 5.58171910346843 m/s
+            Predicted MAE:  0.24310078054063936 m/s
+            Predicted RMSE: 0.32627184936140535 m/s
+
+[12:28:57] LOG: Interpolating DFT
+[12:28:59] LOG: Calculating Error
+[12:29:02] LOG:
+        Level 32:
+            Original Stdev: 5.491343187791445 m/s
+            Predicted MAE:  0.2560220573110797 m/s
+            Predicted RMSE: 0.34644994256480893 m/s
+
+[12:25:42] LOG: Loading DFT
+[12:25:42] LOG: Performing IDFT
+[12:26:09] LOG: Calculating Error
+
+        Level 33:
+            Original Stdev: 5.381127878679719 m/s
+            Predicted MAE:  0.23679652637664722 m/s
+            Predicted RMSE: 0.3160377096743778 m/s
+
+[12:30:45] LOG: Interpolating DFT
+[12:30:47] LOG: Calculating Error
+[12:30:50] LOG:
+        Level 34:
+            Original Stdev: 5.166675731692002 m/s
+            Predicted MAE:  0.3441599934030505 m/s
+            Predicted RMSE: 0.5360250452124493 m/s
+
+[12:29:38] LOG: Loading DFT
+[12:29:38] LOG: Performing IDFT
+[12:30:05] LOG: Calculating Error
+
+        Level 35:
+            Original Stdev: 4.529156641991455 m/s
+            Predicted MAE:  0.19884312650025285 m/s
+            Predicted RMSE: 0.265055891763768 m/s
+
+[12:30:50] LOG:
+    Original Stdev: 8.568464675185558 m/s
+    Predicted MAE:  0.3275248175733363 m/s
+    Predicted RMSE: 0.5530494016772665 m/s

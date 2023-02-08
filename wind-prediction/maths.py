@@ -927,7 +927,7 @@ def get_hermite_interpolate(tension: float = 0, bias: float = 0):
     return _interpolate
 
 
-def fit_kochanek_bartels_spline(data, values, index: int, t: float, learning_rate: float = 0.5):
+def fit_kochanek_bartels_spline(data, values, index: int, t: float, learning_rate: float = 0.5, iterations: int = 15):
     p0 = values[max(0, index - 1)]
     p1 = values[index]
     p2 = values[index + 1]
@@ -956,7 +956,7 @@ def fit_kochanek_bartels_spline(data, values, index: int, t: float, learning_rat
     bias = 0
     tension = 0
 
-    for _ in range(30):
+    for _ in range(iterations):
         m0 = m00 * (1 + bias) + m01 * (1 - bias)
         m1 = m10 * (1 + bias) + m11 * (1 - bias)
 
