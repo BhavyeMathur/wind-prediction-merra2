@@ -1,0 +1,8 @@
+[11:58:55] LOG: Loading DFT
+[11:58:55] LOG: Performing IDFT
+[11:59:22] LOG: Calculating Error
+
+        Level 0:
+            Original Stdev: 11.38197934172047 m/s
+            Predicted MAE:  0.09965647515987254 m/s
+            Predicted RMSE: 0.1341450619757956 m/s
