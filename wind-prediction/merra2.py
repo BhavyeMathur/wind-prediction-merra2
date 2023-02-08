@@ -1,3 +1,5 @@
+from calendar import monthrange
+
 from maths import height_from_pressure
 
 
@@ -133,3 +135,51 @@ def format_time(time: int, filename: str) -> str:
             return f"{time:0>2}:30"
         case 3:
             return f"{time * 3 + 1:0>2}:30"
+
+
+def get_next_file(filename):
+    split_name = filename.split(".")
+    if filename.endswith(".SUB.nc"):
+        date_index = -3
+    else:
+        date_index = -2
+    date = split_name[date_index]
+
+    year = date[:4]
+    month = int(date[4:6])
+    day = int(date[6:])
+    if month == 12 and day == 31:
+        if year == "YAVG":
+            split_name[date_index] = "YAVG0101"
+        else:
+            split_name[date_index] = f"{int(year) + 1}0101"
+    elif day == monthrange(2001 if year == "YAVG" else int(year), month)[1]:
+        split_name[date_index] = f"{year}{month + 1:0>2}01"
+    else:
+        split_name[date_index] = f"{year}{month:0>2}{day + 1:0>2}"
+
+    return ".".join(split_name)
+
+
+def get_previous_file(filename):
+    split_name = filename.split(".")
+    if filename.endswith(".SUB.nc"):
+        date_index = -3
+    else:
+        date_index = -2
+    date = split_name[date_index]
+
+    year = date[:4]
+    month = int(date[4:6])
+    day = int(date[6:])
+    if month == 1 and day == 1:
+        if year == "YAVG":
+            split_name[date_index] = "YAVG1231"
+        else:
+            split_name[date_index] = f"{int(year) - 1}1231"
+    elif day == 1:
+        split_name[date_index] = f"{year}{month - 1:0>2}01"
+    else:
+        split_name[date_index] = f"{year}{month:0>2}{day - 1:0>2}"
+
+    return ".".join(split_name)

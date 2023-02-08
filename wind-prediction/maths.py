@@ -6,6 +6,8 @@ calculation functions.
 import math
 from typing import Callable
 
+import numpy as np
+
 import constants as const
 
 POLAR_RADIUS: float = (1 - const.FLATTENING) * const.EQUATORIAL_RADIUS  # radius at poles in kilometers
@@ -846,7 +848,7 @@ def mape(data, prediction):
 
 
 def mse(data, prediction):
-    return ((data - prediction) ** 2).mean()
+    return np.square(data - prediction).mean()
 
 
 def rmse(data, prediction):
