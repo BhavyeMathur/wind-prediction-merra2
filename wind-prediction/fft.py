@@ -106,14 +106,10 @@ def decode_val_rlen(ia, encoded_val: int):
 
 
 def encode_zlib(ia, strategy: int = 1):
-    compress = zlib.compressobj(9, zlib.DEFLATED, -zlib.MAX_WBITS, zlib.DEF_MEM_LEVEL, strategy)
-    deflated = compress.compress(ia)
-    deflated += compress.flush()
-    return np.frombuffer(deflated, dtype="uint8")
+    compress = zlib.compress(ia, 9)
+    return np.frombuffer(compress, dtype="uint8")
 
 
 def decode_zlib(ia, dtype="uint8"):
-    decompress = zlib.decompressobj(-zlib.MAX_WBITS)
-    inflated = decompress.decompress(ia)
-    inflated += decompress.flush()
-    return np.frombuffer(inflated, dtype=dtype)
+    decompress = zlib.decompress(ia)
+    return np.frombuffer(decompress, dtype=dtype)

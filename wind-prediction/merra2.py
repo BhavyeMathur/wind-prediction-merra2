@@ -132,9 +132,9 @@ def format_date(filename: str, for_output=False) -> str:
 def format_time(time: int, filename: str) -> str:
     match int(filename.split('.')[1][4]):
         case 1:
-            return f"{time:0>2}:30"
+            return f"{time % 24:0>2}:30"
         case 3:
-            return f"{time * 3 + 1:0>2}:30"
+            return f"{(time % 8) * 3 + 1:0>2}:30"
 
 
 def get_next_file(filename):
