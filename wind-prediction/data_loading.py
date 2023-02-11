@@ -50,11 +50,12 @@ def load_yavg_variable_on_day(filename: str,
 def load_variable_at_time(filename: str,
                           variable: str,
                           time: int,
-                          cache: bool = True):
+                          cache: bool = True,
+                          folder: str = COMPRESSED_FOLDER):
     if (key := (filename, variable, time, None, None, None)) in data_cache:
         return data_cache[key]
 
-    with open_xarray_dataset(filename, folder=COMPRESSED_FOLDER) as dataset:
+    with open_xarray_dataset(filename, folder=folder) as dataset:
         data = np.array(dataset[variable][time])
         data = data.view("float16").astype("float16")
 
