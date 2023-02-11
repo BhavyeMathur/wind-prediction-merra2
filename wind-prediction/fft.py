@@ -1,5 +1,29 @@
 import numpy as np
+import numpy.fft._pocketfft_internal as pfi
 import zlib
+
+
+def irfft3_at_level(a: np.ndarray, lev: int):
+    out = np.swapaxes(a, axis1=0, axis2=-1)
+    out = pfi.execute(out, False, False, 1 / 36)  # a, is_real, is_forward, 1 / norm
+    out = np.moveaxis(out, -1, 0)
+
+    out = out[lev, :, :]
+    out = pfi.execute(out, False, False, 1 / 361)  # a, is_real, is_forward, 1 / norm
+
+    return np.fft.irfft(out.T, 576, axis=-1, norm=None)
+
+
+def irfft3_at_level_and_latitude(a: np.ndarray, lev: int, lat: int):
+    out = np.swapaxes(a, axis1=0, axis2=-1)
+    out = pfi.execute(out, False, False, 1 / 36)  # a, is_real, is_forward, 1 / norm
+    out = np.moveaxis(out, -1, 0)
+
+    out = out[lev]
+    out = pfi.execute(out, False, False, 1 / 361)  # a, is_real, is_forward, 1 / norm
+    out = out.T[lat]
+
+    return np.fft.irfft(out, 576, axis=-1, norm=None)
 
 
 def encode_difference_uint8(ia):
@@ -40,67 +64,6 @@ def decode_difference_uint8(ia):
 
         i += di
         out.append(i)
-
-    return np.array(out, dtype="uint16")
-
-
-def encode_rlen(ia):
-    out = []
-    val_count = 0
-    encoded_val = ia[0]
-
-    for val in ia:
-        if val == encoded_val:
-            val_count += 1
-        else:
-            out.append(encoded_val)
-            out.append(val_count)
-            encoded_val = val
-            val_count = 0
-
-    if val_count != 0:
-        out.append(encoded_val)
-        out.append(val_count)
-
-    return np.array(out, dtype="uint8")
-
-
-def decode_rlen(ia):
-    out = []
-    for i in range(0, len(ia), 2):
-        encoded_val = ia[i]
-        for _ in range(ia[i + 1]):
-            out.append(encoded_val)
-
-    return np.array(out, dtype="uint16")
-
-
-def encode_val_rlen(ia, encoded_val: int):
-    out = []
-    val_count = 0
-    for val in ia:
-        if val == encoded_val:
-            val_count += 1
-        else:
-            out.append(val_count)
-            out.append(val)
-            val_count = 0
-
-    if val_count != 0:
-        out.append(val_count)
-
-    return np.array(out, dtype="uint8")
-
-
-def decode_val_rlen(ia, encoded_val: int):
-    out = []
-    for i in range(0, len(ia), 2):
-        for _ in range(ia[i]):
-            out.append(encoded_val)
-        try:
-            out.append(ia[i + 1])
-        except IndexError:
-            break
 
     return np.array(out, dtype="uint16")
 
