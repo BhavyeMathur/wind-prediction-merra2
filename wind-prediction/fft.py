@@ -106,10 +106,36 @@ def decode_val_rlen(ia, encoded_val: int):
 
 
 def encode_zlib(ia, strategy: int = 1):
-    compress = zlib.compress(ia, 9)
-    return np.frombuffer(compress, dtype="uint8")
+    compress = zlib.compressobj(9, zlib.DEFLATED, -zlib.MAX_WBITS, zlib.DEF_MEM_LEVEL, strategy)
+    deflated = compress.compress(ia)
+    deflated += compress.flush()
+    return np.frombuffer(deflated, dtype="uint8")
 
 
 def decode_zlib(ia, dtype="uint8"):
-    decompress = zlib.decompress(ia)
-    return np.frombuffer(decompress, dtype=dtype)
+    decompress = zlib.decompressobj(-zlib.MAX_WBITS)
+    inflated = decompress.decompress(ia)
+    inflated += decompress.flush()
+    return np.frombuffer(inflated, dtype=dtype)
+
+
+def idft3_at_time(fft_real, fft_imag, fft_i_indices, fft_j_indices, fft_k_indices):
+    ifft = np.zeros((36, 361, 289), dtype="complex64")
+
+    fft_real = decode_zlib(fft_real, dtype="float16")
+    fft_imag = decode_zlib(fft_imag, dtype="float16")
+    fft = fft_real.astype("complex64") * 131072 + fft_imag.astype("complex64") * 131072j
+
+    fft_i_indices = decode_zlib(fft_i_indices)
+    fft_i_indices = decode_difference_uint8(fft_i_indices)
+
+    fft_j_indices = decode_zlib(fft_j_indices)
+    fft_j_indices = decode_difference_uint8(fft_j_indices)
+
+    fft_k_indices = decode_zlib(fft_k_indices)
+    fft_k_indices = decode_difference_uint8(fft_k_indices)
+
+    for idx in range(len(fft)):
+        ifft[fft_i_indices[idx], fft_j_indices[idx], fft_k_indices[idx]] = fft[idx]
+
+    return np.fft.irfftn(ifft)
