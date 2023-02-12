@@ -668,15 +668,20 @@ def plot_contour_at_time_and_level(filename: str,
         data = load_variable_at_time_and_level(filename, variable, time, level, **kwargs)
     data = data_processing(data)
 
-    if get_nc4_dimensions(filename, **kwargs) == 3:
+    if (dims := get_nc4_dimensions(filename, **kwargs)) == 2:
+        output = variable
+        title = format_variable(variable)
+    elif dims == 3:
         output = f"{variable}" \
                  f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}"
         title = f"{format_variable(variable)} on {format_date(filename)} at {format_time(time, filename)}"
-    else:
+    elif dims == 4:
         output = f"{variable}-{format_level(level, for_output=True)}" \
                  f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}"
         title = f"{format_variable(variable)} at {format_level(level)}" \
                 f" on {format_date(filename)} at {format_time(time, filename)}"
+    else:
+        raise ValueError("Unknown nc4 file format")
 
     fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
 

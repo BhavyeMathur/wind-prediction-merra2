@@ -37,7 +37,7 @@ def print_nc4_metadata(filename: str, folder: str = COMPRESSED_FOLDER) -> None:
 
 def get_nc4_dimensions(filename: str, folder: str = COMPRESSED_FOLDER) -> int:
     with open_xarray_dataset(filename, folder) as dataset:
-        return len(dataset.dims)
+        return sum(dim != 1 for dim in dataset.dims.values())
 
 
 def get_nc4_dimension_size(filename: str, dimension: str, folder: str = COMPRESSED_FOLDER) -> int:

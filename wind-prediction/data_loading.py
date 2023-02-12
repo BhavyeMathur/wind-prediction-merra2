@@ -151,10 +151,14 @@ def load_variable_at_time_and_level(filename: str,
         return data
 
     with open_xarray_dataset(filename, folder=folder) as dataset:
-        if get_nc4_dimensions(filename, folder=folder) == 3:
+        if (dims := get_nc4_dimensions(filename, folder=folder)) == 2:
+            data = np.array(dataset[variable][0])
+        elif dims == 3:
             data = np.array(dataset[variable][int(time)])
-        else:
+        elif dims == 4:
             data = np.array(dataset[variable][int(time), int(level)])
+        else:
+            raise ValueError("Unknown nc4 format!")
 
     if is_nc4_packed_as_float32(filename, folder=folder):
         data = data.view("float16").astype("float16")

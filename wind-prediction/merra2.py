@@ -52,6 +52,9 @@ def get_units_from_variable(variable: str) -> str:
     if variable.endswith("_est"):
         variable = variable[:-4]
 
+    if variable.startswith("FR"):
+        return "%"
+
     if variable in {"AUTCNVRN", "COLCNVRN", "COLCNVSN", "CUCNVCI", "CUCNVCL", "CUCNVRN"}\
             or variable.startswith("DOXDT") or variable.startswith("DQ"):
         return "kg/m²/s"
@@ -67,6 +70,10 @@ def get_units_from_variable(variable: str) -> str:
             return "m/s"
         case "Wind Speed":
             return "m/s"
+        case "PHIS":
+            return "m²/s²"
+        case "SGH":
+            return "m"
 
 
 def get_variable_name_from_code(variable: str) -> str:
@@ -80,6 +87,18 @@ def get_variable_name_from_code(variable: str) -> str:
             return "North Wind"
         case "T":
             return "Temperature"
+        case "FRLAND":
+            return "Fraction of Land"
+        case "FRLANDICE":
+            return "Fraction of Land Ice"
+        case "FROCEAN":
+            return "Fraction of Ocean"
+        case "FRLAKE":
+            return "Fraction of Lake"
+        case "PHIS":
+            return "Surface Geopotential Height"
+        case "SGH":
+            return "Isotropic Standard Deviation of GWD Topography"
     return variable
 
 
@@ -139,6 +158,9 @@ def format_date(filename: str, for_output=False) -> str:
 
 
 def format_time(time: int, filename: str) -> str:
+    if "const" in filename:
+        return None
+
     match int(filename.split('.')[1][4]):
         case 1:
             return f"{time % 24:0>2}:30"
