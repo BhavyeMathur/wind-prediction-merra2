@@ -173,6 +173,7 @@ def plot_histogram(data: list[DataDictionary],
     labels = []
     colours = []
 
+    plt.figure()
     for i, series in enumerate(data):
         series_list.append(series["data"])
         labels.append(series.get("label", ""))

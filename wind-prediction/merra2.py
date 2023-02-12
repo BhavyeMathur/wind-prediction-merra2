@@ -49,6 +49,9 @@ def get_pressure_from_level(level, total_levels: int = 72) -> float:
 
 
 def get_units_from_variable(variable: str) -> str:
+    if variable.endswith("_est"):
+        variable = variable[:-4]
+
     if variable in {"AUTCNVRN", "COLCNVRN", "COLCNVSN", "CUCNVCI", "CUCNVCL", "CUCNVRN"}\
             or variable.startswith("DOXDT") or variable.startswith("DQ"):
         return "kg/m²/s"
@@ -67,6 +70,9 @@ def get_units_from_variable(variable: str) -> str:
 
 
 def get_variable_name_from_code(variable: str) -> str:
+    if variable.endswith("_est"):
+        return f"Estimated {get_variable_name_from_code(variable[:-4])}"
+
     match variable:
         case "U":
             return "East Wind"
@@ -87,7 +93,10 @@ def get_year_from_filename(filename: str) -> str:
 
 
 def format_variable(variable: str) -> str:
-    return f"{get_variable_name_from_code(variable)} ({get_units_from_variable(variable)})"
+    name = get_variable_name_from_code(variable)
+    if name == variable:
+        return f"{name.title()}"
+    return f"{name} ({get_units_from_variable(variable)})"
 
 
 def format_level(level, total_levels=36, for_output=False) -> str:
