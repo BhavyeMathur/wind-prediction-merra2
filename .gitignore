@@ -5,6 +5,10 @@
 *.bin
 *.parquet
 *urls.txt
+*.log
+
+# Generated Folders
+wandb/
 
 # Media files
 *.gif
