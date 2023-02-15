@@ -8,7 +8,7 @@
 *.log
 
 # Generated Folders
-wandb/*
+wandb/
 
 # Media files
 *.gif
