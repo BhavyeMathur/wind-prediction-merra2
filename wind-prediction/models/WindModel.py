@@ -1,6 +1,5 @@
 import torch
-from torch.utils.data import DataLoader, Dataset
-import pytorch_lightning as pl
+from torch.utils.data import Dataset
 
 import pandas as pd
 
@@ -14,16 +13,18 @@ N = 100000000
 TRAIN_TEST_SPLIT = 0.8
 TRAIN_VAL_SPLIT = 0.9
 
-DEVICE = "cpu"
+DEVICE = "mps"
 
 NORMALIZED = True
 GEOGRAPHICAL = True
 CYCLIC_TIME = True
 ABSOLUTE_U = False
 ABSOLUTE_V = False
+PREDICT_DIFFERENCE = False
 
 VARIABLE = "U"
-DATASET = "N" if NORMALIZED else ""
+DATASET = "D" if PREDICT_DIFFERENCE else ""
+DATASET += "N" if NORMALIZED else ""
 DATASET += "G" if GEOGRAPHICAL else ""
 DATASET += "CT" if CYCLIC_TIME else ""
 DATASET += "AU" if ABSOLUTE_U else ""
@@ -45,7 +46,10 @@ class WindDataset(Dataset):
         else:
             raise ValueError("Invalid Subset")
 
-        self.y = self.x[VARIABLE]
+        if PREDICT_DIFFERENCE:
+            self.y = self.x[VARIABLE] - self.x[VARIABLE + "_est"]
+        else:
+            self.y = self.x[VARIABLE]
 
         del self.x["U"]
         del self.x["V"]
@@ -53,8 +57,8 @@ class WindDataset(Dataset):
         self.x = self.x.values.astype("float32")
         self.y = self.y.values.astype("float32")
 
-        self.x = torch.Tensor(self.x).to(DEVICE)
-        self.y = torch.Tensor(self.y).to(DEVICE)
+        self.x = torch.tensor(self.x, device=DEVICE)
+        self.y = torch.tensor(self.y, device=DEVICE)
 
     def __len__(self):
         return len(self.x)
@@ -68,7 +72,7 @@ class WindDataset(Dataset):
         file += "G" if GEOGRAPHICAL else ""
         file += "CT" if CYCLIC_TIME else ""
 
-        cls.data = pd.read_feather(f"../raw/subset/UV-{file}-{ESTIMATE_QUANTILE}-{100000000}.ft").sample(frac=frac)
+        cls.data = pd.read_feather(f"../raw/subset/UV-{file}-{ESTIMATE_QUANTILE}-{N}.ft").sample(frac=frac)
 
         if ABSOLUTE_U:
             cls.data["U"] = cls.data["U"].abs()

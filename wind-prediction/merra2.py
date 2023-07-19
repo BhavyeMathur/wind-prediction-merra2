@@ -55,7 +55,7 @@ def get_units_from_variable(variable: str) -> str:
     if variable.startswith("FR"):
         return "%"
 
-    if variable in {"AUTCNVRN", "COLCNVRN", "COLCNVSN", "CUCNVCI", "CUCNVCL", "CUCNVRN"}\
+    if variable in {"AUTCNVRN", "COLCNVRN", "COLCNVSN", "CUCNVCI", "CUCNVCL", "CUCNVRN"} \
             or variable.startswith("DOXDT") or variable.startswith("DQ"):
         return "kg/m²/s"
 
@@ -63,42 +63,40 @@ def get_units_from_variable(variable: str) -> str:
             or variable.startswith("DPDT"):
         return "W/m²"
 
-    match variable:
-        case "U":
-            return "m/s"
-        case "V":
-            return "m/s"
-        case "Wind Speed":
-            return "m/s"
-        case "PHIS":
-            return "m²/s²"
-        case "SGH":
-            return "m"
+    if variable == "U":
+        return "m/s"
+    elif variable == "V":
+        return "m/s"
+    elif variable == "Wind Speed":
+        return "m/s"
+    elif variable == "PHIS":
+        return "m²/s²"
+    elif variable == "SGH":
+        return "m"
 
 
 def get_variable_name_from_code(variable: str) -> str:
     if variable.endswith("_est"):
         return f"Estimated {get_variable_name_from_code(variable[:-4])}"
 
-    match variable:
-        case "U":
-            return "East Wind"
-        case "V":
-            return "North Wind"
-        case "T":
-            return "Temperature"
-        case "FRLAND":
-            return "Fraction of Land"
-        case "FRLANDICE":
-            return "Fraction of Land Ice"
-        case "FROCEAN":
-            return "Fraction of Ocean"
-        case "FRLAKE":
-            return "Fraction of Lake"
-        case "PHIS":
-            return "Surface Geopotential Height"
-        case "SGH":
-            return "Isotropic Standard Deviation of GWD Topography"
+    if variable == "U":
+        return "East Wind"
+    elif variable == "V":
+        return "North Wind"
+    elif variable == "T":
+        return "Temperature"
+    elif variable == "FRLAND":
+        return "Fraction of Land"
+    elif variable == "FRLANDICE":
+        return "Fraction of Land Ice"
+    elif variable == "FROCEAN":
+        return "Fraction of Ocean"
+    elif variable == "FRLAKE":
+        return "Fraction of Lake"
+    elif variable == "PHIS":
+        return "Surface Geopotential Height"
+    elif variable == "SGH":
+        return "Isotropic Standard Deviation of GWD Topography"
     return variable
 
 
@@ -161,11 +159,10 @@ def format_time(time: int, filename: str) -> str:
     if "const" in filename:
         return None
 
-    match int(filename.split('.')[1][4]):
-        case 1:
-            return f"{time % 24:0>2}:30"
-        case 3:
-            return f"{(time % 8) * 3 + 1:0>2}:30"
+    if (case := int(filename.split('.')[1][4])) == 1:
+        return f"{time % 24:0>2}:30"
+    elif case == 3:
+        return f"{(time % 8) * 3 + 1:0>2}:30"
 
 
 def get_next_file(filename):
