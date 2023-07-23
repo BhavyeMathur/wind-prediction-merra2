@@ -102,3 +102,25 @@ def idft3_at_time(fft_real, fft_imag, fft_i_indices, fft_j_indices, fft_k_indice
         ifft[fft_i_indices[idx], fft_j_indices[idx], fft_k_indices[idx]] = fft[idx]
 
     return np.fft.irfftn(ifft)
+
+
+def idft3_at_level(fft_real, fft_imag, fft_i_indices, fft_j_indices, fft_k_indices):
+    ifft = np.zeros((365 * 8, 361, 289), dtype="complex64")
+
+    fft_real = decode_zlib(fft_real, dtype="float16")
+    fft_imag = decode_zlib(fft_imag, dtype="float16")
+    fft = fft_real.astype("complex64") * 262144 + fft_imag.astype("complex64") * 262144j
+
+    fft_i_indices = decode_zlib(fft_i_indices)
+    fft_i_indices = decode_difference_uint8(fft_i_indices)
+
+    fft_j_indices = decode_zlib(fft_j_indices)
+    fft_j_indices = decode_difference_uint8(fft_j_indices)
+
+    fft_k_indices = decode_zlib(fft_k_indices)
+    fft_k_indices = decode_difference_uint8(fft_k_indices)
+
+    for idx in range(len(fft)):
+        ifft[fft_i_indices[idx], fft_j_indices[idx], fft_k_indices[idx]] = fft[idx]
+
+    return np.fft.irfftn(ifft), len(fft)

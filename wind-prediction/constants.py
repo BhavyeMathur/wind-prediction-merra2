@@ -7,7 +7,7 @@ import math
 
 """Filepaths --------------------------------------------------------------------------------------------------------"""
 
-COMPRESSED_FOLDER = "raw/"  # "/Volumes/MERRA-2/compressed-wind/"
+COMPRESSED_FOLDER = "."  # "/Volumes/MERRA-2/compressed-wind/"
 
 """Constant Variables -----------------------------------------------------------------------------------------------"""
 
