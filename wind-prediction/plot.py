@@ -341,7 +341,6 @@ def plot_variable_at_time_level_and_latitude_vs_longitude(filename: str,
 
     plt.title(f"{variable} ({get_units_from_variable(variable)}) at {format_latitude(latitude)}, {format_level(level)}"
               f" on {format_date(filename)} at {format_time(time, filename)}", fontsize=8)
-    plt.show()
 
 
 def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
@@ -357,7 +356,6 @@ def plot_variable_at_time_level_and_longitude_vs_latitude(filename: str,
 
     plt.title(f"{variable} ({get_units_from_variable(variable)}) at {format_longitude(longitude)}, "
               f"{format_level(level)} on {format_date(filename)} at {format_time(time, filename)}", fontsize=8)
-    plt.show()
 
 
 def plot_variable_at_time_and_level_vs_longitude(filename: str,
@@ -380,7 +378,6 @@ def plot_variable_at_time_and_level_vs_longitude(filename: str,
         fig, ax1, ax2 = fig_ax1_ax2
     else:
         fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
-        plt.show()
 
     for latitude in range(lat_start, lat_end, lat_step):
         ax1.plot(np.linspace(-180, 180, 576), data[latitude],
@@ -422,16 +419,20 @@ def _plot_variable_at_time_and_longitude_vs_vertical(filename: str,
         fig, ax1, ax2 = fig_ax1_ax2
     else:
         fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
-        plt.show()
 
     for latitude in range(lat_start, lat_end, lat_step):
         ax1.plot(verticals[-data.shape[0]:], data[:, latitude],
-                 color=plt.cm.coolwarm(latitude / 361),
+                 color=cmr.arctic((latitude / 361) ** 0.5),
                  linewidth=linewidth)
 
-    bar = mpl.colorbar.Colorbar(ax2, cmap="coolwarm", orientation="vertical", values=np.linspace(-90, 90, 50))
+    bar = mpl.colorbar.Colorbar(ax2, cmap=cmr.arctic, orientation="vertical", values=np.linspace(-90, 90, 50))
     bar.set_ticks([-90, -60, -30, 0, 30, 60, 90])
     bar.set_ticklabels(["-90°", "-60°", "-30°", " 0°", "30°", "60°", "90°"])
+
+    background = np.array([40, 50, 65]) / 255 - 0.1
+    fig.set_facecolor(background)
+    ax1.set_facecolor(background)
+    ax1.grid(c=background + 0.1)
 
     ax1.tick_params(labelsize=9)
     ax1.set_title(title, fontsize=9)
@@ -462,16 +463,20 @@ def _plot_variable_at_time_and_latitude_vs_vertical(filename: str,
         fig, ax1, ax2 = fig_ax1_ax2
     else:
         fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
-        plt.show()
 
     for longitude in range(lon_start, lon_end, lon_step):
         ax1.plot(verticals[-data.shape[0]:], data[:, longitude],
-                 color=plt.cm.coolwarm(longitude / 576),
+                 color=cmr.arctic((longitude / 576) ** 0.5),
                  linewidth=linewidth)
 
-    bar = mpl.colorbar.Colorbar(ax2, cmap="coolwarm", orientation="vertical", values=np.linspace(-180, 180, 50))
+    bar = mpl.colorbar.Colorbar(ax2, cmap=cmr.arctic, orientation="vertical", values=np.linspace(-180, 180, 50))
     bar.set_ticks([-180, -120, -60, 0, 60, 120, 180])
     bar.set_ticklabels(["-180°", "-120°", "-60°", " 0°", "60°", "120°", "180°"])
+
+    background = np.array([40, 50, 65]) / 255 - 0.1
+    fig.set_facecolor(background)
+    ax1.set_facecolor(background)
+    ax1.grid(c=background + 0.1)
 
     ax1.tick_params(labelsize=9)
     ax1.set_title(title, fontsize=9)
@@ -495,7 +500,6 @@ def plot_variable_at_level_and_longitude_vs_time(filename: str,
         fig, ax1, ax2 = fig_ax1_ax2
     else:
         fig, ax1, ax2 = create_1x2_plot(title, figsize=(8, 5), width_ratios=(98, 2))
-        plt.show()
 
     for latitude in range(361):
         ax1.plot(data[:, latitude],
@@ -539,7 +543,7 @@ def plot_variable_at_time_and_longitude_vs_pressure(filename: str,
 
     fig, ax1, ax2 = _plot_variable_at_time_and_longitude_vs_vertical(filename, variable, time, longitude,
                                                                      [get_pressure_from_level(lev)
-                                                                      for lev in range(72)], **kwargs)
+                                                                      for lev in range(36)], **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d hPa"))
 
     plt.savefig("assets/vs-vertical/" + output + ".png", dpi=300)
@@ -554,7 +558,7 @@ def plot_variable_at_time_and_longitude_vs_height(filename: str,
     output = f"{variable}/{format_longitude(longitude, for_output=True)}" \
              f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}-vs-height"
 
-    heights = [height_from_pressure(get_pressure_from_level(lev) * 100) / 1000 for lev in range(72)]
+    heights = [height_from_pressure(get_pressure_from_level(lev) * 100) / 1000 for lev in range(36)]
     fig, ax1, ax2 = _plot_variable_at_time_and_longitude_vs_vertical(filename, variable, time, longitude, heights,
                                                                      **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d km"))
@@ -587,7 +591,7 @@ def plot_variable_at_time_and_latitude_vs_pressure(filename: str,
 
     fig, ax1, ax2 = _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude,
                                                                     [get_pressure_from_level(lev)
-                                                                     for lev in range(72)], **kwargs)
+                                                                     for lev in range(36)], **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d hPa"))
 
     plt.savefig("assets/vs-vertical/" + output + ".png", dpi=300)
@@ -602,7 +606,7 @@ def plot_variable_at_time_and_latitude_vs_height(filename: str,
     output = f"{variable}/{format_latitude(latitude, for_output=True)}" \
              f"-{format_date(filename, for_output=True)}-{format_time(time, filename)}-vs-height"
 
-    heights = [height_from_pressure(get_pressure_from_level(lev) * 100) / 1000 for lev in range(72)]
+    heights = [height_from_pressure(get_pressure_from_level(lev) * 100) / 1000 for lev in range(36)]
     fig, ax1, ax2 = _plot_variable_at_time_and_latitude_vs_vertical(filename, variable, time, latitude, heights,
                                                                     **kwargs)
     ax1.xaxis.set_major_formatter(FormatStrFormatter("%d km"))
@@ -630,7 +634,6 @@ def plot_3D_variable_at_time_and_level(filename: str,
 
     if ax is None:
         ax = plt.axes(projection="3d")
-        plt.show()
 
     lons, lats = np.meshgrid(np.linspace(-180, 180, 576), np.linspace(-90, 90, 361))
     ax.plot_surface(lons, lats, data, antialiased=True, cmap="coolwarm", linewidth=linewidth, alpha=alpha)
@@ -704,6 +707,7 @@ def plot_contour_at_time_and_level(filename: str,
     ax1.yaxis.set_major_formatter(FormatStrFormatter("%d°"))
     ax1.set_xlim((-180, 180))
     ax1.set_ylim((-90, 90))
+    ax1.grid(False)
 
     ax2.tick_params(labelsize=7, right=False, direction="in")
 
@@ -808,6 +812,5 @@ def plot_interactive_contour_at_time(filename: str,
     level_slider.on_changed(update_contour)
 
     update_contour(0)
-    plt.show()
 
     return level_slider
