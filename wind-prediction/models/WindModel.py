@@ -21,6 +21,7 @@ CYCLIC_TIME = True
 ABSOLUTE_U = False
 ABSOLUTE_V = False
 PREDICT_DIFFERENCE = False
+USE_ESTIMATE = False
 
 VARIABLE = "U"
 DATASET = "D" if PREDICT_DIFFERENCE else ""
@@ -29,6 +30,10 @@ DATASET += "G" if GEOGRAPHICAL else ""
 DATASET += "CT" if CYCLIC_TIME else ""
 DATASET += "AU" if ABSOLUTE_U else ""
 DATASET += "AV" if ABSOLUTE_V else ""
+DATASET += "NE" if not USE_ESTIMATE else ""
+
+
+INPUT_SIZE = 15 if USE_ESTIMATE else 13
 
 
 class WindDataset(Dataset):
@@ -51,6 +56,9 @@ class WindDataset(Dataset):
         else:
             self.y = self.x[VARIABLE]
 
+        if not USE_ESTIMATE:
+            del self.x["U_est"], self.x["V_est"]
+
         del self.x["U"]
         del self.x["V"]
 
@@ -68,6 +76,8 @@ class WindDataset(Dataset):
 
     @classmethod
     def init(cls, frac: float):
+        global INPUT_SIZE
+
         file = "N" if NORMALIZED else ""
         file += "G" if GEOGRAPHICAL else ""
         file += "CT" if CYCLIC_TIME else ""
