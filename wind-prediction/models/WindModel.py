@@ -7,33 +7,10 @@ import pandas as pd
 means = {"U": 5.589, "V": 0.018}
 stds = {"U": 9.832, "V": 3.232}
 
-ESTIMATE_QUANTILE = 0.9935
-N = 100000000
-
 TRAIN_TEST_SPLIT = 0.8
 TRAIN_VAL_SPLIT = 0.9
 
-DEVICE = "mps"
-
-NORMALIZED = True
-GEOGRAPHICAL = True
-CYCLIC_TIME = True
-ABSOLUTE_U = False
-ABSOLUTE_V = False
-PREDICT_DIFFERENCE = False
-USE_ESTIMATE = False
-
 VARIABLE = "U"
-DATASET = "D" if PREDICT_DIFFERENCE else ""
-DATASET += "N" if NORMALIZED else ""
-DATASET += "G" if GEOGRAPHICAL else ""
-DATASET += "CT" if CYCLIC_TIME else ""
-DATASET += "AU" if ABSOLUTE_U else ""
-DATASET += "AV" if ABSOLUTE_V else ""
-DATASET += "NE" if not USE_ESTIMATE else ""
-
-
-INPUT_SIZE = 15 if USE_ESTIMATE else 13
 
 
 class WindDataset(Dataset):
@@ -51,13 +28,10 @@ class WindDataset(Dataset):
         else:
             raise ValueError("Invalid Subset")
 
-        if PREDICT_DIFFERENCE:
+        if self.predict_difference:
             self.y = self.x[VARIABLE] - self.x[VARIABLE + "_est"]
         else:
             self.y = self.x[VARIABLE]
-
-        if not USE_ESTIMATE:
-            del self.x["U_est"], self.x["V_est"]
 
         del self.x["U"]
         del self.x["V"]
@@ -65,8 +39,8 @@ class WindDataset(Dataset):
         self.x = self.x.values.astype("float32")
         self.y = self.y.values.astype("float32")
 
-        self.x = torch.tensor(self.x, device=DEVICE)
-        self.y = torch.tensor(self.y, device=DEVICE)
+        self.x = torch.tensor(self.x, device=self.device)
+        self.y = torch.tensor(self.y, device=self.device)
 
     def __len__(self):
         return len(self.x)
@@ -75,18 +49,21 @@ class WindDataset(Dataset):
         return self.x[i], self.y[i]
 
     @classmethod
-    def init(cls, frac: float):
-        global INPUT_SIZE
+    def init(cls, frac: float, normalised=True, geographical=True, cyclic_time=True, quantile=0.9935, n=10000000,
+             device="mps", absolute=False, predict_difference=False):
 
-        file = "N" if NORMALIZED else ""
-        file += "G" if GEOGRAPHICAL else ""
-        file += "CT" if CYCLIC_TIME else ""
+        file = "N" if normalised else ""
+        file += "G" if geographical else ""
+        file += "CT" if cyclic_time else ""
 
-        cls.data = pd.read_feather(f"../data/subset/UV-{file}-{ESTIMATE_QUANTILE}-{N}.ft").sample(frac=frac)
+        cls.device = device
+        cls.predict_difference = predict_difference
 
-        if ABSOLUTE_U:
+        cls.data = pd.read_feather(f"../data/subset/UV-{file}-{quantile}-{n}.ft").sample(frac=frac)
+
+        if absolute:
             cls.data["U"] = cls.data["U"].abs()
             cls.data["U_est"] = cls.data["U_est"].abs()
-        if ABSOLUTE_V:
+
             cls.data["V"] = cls.data["V"].abs()
             cls.data["V_est"] = cls.data["V_est"].abs()
