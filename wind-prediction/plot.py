@@ -156,7 +156,10 @@ def plot_histogram(data: list[DataDictionary],
                    xlabel: str | None = None,
                    ylabel: str | None = None,
                    subtitle: str | None = None,
-                   bins: int | None = None) -> None:
+                   bins: int | None = None,
+                   cmap=gradient,
+                   cmin: float = 0,
+                   cmax: float = 1) -> None:
     """Plots a histogram with the data supplied
 
     @param data: a dictionary represent the data, labels, and colours for the histogram
@@ -177,13 +180,17 @@ def plot_histogram(data: list[DataDictionary],
     for i, series in enumerate(data):
         series_list.append(series["data"])
         labels.append(series.get("label", ""))
-        colours.append(series.get("colour", _get_colour(i)))
+        if len(series_list) != 1:
+            colours.append(series.get("colour", _get_colour(i)))
 
-    n, bins, patches = plt.hist(series_list, bins=bins, label=labels, color=colours, linewidth=0)
+    if len(series_list) == 1:
+        n, bins, patches = plt.hist(series_list, bins=bins, label=labels, linewidth=0)
+    else:
+        n, bins, patches = plt.hist(series_list, bins=bins, label=labels, color=colours, linewidth=0)
 
     if len(series_list) == 1:
         for i in range(len(patches)):
-            patches[i].set_facecolor(gradient(n[i] / max(n)))
+            patches[i].set_facecolor(cmap(cmin + cmax * n[i] / max(n)))
 
     setup_plot(title=title, xlabel=xlabel, ylabel=ylabel, subtitle=subtitle)
 
