@@ -82,7 +82,7 @@ class WindDataset(Dataset):
         file += "G" if GEOGRAPHICAL else ""
         file += "CT" if CYCLIC_TIME else ""
 
-        cls.data = pd.read_feather(f"../raw/subset/UV-{file}-{ESTIMATE_QUANTILE}-{N}.ft").sample(frac=frac)
+        cls.data = pd.read_feather(f"../data/subset/UV-{file}-{ESTIMATE_QUANTILE}-{N}.ft").sample(frac=frac)
 
         if ABSOLUTE_U:
             cls.data["U"] = cls.data["U"].abs()
