@@ -81,6 +81,7 @@ def decode_zlib(ia, dtype="uint8"):
     inflated += decompress.flush()
     return np.frombuffer(inflated, dtype=dtype)
 
+
 def dft_at_time_level_and_latitude(data: np.ndarray, quantile: float = 0.75):
     fft = np.fft.rfft(data)
     amplitudes = np.abs(fft)
