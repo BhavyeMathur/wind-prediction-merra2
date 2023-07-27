@@ -10,7 +10,7 @@ stds = {"U": 9.832, "V": 3.232}
 TRAIN_TEST_SPLIT = 0.8
 TRAIN_VAL_SPLIT = 0.9
 
-VARIABLE = "U"
+VARIABLE = "V"
 
 
 class WindDataset(Dataset):
@@ -28,13 +28,13 @@ class WindDataset(Dataset):
         else:
             raise ValueError("Invalid Subset")
 
-        if self.predict_difference:
+        if self.predict_difference and f"{VARIABLE}_est" in self.x.columns:
             self.y = self.x[VARIABLE] - self.x[VARIABLE + "_est"]
         else:
             self.y = self.x[VARIABLE]
 
-        del self.x["U"]
-        del self.x["V"]
+        for variable in self.variables:
+            del self.x[variable]
 
         self.x = self.x.values.astype("float32")
         self.y = self.y.values.astype("float32")
@@ -49,21 +49,38 @@ class WindDataset(Dataset):
         return self.x[i], self.y[i]
 
     @classmethod
-    def init(cls, frac: float, normalised=True, geographical=True, cyclic_time=True, quantile=0.9935, n=10000000,
-             device="mps", absolute=False, predict_difference=False):
+    def init(cls, frac: float, quantile=0.9935, n=10000000, device="mps", variables=("U", "V"),
+             normalised=True, geographical=True, cyclic_time=True, cyclic_coordinates=False,
+             absolute=False, predict_difference=False, mathur2022=False, barometric=False, geographical_matrix=1):
 
-        file = "N" if normalised else ""
-        file += "G" if geographical else ""
-        file += "CT" if cyclic_time else ""
+        if mathur2022:
+            file = "MATHUR2022"
+            predict_difference = False
+            absolute = False
+        else:
+            file = "N" if normalised else ""
+            file += f"{geographical_matrix if geographical_matrix != 1 else ''}G" if geographical else ""
+            file += "CT" if cyclic_time else ""
+            file += "CC" if cyclic_coordinates else ""
+            file += "B" if barometric else ""
 
         cls.device = device
         cls.predict_difference = predict_difference
+        cls.variables = variables
 
-        cls.data = pd.read_feather(f"../data/subset/UV-{file}-{quantile}-{n}.ft").sample(frac=frac)
+        if quantile is None:
+            file = f"../data/subset/{''.join(variables)}-{file}-{n}.ft"
+        else:
+            file = f"../data/subset/{''.join(variables)}-{file}-{quantile}-{n}.ft"
+        cls.data = pd.read_feather(file)
+        print("Loaded", file)
+
+        cls.data = cls.data.sample(frac=frac)
 
         if absolute:
-            cls.data["U"] = cls.data["U"].abs()
-            cls.data["U_est"] = cls.data["U_est"].abs()
+            for variable in variables:
+                cls.data[variable] = cls.data[variable].abs()
+                cls.data[f"{variable}_est"] = cls.data[f"{variable}_est"].abs()
 
             cls.data["V"] = cls.data["V"].abs()
             cls.data["V_est"] = cls.data["V_est"].abs()
