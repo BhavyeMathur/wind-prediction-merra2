@@ -111,6 +111,7 @@ def idft_at_time_level_and_latitude(fft_real, fft_imag, fft_indices):
 
     return np.fft.irfft(fft)
 
+
 def dft2_at_time_and_level(data: np.ndarray, quantile: float = 0.75):
     fft = np.fft.rfft2(data)
     amplitudes = np.abs(fft)
