@@ -70,5 +70,5 @@ PRESSURE_MEAN: Final[float] = 37590
 LCCP_PHI1 = 0  # radians
 LCCP_PHI2 = 1.4030661650965  # radians
 
-MEANS = {"U": 5.589, "V": 0.018}
-STDS = {"U": 9.832, "V": 3.232}
+MEANS = {"U": 5.589, "V": 0.018, "T": 235.745, "P": 37590}
+STDS = {"U": 9.832, "V": 3.232, "T": 26.735, "P": 26545}
