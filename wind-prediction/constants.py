@@ -7,7 +7,7 @@ import math
 
 """Filepaths --------------------------------------------------------------------------------------------------------"""
 
-COMPRESSED_FOLDER = "."  # "/Volumes/MERRA-2/compressed-wind/"
+COMPRESSED_FOLDER = "data"  # "/Volumes/MERRA-2/compressed-wind/"
 
 """Constant Variables -----------------------------------------------------------------------------------------------"""
 
@@ -69,3 +69,6 @@ PRESSURE_MEAN: Final[float] = 37590
 # Lambert Conformal Conic Projection Principal Latitudes
 LCCP_PHI1 = 0  # radians
 LCCP_PHI2 = 1.4030661650965  # radians
+
+MEANS = {"U": 5.589, "V": 0.018}
+STDS = {"U": 9.832, "V": 3.232}
