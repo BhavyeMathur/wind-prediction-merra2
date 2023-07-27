@@ -81,6 +81,91 @@ def decode_zlib(ia, dtype="uint8"):
     inflated += decompress.flush()
     return np.frombuffer(inflated, dtype=dtype)
 
+def dft_at_time_level_and_latitude(data: np.ndarray, quantile: float = 0.75):
+    fft = np.fft.rfft(data)
+    amplitudes = np.abs(fft)
+
+    cutoff_amp = np.quantile(amplitudes, quantile)
+    fft_real = []
+    fft_imag = []
+    fft_indices = []
+
+    for i, val in enumerate(fft):
+        if amplitudes[i] < cutoff_amp:
+            continue
+
+        fft_real.append(fft[i].real)
+        fft_imag.append(fft[i].imag)
+        fft_indices.append(i)
+
+    return np.array(fft_real, dtype="float16"), np.array(fft_imag, dtype="float16"), \
+        np.array(fft_indices, dtype="uint16")
+
+
+def idft_at_time_level_and_latitude(fft_real, fft_imag, fft_indices):
+    fft = np.zeros((289,), dtype="complex64")
+
+    for k in range(len(fft_indices)):
+        fft[fft_indices[k]] = fft_real[k] + 1j * fft_imag[k]
+
+    return np.fft.irfft(fft)
+
+def dft2_at_time_and_level(data: np.ndarray, quantile: float = 0.75):
+    fft = np.fft.rfft2(data)
+    amplitudes = np.abs(fft)
+
+    fft_real = []
+    fft_imag = []
+    fft_i_indices = []
+    fft_j_indices = []
+
+    cutoff_amp = np.quantile(amplitudes, quantile)
+
+    for j in range(289):
+        for i in range(361):
+            if amplitudes[i, j] < cutoff_amp:
+                continue
+
+            fft_real.append(fft[i, j].real)
+            fft_imag.append(fft[i, j].imag)
+            fft_i_indices.append(i)
+            fft_j_indices.append(j)
+
+    fft_real = (np.array(fft_real, dtype="float32") / 512).astype("float16")
+    fft_real = encode_zlib(fft_real)
+
+    fft_imag = (np.array(fft_imag, dtype="float32") / 512).astype("float16")
+    fft_imag = encode_zlib(fft_imag)
+
+    fft_i_indices = np.array(fft_i_indices, dtype="int16")
+    fft_i_indices = encode_difference_uint8(fft_i_indices)
+    fft_i_indices = encode_zlib(fft_i_indices)
+
+    fft_j_indices = np.array(fft_j_indices, dtype="int16")
+    fft_j_indices = encode_difference_uint8(fft_j_indices)
+    fft_j_indices = encode_zlib(fft_j_indices, strategy=0)
+
+    return fft_real, fft_imag, fft_i_indices, fft_j_indices
+
+
+def idft2_at_time_and_level(fft_real, fft_imag, fft_i_indices, fft_j_indices):
+    ifft = np.zeros((361, 289), dtype="complex64")
+
+    fft_real = decode_zlib(fft_real, dtype="float16")
+    fft_imag = decode_zlib(fft_imag, dtype="float16")
+    fft = fft_real.astype("complex64") * 512 + fft_imag.astype("complex64") * 512j
+
+    fft_i_indices = decode_zlib(fft_i_indices)
+    fft_i_indices = decode_difference_uint8(fft_i_indices)
+
+    fft_j_indices = decode_zlib(fft_j_indices)
+    fft_j_indices = decode_difference_uint8(fft_j_indices)
+
+    for idx in range(len(fft)):
+        ifft[fft_i_indices[idx], fft_j_indices[idx]] = fft[idx]
+
+    return np.fft.irfft2(ifft), len(fft)
+
 
 def idft3_at_time(fft_real, fft_imag, fft_i_indices, fft_j_indices, fft_k_indices):
     ifft = np.zeros((36, 361, 289), dtype="complex64")
@@ -102,6 +187,60 @@ def idft3_at_time(fft_real, fft_imag, fft_i_indices, fft_j_indices, fft_k_indice
         ifft[fft_i_indices[idx], fft_j_indices[idx], fft_k_indices[idx]] = fft[idx]
 
     return np.fft.irfftn(ifft)
+
+
+DFT3_LEVEL_CACHE = {}
+
+
+def dft3_at_level(data: np.ndarray, level: int, quantile: float = 0.75, cache: bool = True):
+    if level in DFT3_LEVEL_CACHE:
+        fft, amplitudes = DFT3_LEVEL_CACHE[level]
+    else:
+        fft = np.fft.rfftn(data)
+        amplitudes = np.abs(fft)
+
+        if cache:
+            DFT3_LEVEL_CACHE[level] = fft, amplitudes
+
+    fft_real = []
+    fft_imag = []
+    fft_i_indices = []
+    fft_j_indices = []
+    fft_k_indices = []
+
+    cutoff_amp = np.quantile(amplitudes, quantile)
+
+    for k in range(289):
+        for j in range(361):
+            for i in range(365 * 8):
+                if amplitudes[i, j, k] < cutoff_amp:
+                    continue
+
+                fft_real.append(fft[i, j, k].real)
+                fft_imag.append(fft[i, j, k].imag)
+                fft_i_indices.append(i)
+                fft_j_indices.append(j)
+                fft_k_indices.append(k)
+
+    fft_real = (np.array(fft_real, dtype="float32") / 262144).astype("float16")
+    fft_real = encode_zlib(fft_real)
+
+    fft_imag = (np.array(fft_imag, dtype="float32") / 262144).astype("float16")
+    fft_imag = encode_zlib(fft_imag)
+
+    fft_i_indices = np.array(fft_i_indices, dtype="int16")
+    fft_i_indices = encode_difference_uint8(fft_i_indices)
+    fft_i_indices = encode_zlib(fft_i_indices)
+
+    fft_j_indices = np.array(fft_j_indices, dtype="int16")
+    fft_j_indices = encode_difference_uint8(fft_j_indices)
+    fft_j_indices = encode_zlib(fft_j_indices)
+
+    fft_k_indices = np.array(fft_k_indices, dtype="int16")
+    fft_k_indices = encode_difference_uint8(fft_k_indices)
+    fft_k_indices = encode_zlib(fft_k_indices)
+
+    return fft_real, fft_imag, fft_i_indices, fft_j_indices, fft_k_indices
 
 
 def idft3_at_level(fft_real, fft_imag, fft_i_indices, fft_j_indices, fft_k_indices):
