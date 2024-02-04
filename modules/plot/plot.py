@@ -71,7 +71,7 @@ def _draw_color_bar(fig: plt.Figure, plot: matplotlib.cm.ScalarMappable) -> None
         plot = plt.cm.ScalarMappable(norm=norm, cmap=plot.cmap)
         plot.set_array([])
 
-    cbar = fig.colorbar(plot, fraction=0.03, pad=0.03)
+    cbar = fig.colorbar(plot, ax=fig.gca(), fraction=0.03, pad=0.03)
     cbar.outline.set_linewidth(0.05)
 
     cbar.ax.tick_params(labelsize=7, right=False, direction="in")
@@ -168,7 +168,7 @@ def plot_dataset(dataset: MERRA2Dataset, time: None | str = None, lev: None | in
 
 
 def _plot_latitude_longitude_contour(data: np.ndarray, title, output: list[str],
-                                     plot_type: str = "image", cbar: bool = True, **kwargs) -> list[str]:
+                                     plot_type: str | list[str] = "image", cbar: bool = True, **kwargs) -> list[str]:
     fig, ax = _new_earth_figure(title, output, **kwargs)
     plot_kwargs = _set_plot_kwargs(data, plot_type, **kwargs)
 
@@ -180,8 +180,14 @@ def _plot_latitude_longitude_contour(data: np.ndarray, title, output: list[str],
         plotted_data = ax.contour(*_get_latlon_mesh(data.shape), data, **plot_kwargs)
         output.append("contour")
 
-    elif plot_type == "image":
+    elif "image" in plot_type:
         plotted_data = ax.imshow(data, origin="lower", extent=(-180, 180, -90, 90), **plot_kwargs)
+
+        if "contour" in plot_type:
+            output.append("image-contour")
+
+            plot_kwargs |= {"colors": ["black"], "cmap": None, "linewidths": [0.5], "alpha": 0.2}
+            ax.contour(*_get_latlon_mesh(data.shape), data, **plot_kwargs)
 
     else:
         raise ValueError(f"Unknown plot type {plot_type!r}")
