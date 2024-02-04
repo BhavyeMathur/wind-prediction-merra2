@@ -15,7 +15,7 @@ def format_time(time: str) -> str:
         string.append(f"at {hour:02}:{minute:02}")
 
     if day is not None:  # implies month is not None
-        string.append(f"on {day} {MONTH_NAMES[month]}")
+        string.append(f"on {day} {MONTH_NAMES[month - 1]}")
 
     if year != 0 and year is not None:
         string.append(str(year))

@@ -5,6 +5,7 @@ import matplotlib.ticker as mticker
 
 import cmasher as cmr
 import cartopy.crs as projections
+from cartopy.feature.nightshade import Nightshade
 
 import numpy as np
 
@@ -12,11 +13,14 @@ from modules.merra2.dataset import MERRA2Dataset
 from .text import *
 
 import sys
+from datetime import datetime
 
 if sys.platform == "darwin":
     import matplotlib
 
     matplotlib.use('TkAgg')
+
+_PLATE_CARREE = projections.PlateCarree()
 
 
 def _get_vmin_and_vmax(data, diverging: bool = False, color_quantile: float = 0, **_):
@@ -31,17 +35,27 @@ def _get_vmin_and_vmax(data, diverging: bool = False, color_quantile: float = 0,
     return -vmax, vmax
 
 
-def _get_figsize_from_projection(projection) -> tuple[int, int]:
+def _get_figsize_from_projection(projection) -> tuple[float, float]:
     if isinstance(projection, (projections.Robinson, projections.Mollweide)):
-        return 8, 4
+        return 7, 4
 
     if isinstance(projection, (projections.Mercator,)):
         return 8, 7
 
-    if isinstance(projection, (projections.AzimuthalEquidistant, )):
+    if isinstance(projection, (projections.AzimuthalEquidistant,)):
         return 6, 6
 
+    if isinstance(projection, projections.PlateCarree):
+        return 8, 4
+
     return 8, 5
+
+
+def _get_layout_from_projection(projection) -> str:
+    if isinstance(projection, (projections.Robinson, projections.Mollweide)):
+        return "none"
+
+    return "tight"
 
 
 def _get_latlon_mesh(shape):
@@ -68,36 +82,45 @@ def _setup_figure(ax: plt.Axes, title: str, title_size: float = 9):
     ax.spines[:].set_color("#fff")
 
 
-def _add_earth_figure_grid(ax: plt.Axes, projection) -> tuple[tuple[int, ...], tuple[int, ...]]:
+def _add_earth_figure_grid(ax: plt.Axes, projection, labelsize=7, linewidth=0.1):
     xticks = tuple(range(-150, 151, 50))
     yticks = tuple(range(-80, 81, 20))
 
     if projection is None:
-        ax.grid(True, which="both", linestyle="dashed", linewidth=0.1)
-    else:
-        gl = ax.gridlines(crs=projections.PlateCarree(), linewidth=0.1, linestyle='-', color="white", alpha=0.3)
-        gl.xlocator = mticker.FixedLocator(xticks)
-        gl.ylocator = mticker.FixedLocator(yticks)
+        ax.grid(True, which="both", linestyle="dashed", linewidth=linewidth)
 
-    return xticks, yticks
-
-
-def _new_earth_figure(title: str, output: list[str], figsize: tuple[int, int] = None, projection=None):
-    figsize = _get_figsize_from_projection(projection) if figsize is None else figsize
-
-    if (figsize[0] / figsize[1]) > 2:  # checking aspect ratio
-        fig = plt.figure(figsize=figsize)
-    else:
-        fig = plt.figure(figsize=figsize, tight_layout=True)
-
-    if projection is None:
-        ax = fig.gca()
-
-        ax.tick_params(labelsize=7)
+        ax.tick_params(labelsize=labelsize)
         ax.xaxis.set_major_formatter(FormatStrFormatter("%d°"))
         ax.yaxis.set_major_formatter(FormatStrFormatter("%d°"))
     else:
+        gl = ax.gridlines(crs=_PLATE_CARREE, linewidth=linewidth, linestyle='-', color="white", alpha=0.3,
+                          draw_labels=True)
+        gl.top_labels = False
+        gl.right_labels = False
+        gl.xlocator = mticker.FixedLocator(xticks)
+        gl.ylocator = mticker.FixedLocator(yticks)
+
+        gl.xlabel_style["size"] = labelsize
+        gl.ylabel_style["size"] = labelsize
+
+
+def _new_earth_figure(title: str, output: list[str], projection=None,
+                      coastlines: bool = False, nightshade: bool = False, **_):
+    fig = plt.figure(figsize=_get_figsize_from_projection(projection),
+                     layout=_get_layout_from_projection(projection))
+    plt.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, wspace=0, hspace=0)
+
+    if projection is None:
+        ax = fig.gca()
+    else:
         ax = fig.add_subplot(projection=projection)
+
+        if coastlines:
+            ax.coastlines(linewidth=1, alpha=0.2)
+
+        if nightshade:
+            ax.add_feature(Nightshade(datetime(year=1980, month=1, day=1, hour=12), alpha=0.2))
+
         output.append(projection.__class__.__name__.lower())
 
     _setup_figure(ax, title)
@@ -112,7 +135,7 @@ def _set_plot_kwargs(data: np.ndarray, plot_type: str, **kwargs):
     if (projection := kwargs.get("projection")) is None:
         plot_kwargs["aspect"] = "auto"
     elif isinstance(projection, projections.Projection):
-        plot_kwargs["transform"] = projections.PlateCarree()
+        plot_kwargs["transform"] = _PLATE_CARREE
     else:
         raise ValueError("Non-Cartopy projections not yet supported")
 
@@ -146,7 +169,6 @@ def plot_dataset(dataset: MERRA2Dataset, time: None | str = None, lev: None | in
 
 def _plot_latitude_longitude_contour(data: np.ndarray, title, output: list[str],
                                      plot_type: str = "image", cbar: bool = True, **kwargs) -> list[str]:
-
     fig, ax = _new_earth_figure(title, output, **kwargs)
     plot_kwargs = _set_plot_kwargs(data, plot_type, **kwargs)
 
