@@ -5,7 +5,6 @@ import matplotlib.ticker as mticker
 
 import cmasher as cmr
 import cartopy.crs as projections
-from cartopy.mpl.gridliner import LongitudeFormatter, LatitudeFormatter
 
 import numpy as np
 
@@ -36,6 +35,12 @@ def _get_figsize_from_projection(projection) -> tuple[int, int]:
     if isinstance(projection, (projections.Robinson, projections.Mollweide)):
         return 8, 4
 
+    if isinstance(projection, (projections.Mercator,)):
+        return 8, 7
+
+    if isinstance(projection, (projections.AzimuthalEquidistant, )):
+        return 6, 6
+
     return 8, 5
 
 
@@ -63,36 +68,40 @@ def _setup_figure(ax: plt.Axes, title: str, title_size: float = 9):
     ax.spines[:].set_color("#fff")
 
 
-def _add_earth_figure_grid(ax: plt.Axes, projection):
+def _add_earth_figure_grid(ax: plt.Axes, projection) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    xticks = tuple(range(-150, 151, 50))
+    yticks = tuple(range(-80, 81, 20))
+
     if projection is None:
         ax.grid(True, which="both", linestyle="dashed", linewidth=0.1)
-        return
+    else:
+        gl = ax.gridlines(crs=projections.PlateCarree(), linewidth=0.1, linestyle='-', color="white", alpha=0.3)
+        gl.xlocator = mticker.FixedLocator(xticks)
+        gl.ylocator = mticker.FixedLocator(yticks)
 
-    gl = ax.gridlines(crs=projections.PlateCarree(), linewidth=0.1, linestyle='-', color="white", alpha=0.3)
-    gl.xlocator = mticker.FixedLocator(range(-150, 151, 50))
-    gl.ylocator = mticker.FixedLocator(range(-80, 81, 20))
+    return xticks, yticks
 
 
 def _new_earth_figure(title: str, output: list[str], figsize: tuple[int, int] = None, projection=None):
-    if figsize is None:
-        figsize = _get_figsize_from_projection(projection)
+    figsize = _get_figsize_from_projection(projection) if figsize is None else figsize
+
+    if (figsize[0] / figsize[1]) > 2:  # checking aspect ratio
+        fig = plt.figure(figsize=figsize)
+    else:
+        fig = plt.figure(figsize=figsize, tight_layout=True)
 
     if projection is None:
-        fig = plt.figure(figsize=figsize, tight_layout=True)
         ax = fig.gca()
-    else:
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(projection=projection)
 
-    _setup_figure(ax, title)
-    _add_earth_figure_grid(ax, projection)
-
-    if projection:
-        output.append(projection.__class__.__name__.lower())
-    else:
         ax.tick_params(labelsize=7)
         ax.xaxis.set_major_formatter(FormatStrFormatter("%d°"))
         ax.yaxis.set_major_formatter(FormatStrFormatter("%d°"))
+    else:
+        ax = fig.add_subplot(projection=projection)
+        output.append(projection.__class__.__name__.lower())
+
+    _setup_figure(ax, title)
+    _add_earth_figure_grid(ax, projection)
 
     return fig, ax
 
