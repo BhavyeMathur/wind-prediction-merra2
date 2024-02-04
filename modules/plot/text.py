@@ -27,7 +27,7 @@ def format_level(lev: int) -> str:
     return f"(≈{round(height_from_pressure(get_pressure_from_level(lev) * 100), -2):.0f} m)"
 
 
-def format_title(variable: str, time: None | str, lev: None | int) -> str:
+def format_title(variable: str, time: None | str, lev: None | int) -> str | list[str]:
     parts = [format_variable(variable)]
 
     if time:
@@ -38,15 +38,30 @@ def format_title(variable: str, time: None | str, lev: None | int) -> str:
     return " ".join(parts)
 
 
+def format_output_time(time: None | str) -> str | list[str]:
+    minute, hour, day, month, year = parse_datetime(time)
+    if minute and day:  # and hour and month
+        return f"{year if year else 'YAVG'}{month:02}{day:02}-{hour:02}{minute:02}"
+    elif minute:  # and hour
+        return f"{year if year else 'YAVG'}-{hour:02}{minute:02}"
+    elif day:  # and month
+        return f"{year if year else 'YAVG'}{month:02}{day:02}"
+    else:
+        return year if year else 'YAVG'
+
+
 def format_output(variable: str, time: None | str, lev: None | int) -> list[str]:
     parts = [variable]
 
     # FRLAND.png
     # U-YAVG0101-0430-lev36.png
 
-    if time:
-        minute, hour, day, month, year = parse_datetime(time)
-        parts.append(f"{year if year else 'YAVG'}{month:02}{day:02}-{hour:02}{minute:02}")
+    if isinstance(time, list):
+        parts.append(format_output_time(time[0]))
+        parts.append(format_output_time(time[-1]))
+    elif time:
+        parts.append(format_output_time(time))
+
     if lev:
         parts.append(f"lev{lev}")
 

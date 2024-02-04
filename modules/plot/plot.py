@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.animation import FuncAnimation
 import matplotlib.contour
 import matplotlib.ticker as mticker
 
@@ -64,12 +65,15 @@ def _get_latlon_mesh(shape):
     return np.meshgrid(lons, lats)
 
 
-def _draw_color_bar(fig: plt.Figure, plot: matplotlib.cm.ScalarMappable) -> None:
-    if isinstance(plot, matplotlib.contour.ContourSet):
-        # drawing a continuous color bar (without discrete contour levels)
-        norm = matplotlib.colors.Normalize(vmin=plot.cvalues.min(), vmax=plot.cvalues.max())
-        plot = plt.cm.ScalarMappable(norm=norm, cmap=plot.cmap)
-        plot.set_array([])
+def _draw_color_bar(fig: plt.Figure, data, cmap=cmr.ocean, cbar: bool = True, **kwargs) -> None:
+    if not cbar:
+        return
+
+    vmin, vmax = _get_vmin_and_vmax(data, **kwargs)
+
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+    plot = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+    plot.set_array([])
 
     cbar = fig.colorbar(plot, ax=fig.gca(), fraction=0.03, pad=0.03)
     cbar.outline.set_linewidth(0.05)
@@ -104,7 +108,7 @@ def _add_earth_figure_grid(ax: plt.Axes, projection, labelsize=7, linewidth=0.1)
         gl.ylabel_style["size"] = labelsize
 
 
-def _new_earth_figure(title: str, output: list[str], projection=None,
+def _new_earth_figure(title: str, output: list[str], projection=_PLATE_CARREE,
                       coastlines: bool = False, nightshade: bool = False, **_):
     fig = plt.figure(figsize=_get_figsize_from_projection(projection),
                      layout=_get_layout_from_projection(projection))
@@ -151,48 +155,133 @@ def _set_plot_kwargs(data: np.ndarray, plot_type: str, **kwargs):
     return plot_kwargs
 
 
-def plot_dataset(dataset: MERRA2Dataset, time: None | str = None, lev: None | int = None, latitude: None | int = None,
-                 data_transform=lambda data: data, **kwargs) -> None:
+# Source: Eelco van Vliet
+# https://stackoverflow.com/questions/16915966/using-matplotlib-animate-to-animate-a-contour-plot-in-python
+def _clean_up_artists(axis, artist_list) -> None:
+    """
+    try to remove the artists stored in the artist list belonging to the 'axis'.
+
+    :param axis: clean artists belonging to these axis
+    :param artist_list: list of artist to remove
+    """
+    for artist in artist_list:
+        try:
+            # fist attempt: try to remove collection of contours for instance
+            while artist.collections:
+                for col in artist.collections:
+                    artist.collections.remove(col)
+                    try:
+                        axis.collections.remove(col)
+                    except ValueError:
+                        pass
+
+                artist.collections = []
+                axis.collections = []
+        except AttributeError:
+            pass
+
+        # second attempt, try to remove the text
+        try:
+            artist.remove()
+        except (AttributeError, ValueError):
+            pass
+
+
+def plot_dataset(dataset: MERRA2Dataset, time: None | str | list[str] = None, lev: None | int = None,
+                 latitude: None | int = None, data_transform=lambda data: data, **kwargs) -> None:
     data = dataset.load(time=time, lev=lev, lat=latitude)
     data = data_transform(data)
 
     # Latitude vs Longitude contour
     if len(data.shape) == 2:
-        output = _plot_latitude_longitude_contour(data, format_title(dataset.variable, time, lev),
-                                                  format_output(dataset.variable, time, lev), **kwargs)
-    else:
-        raise ValueError("Data shape incompatible with plot")
+        title = format_title(dataset.variable, time, lev)
+        output = format_output(dataset.variable, time, lev)
+        output = _plot_latitude_longitude_contour(data, title, output, **kwargs)
 
-    plt.savefig(f"generated/contours/{'-'.join(output)}", dpi=300)
-    plt.show()
+        plt.savefig(f"generated/contours/{'-'.join(output)}.png", dpi=300)
+        plt.show()
+
+    # Latitude vs Longitude contour, animated vs Time
+    elif len(data.shape) == 3:
+        if isinstance(time, str):
+            times = [f"{hour:02}:30 {time}" for hour in range(1, 24, 3)]
+            output = format_output(dataset.variable, times, lev)
+        else:  # time is list
+            times = [f"{hour:02}:30 {date}" for date in time for hour in range(1, 24, 3)]
+            output = format_output(dataset.variable, time, lev)
+
+        title = [format_title(dataset.variable, time, lev) for time in times]
+
+        anim, output = _animate_latitude_longitude_contour_vs_time(data, title, output, times, **kwargs)
+        anim.save(f"generated/contours/animated/{'-'.join(output)}.mp4", fps=15, dpi=300)
+
+    else:
+        raise ValueError(f"Data shape {data.shape} incompatible with plot")
+
+
+def _animate_latitude_longitude_contour_vs_time(data: np.ndarray, title, output: list[str], times: list[str],
+                                                nightshade: bool = False,  plot_type: str | list[str] = "image",
+                                                **kwargs):
+    fig, ax, mesh, plot_kwargs = _setup_latitude_longitude_contour(data, "", output, plot_type, **kwargs)
+    plotted_data = []
+
+    title_size = kwargs.get("title_size", 9)
+
+    if nightshade:
+        output.append("nightshade")
+
+    def update(i):
+        print(f"{i + 1}/{len(data)}")
+        _clean_up_artists(ax, plotted_data)
+
+        ax.set_title(title[i], fontsize=title_size)
+
+        if nightshade:
+            dt = datetime(*parse_datetime(times[i], 1980)[::-1])
+            shade = ax.add_feature(Nightshade(dt, alpha=0.2))
+            plotted_data.append(shade)
+
+        plotted_data.append(_update_latitude_longitude_contour(mesh, data[i], ax, plot_type, **plot_kwargs))
+
+        return plotted_data
+
+    anim = FuncAnimation(fig, update, frames=tuple(range(len(data))), interval=0)
+
+    return anim, output
 
 
 def _plot_latitude_longitude_contour(data: np.ndarray, title, output: list[str],
-                                     plot_type: str | list[str] = "image", cbar: bool = True, **kwargs) -> list[str]:
+                                     plot_type: str | list[str] = "image", **kwargs) -> list[str]:
+    fig, ax, mesh, plot_kwargs = _setup_latitude_longitude_contour(data, title, output, plot_type, **kwargs)
+
+    _update_latitude_longitude_contour(mesh, data, ax, plot_type, **plot_kwargs)
+
+    return output
+
+
+def _setup_latitude_longitude_contour(data: np.ndarray, title, output: list[str],
+                                      plot_type: str | list[str] = "image", **kwargs):
     fig, ax = _new_earth_figure(title, output, **kwargs)
     plot_kwargs = _set_plot_kwargs(data, plot_type, **kwargs)
+    mesh = _get_latlon_mesh(data.shape)
 
+    if plot_type != "image":
+        output.append(plot_type)
+
+    _draw_color_bar(fig, data, **kwargs)
+
+    return fig, ax, mesh, plot_kwargs
+
+
+def _update_latitude_longitude_contour(mesh, data, ax, plot_type: str, **kwargs):
     if plot_type == "contourf":
-        plotted_data = ax.contourf(*_get_latlon_mesh(data.shape), data, **plot_kwargs)
-        output.append("contourf")
+        return ax.contourf(*mesh, data, **kwargs)
 
     elif plot_type == "contour":
-        plotted_data = ax.contour(*_get_latlon_mesh(data.shape), data, **plot_kwargs)
-        output.append("contour")
+        return ax.contour(*mesh, data, **kwargs)
 
-    elif "image" in plot_type:
-        plotted_data = ax.imshow(data, origin="lower", extent=(-180, 180, -90, 90), **plot_kwargs)
-
-        if "contour" in plot_type:
-            output.append("image-contour")
-
-            plot_kwargs |= {"colors": ["black"], "cmap": None, "linewidths": [0.5], "alpha": 0.2}
-            ax.contour(*_get_latlon_mesh(data.shape), data, **plot_kwargs)
+    elif plot_type == "image":
+        return ax.imshow(data, origin="lower", extent=(-180, 180, -90, 90), **kwargs)
 
     else:
         raise ValueError(f"Unknown plot type {plot_type!r}")
-
-    if cbar:
-        _draw_color_bar(fig, plotted_data)
-
-    return output

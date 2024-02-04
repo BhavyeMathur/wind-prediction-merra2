@@ -92,7 +92,7 @@ def date_as_number(day: int, month: int, year: int) -> int:
     return 10000 * year + 100 * month + day
 
 
-def parse_datetime(datetime: str) -> tuple[int | None, int | None, int | None, int | None, int | None]:
+def parse_datetime(datetime: str, yavg: int = 0) -> tuple[int | None, int | None, int | None, int | None, int | None]:
     time = None
     hour = None
     minute = None
@@ -127,7 +127,7 @@ def parse_datetime(datetime: str) -> tuple[int | None, int | None, int | None, i
                 None if hour is None else int(hour),
                 None if day is None else int(day),
                 None if month is None else int(month),
-                None if year is None else (0 if year == "YAVG" else int(year)))
+                yavg if (year is None or year == "YAVG") else int(year))
 
     except Exception:
         raise ValueError(f"Invalid time format {datetime!r}")

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import numpy as np
+
 import os
 
 from modules.merra2.datafile import MERRA2File
@@ -119,7 +121,7 @@ class MERRA2Dataset:
         Returns:
             Sizes of the dimensions in the data set
         """
-        return tuple(self._dimensions.values())
+        return len(self._files), *self._dimensions.values()
 
     def _get_file_at_date(self, day: None | int, month: None | int, year: None | int) -> MERRA2File:
         if year is None and self._has_multiple_years:
@@ -138,7 +140,10 @@ class MERRA2Dataset:
         except KeyError:
             raise ValueError(f"No file found for '{day}-{month}-{year}'")
 
-    def load(self, time: None | str = None, lev: None | int = None, lat: None | int = None):
+    def load(self, time: None | str | list[str] = None, lev: None | int = None, lat: None | int = None):
+        if isinstance(time, list):
+            return np.concatenate([self.load(t, lev, lat) for t in time])
+
         minute, hour, day, month, year = parse_datetime(time)
 
         time = get_merra_time_index_from_time(minute, hour, self._dimensions["time"])
