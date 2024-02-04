@@ -1,0 +1,5 @@
+matplotlib~=3.8.2
+Cartopy~=0.22.0
+cmasher~=1.7.2
+numpy~=1.26.2
+xarray~=2023.12.0
