@@ -36,3 +36,18 @@ def format_title(variable: str, time: None | str, lev: None | int) -> str:
         parts.append(format_level(lev))
 
     return " ".join(parts)
+
+
+def format_output(variable: str, time: None | str, lev: None | int) -> list[str]:
+    parts = [variable]
+
+    # FRLAND.png
+    # U-YAVG0101-0430-lev36.png
+
+    if time:
+        minute, hour, day, month, year = parse_datetime(time)
+        parts.append(f"{year if year else 'YAVG'}{month:02}{day:02}-{hour:02}{minute:02}")
+    if lev:
+        parts.append(f"lev{lev}")
+
+    return parts

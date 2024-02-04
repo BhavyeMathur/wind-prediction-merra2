@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
+import matplotlib.contour
+import matplotlib.ticker as mticker
+
 import cmasher as cmr
 import cartopy.crs as projections
+from cartopy.mpl.gridliner import LongitudeFormatter, LatitudeFormatter
 
 import numpy as np
 
@@ -28,37 +32,69 @@ def _get_vmin_and_vmax(data, diverging: bool = False, color_quantile: float = 0,
     return -vmax, vmax
 
 
-def _draw_color_bar(fig, ax, plot):
-    try:
+def _get_figsize_from_projection(projection) -> tuple[int, int]:
+    if isinstance(projection, (projections.Robinson, projections.Mollweide)):
+        return 8, 4
+
+    return 8, 5
+
+
+def _get_latlon_mesh(shape):
+    lats = np.linspace(-90, 90, shape[0])
+    lons = np.linspace(-180, 180, shape[1])
+    return np.meshgrid(lons, lats)
+
+
+def _draw_color_bar(fig: plt.Figure, plot: matplotlib.cm.ScalarMappable) -> None:
+    if isinstance(plot, matplotlib.contour.ContourSet):
+        # drawing a continuous color bar (without discrete contour levels)
         norm = matplotlib.colors.Normalize(vmin=plot.cvalues.min(), vmax=plot.cvalues.max())
         plot = plt.cm.ScalarMappable(norm=norm, cmap=plot.cmap)
         plot.set_array([])
 
-    except AttributeError:
-        pass
+    cbar = fig.colorbar(plot, fraction=0.03, pad=0.03)
+    cbar.outline.set_linewidth(0.05)
 
-    fig.colorbar(plot, cax=ax)
-    ax.tick_params(labelsize=7, right=False, direction="in")
-
-
-def _update_axis_projection(ax, axi, projection):
-    rows, cols, start, stop = axi.get_subplotspec().get_geometry()
-    ax.flat[start].remove()
-    ax.flat[start] = plt.gcf().add_subplot(rows, cols, start + 1, projection=projection)
+    cbar.ax.tick_params(labelsize=7, right=False, direction="in")
 
 
-def _set_map_projection(ax, axi, projection=None,
-                        coastlines: bool = False, coastline_kwargs: dict = {"linewidth": 0.5}, **_):
-    if projection:
-        _update_axis_projection(ax, axi, projection=projection)
+def _setup_figure(ax: plt.Axes, title: str, title_size: float = 9):
+    ax.set_title(title, fontsize=title_size)
+    ax.spines[:].set_color("#fff")
 
-        if coastlines:
-            axi.coastlines(**coastline_kwargs)
 
+def _add_earth_figure_grid(ax: plt.Axes, projection):
+    if projection is None:
+        ax.grid(True, which="both", linestyle="dashed", linewidth=0.1)
+        return
+
+    gl = ax.gridlines(crs=projections.PlateCarree(), linewidth=0.1, linestyle='-', color="white", alpha=0.3)
+    gl.xlocator = mticker.FixedLocator(range(-150, 151, 50))
+    gl.ylocator = mticker.FixedLocator(range(-80, 81, 20))
+
+
+def _new_earth_figure(title: str, output: list[str], figsize: tuple[int, int] = None, projection=None):
+    if figsize is None:
+        figsize = _get_figsize_from_projection(projection)
+
+    if projection is None:
+        fig = plt.figure(figsize=figsize, tight_layout=True)
+        ax = fig.gca()
     else:
-        axi.tick_params(labelsize=9)
-        axi.xaxis.set_major_formatter(FormatStrFormatter("%d°"))
-        axi.yaxis.set_major_formatter(FormatStrFormatter("%d°"))
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(projection=projection)
+
+    _setup_figure(ax, title)
+    _add_earth_figure_grid(ax, projection)
+
+    if projection:
+        output.append(projection.__class__.__name__.lower())
+    else:
+        ax.tick_params(labelsize=7)
+        ax.xaxis.set_major_formatter(FormatStrFormatter("%d°"))
+        ax.yaxis.set_major_formatter(FormatStrFormatter("%d°"))
+
+    return fig, ax
 
 
 def _set_plot_kwargs(data: np.ndarray, plot_type: str, **kwargs):
@@ -85,58 +121,41 @@ def _set_plot_kwargs(data: np.ndarray, plot_type: str, **kwargs):
 
 def plot_dataset(dataset: MERRA2Dataset, time: None | str = None, lev: None | int = None, latitude: None | int = None,
                  data_transform=lambda data: data, **kwargs) -> None:
-
     data = dataset.load(time=time, lev=lev, lat=latitude)
     data = data_transform(data)
 
     # Latitude vs Longitude contour
     if len(data.shape) == 2:
-        _plot_latitude_longitude_contour(data, format_title(dataset.variable, time, lev), **kwargs)
+        output = _plot_latitude_longitude_contour(data, format_title(dataset.variable, time, lev),
+                                                  format_output(dataset.variable, time, lev), **kwargs)
+    else:
+        raise ValueError("Data shape incompatible with plot")
 
+    plt.savefig(f"generated/contours/{'-'.join(output)}", dpi=300)
     plt.show()
 
 
-def _plot_latitude_longitude_contour(data: np.ndarray, title, figsize: tuple[int, int] = (8, 5),
-                                     plot_type: str = "image", cbar: bool = True, **kwargs) -> None:
-    """
-    :param data:
-    :param cmap:
-    :param figsize:
-    :param plot_type:
-    :param cbar:
+def _plot_latitude_longitude_contour(data: np.ndarray, title, output: list[str],
+                                     plot_type: str = "image", cbar: bool = True, **kwargs) -> list[str]:
 
-    :param diverging
-    :param color_quantile
-
-    :param projection
-    :param coastlines
-    :param coastline_kwargs
-
-    :return:
-    """
-
-    fig, ax = plt.subplots(ncols=2, figsize=figsize, tight_layout=True, width_ratios=(97, 3))
-    _set_map_projection(ax, ax[0], **kwargs)
-
+    fig, ax = _new_earth_figure(title, output, **kwargs)
     plot_kwargs = _set_plot_kwargs(data, plot_type, **kwargs)
 
-    ax[0].set_title(title, fontsize=9)
-    ax[0].grid(True, which="both", linestyle="dashed", linewidth=0.15)
+    if plot_type == "contourf":
+        plotted_data = ax.contourf(*_get_latlon_mesh(data.shape), data, **plot_kwargs)
+        output.append("contourf")
 
-    if plot_type.startswith("contour"):
-        plot = ax[0].contourf if plot_type == "contourf" else ax[0].contour
-        lats = np.linspace(-90, 90, data.shape[0])
-        lons = np.linspace(-180, 180, data.shape[1])
-
-        plotted_data = plot(*np.meshgrid(lons, lats), data, **plot_kwargs)
+    elif plot_type == "contour":
+        plotted_data = ax.contour(*_get_latlon_mesh(data.shape), data, **plot_kwargs)
+        output.append("contour")
 
     elif plot_type == "image":
-        plotted_data = ax[0].imshow(data, origin="lower", extent=[-180, 180, -90, 90], **plot_kwargs)
+        plotted_data = ax.imshow(data, origin="lower", extent=(-180, 180, -90, 90), **plot_kwargs)
 
     else:
         raise ValueError(f"Unknown plot type {plot_type!r}")
 
     if cbar:
-        _draw_color_bar(fig, ax[1], plotted_data)
+        _draw_color_bar(fig, plotted_data)
 
-    # plt.savefig("assets/contours/" + output + ".png", dpi=300)
+    return output
