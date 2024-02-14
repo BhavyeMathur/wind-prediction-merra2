@@ -149,8 +149,18 @@ def days_in_year() -> Generator[tuple[int, int], None, None]:
             yield month, day
 
 
+def hours_in_month(month: int) -> Generator[tuple[int, int, int], None, None]:
+    """
+    Parameters
+    ----------
+    month: 1 for January, 12 for December
+    """
+    for day in days_in_month(month):
+        for hour in range(24):
+            yield day, hour
+
+
 def hours_in_year() -> Generator[tuple[int, int, int], None, None]:
     for month in months_in_year():
-        for day in days_in_month(month):
-            for hour in range(24):
-                yield month, day, hour
+        for day, hour in hours_in_month(month):
+            yield month, day, hour
