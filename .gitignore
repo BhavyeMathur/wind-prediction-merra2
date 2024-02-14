@@ -1,5 +1,7 @@
 # Data files
 data/*
+!data/*.ipynb
+!data/*.py
 *.nc4
 *.nc
 *.ft

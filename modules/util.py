@@ -2,7 +2,7 @@ from typing import Generator
 
 import datetime
 from time import strftime
-from math import log
+import math
 
 import string
 
@@ -22,7 +22,7 @@ def format_bytes(size: int, si: bool = False) -> str:
     """
 
     order = 0
-    while log(size) > 3:
+    while math.log10(size) > 3:
         size /= 1000 if si else 1024
         order += 1
 
@@ -128,3 +128,29 @@ def datetime_range(start: str, end: str, delta: datetime.timedelta) -> Generator
     while start <= end:
         yield start
         start += delta
+
+
+def months_in_year() -> range:
+    return range(1, 13)
+
+
+def days_in_month(month: int) -> range:
+    """
+    Parameters
+    ----------
+    month: 1 for January, 12 for December
+    """
+    return range(1, MONTH_DAYS[month - 1] + 1)
+
+
+def days_in_year() -> Generator[tuple[int, int], None, None]:
+    for month in months_in_year():
+        for day in days_in_month(month):
+            yield month, day
+
+
+def hours_in_year() -> Generator[tuple[int, int, int], None, None]:
+    for month in months_in_year():
+        for day in days_in_month(month):
+            for hour in range(24):
+                yield month, day, hour
