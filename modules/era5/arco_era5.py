@@ -7,18 +7,19 @@ from modules.util import format_bytes
 from .metadata import *
 
 
-def connect(url: str, variables: tuple[str, ...] = None, **kwargs) -> xr.Dataset:
+def connect(url: str, variables: tuple[str, ...] = None, verbose: bool = True, **kwargs) -> xr.Dataset:
     dataset = xr.open_zarr(url, **kwargs)
 
     if variables:
         dataset = dataset[list(variables)]
 
-    print(f"Dataset size: {format_bytes(dataset.nbytes)}")
+    if verbose:
+        print(f"Dataset size: {format_bytes(dataset.nbytes)}")
     return dataset
 
 
 def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time: str,
-                      start_level: int = 150, end_level: int = 1000) -> xr.Dataset:
+                      start_level: int = 150, end_level: int = 1000, verbose: bool = True) -> xr.Dataset:
     # dataset = dataset.convert_calendar("noleap")
     dataset = dataset.sel(level=slice(start_level, end_level),
                           time=slice(f"{start_year}-{time}", str(end_year), 24 * 365))
@@ -27,11 +28,12 @@ def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time:
     dataset.attrs["tavg_end_year"] = end_year
     dataset.attrs["datetime"] = time
 
-    print(f"Dataset TAVG slice size: {format_bytes(dataset.nbytes)} ")
+    if verbose:
+        print(f"Dataset TAVG slice size: {format_bytes(dataset.nbytes)} ")
     return dataset
 
 
-def compute_tavg(dataset: xr.Dataset) -> xr.Dataset:
+def compute_tavg(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
     attrs = dataset.attrs
 
     with ProgressBar():
@@ -39,11 +41,12 @@ def compute_tavg(dataset: xr.Dataset) -> xr.Dataset:
 
     dataset.attrs = attrs | {"is_tavg": 1}
 
-    print(f"Dataset TAVG size: {format_bytes(dataset.nbytes)}")
+    if verbose:
+        print(f"Dataset TAVG size: {format_bytes(dataset.nbytes)}")
     return dataset
 
 
-def compress_dataset(dataset: xr.Dataset, view: str = "int16") -> xr.Dataset:
+def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = True) -> xr.Dataset:
     variables = {}
     coords = {}
 
@@ -60,7 +63,8 @@ def compress_dataset(dataset: xr.Dataset, view: str = "int16") -> xr.Dataset:
 
     ds = xr.Dataset(data_vars=variables, coords=coords, attrs=dataset.attrs | {"is_float16": 1})
 
-    print(f"Compressed dataset size: {format_bytes(ds.nbytes)}")
+    if verbose:
+        print(f"Compressed dataset size: {format_bytes(ds.nbytes)}")
     return ds
 
 
