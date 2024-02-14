@@ -27,7 +27,7 @@ def format_bytes(size: int, si: bool = False) -> str:
         order += 1
 
     unit_name = size_units[order]
-    return f"{size:.2f} {unit_name if si else unit_name.replace('B', 'iB')}{size != 1 * 's'}"
+    return f"{size:.2f} {unit_name if si else unit_name.replace('B', 'iB')}{'' if size == 1 else 's'}"
 
 
 size_units = ("bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
