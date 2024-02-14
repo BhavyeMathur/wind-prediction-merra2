@@ -26,15 +26,17 @@ def get_all_month_day_hour(start_month=1, start_day=1, start_hour=0,
     return times
 
 
-def download_all(**kwargs):
+def download_all(output_folder: str = "ERA5/wind", **kwargs):
     for month, day, hour in tqdm(get_all_month_day_hour(**kwargs)):
-        if os.path.isfile(f"ERA5/wind/ERA5-tavg-{month:02}{day:02}-{hour:02}00.nc"):
+        if os.path.isfile(f"{output_folder}/ERA5-tavg-{month:02}{day:02}-{hour:02}00.nc"):
             continue
 
         wind_slice = era5.select_tavg_slice(ml_wind, 2012, 2022, f"{month:02}-{day:02} {hour:02}:00", verbose=False)
         wind_slice = era5.compute_tavg(wind_slice, verbose=False)
         wind_slice = era5.compress_dataset(wind_slice, verbose=False)
-        era5.save_dataset(wind_slice, "ERA5/wind")
+
+        era5.save_dataset(wind_slice, output_folder)
+        del wind_slice
 
 
 if __name__ == "__main__":
