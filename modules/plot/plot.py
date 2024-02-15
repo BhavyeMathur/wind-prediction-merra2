@@ -11,6 +11,7 @@ from cartopy.feature.nightshade import Nightshade
 import numpy as np
 
 from modules.merra2.dataset import MERRA2Dataset
+from modules.datetime import parse_datetime_depr
 from .text import *
 
 import sys
@@ -237,7 +238,7 @@ def _animate_latitude_longitude_contour_vs_time(data: np.ndarray, title, output:
         ax.set_title(title[i], fontsize=title_size)
 
         if nightshade:
-            dt = datetime(*parse_datetime(times[i], 1980)[::-1])
+            dt = datetime(*parse_datetime_depr(times[i], 1980)[::-1])
             shade = ax.add_feature(Nightshade(dt, alpha=0.2))
             plotted_data.append(shade)
 

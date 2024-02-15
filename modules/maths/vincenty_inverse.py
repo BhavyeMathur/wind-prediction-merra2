@@ -4,7 +4,7 @@ import math
 
 
 # Correction factor as used by DEFRA
-# see https://www.eci.ox.ac.uk/research/energy/downloads/jardine09-carboninflights.pdf for comparisions
+# see https://www.eci.ox.ac.uk/research/energy/downloads/jardine09-carboninflights.pdf for comparisons
 VINCENTY_CORRECTION_FACTOR = 1.1
 VINCENTY_ITERATIONS = 200
 VINCENTY_TOLERANCE = 10 ** -12  # accuracy to within 0.06 mm

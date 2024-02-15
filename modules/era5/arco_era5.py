@@ -1,9 +1,10 @@
-import datetime
+from datetime import datetime
 
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from modules.util import format_bytes, format_datetime
+from modules.util import format_bytes
+from modules.datetime import format_datetime, parse_datetime
 from .metadata import *
 
 
@@ -18,16 +19,16 @@ def connect(url: str, variables: tuple[str, ...] = None, verbose: bool = True, *
     return dataset
 
 
-def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time: tuple[int, int, int],
+def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, dt: datetime,
                       start_level: int = 150, end_level: int = 1000, verbose: bool = True) -> xr.Dataset:
-    time = format_datetime(*time, pretty=True)
+    dt = format_datetime(dt, pretty=True)
 
     dataset = dataset.sel(level=slice(start_level, end_level),
-                          time=slice(f"{start_year}-{time}", str(end_year), 24 * 365))
+                          time=slice(f"{start_year}-{dt}", str(end_year), 24 * 365))
 
     dataset.attrs["tavg_start_year"] = start_year
     dataset.attrs["tavg_end_year"] = end_year
-    dataset.attrs["datetime"] = time
+    dataset.attrs["datetime"] = dt
 
     if verbose:
         print(f"Dataset TAVG slice size: {format_bytes(dataset.nbytes)} ")
@@ -75,9 +76,8 @@ def save_dataset(dataset, output_folder: str, verbose: bool = True) -> None:
     if dataset.attrs.get("is_tavg"):
         file.append("tavg")
 
-        time = datetime.datetime.strptime(dataset.attrs["datetime"], "%m-%d %H:%M")
-        file.append(f"{time.month:02}{time.day:02}")
-        file.append(f"{time.hour:02}{time.minute:02}")
+        time = parse_datetime(dataset.attrs["datetime"])
+        file.append(format_datetime(time, pretty=False))
     else:
         raise NotImplementedError("Don't know how to save non-TAVG dataset")
 

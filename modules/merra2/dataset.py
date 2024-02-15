@@ -6,7 +6,7 @@ import os
 
 from modules.merra2.datafile import MERRA2File
 from modules.merra2.util import get_merra_time_index_from_time
-from modules.util import parse_datetime, date_as_number
+from modules.datetime import parse_datetime_depr, date_as_number
 
 
 class MERRA2Dataset:
@@ -144,7 +144,7 @@ class MERRA2Dataset:
         if isinstance(time, list):
             return np.concatenate([self.load(t, lev, lat) for t in time])
 
-        minute, hour, day, month, year = parse_datetime(time)
+        minute, hour, day, month, year = parse_datetime_depr(time)
 
         time = get_merra_time_index_from_time(minute, hour, self._dimensions["time"])
         file = self._get_file_at_date(day, month, year)

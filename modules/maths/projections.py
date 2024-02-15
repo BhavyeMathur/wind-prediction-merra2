@@ -1,6 +1,5 @@
 """Lambert Conformal Conic Projection Formulae"""
 
-
 import math
 
 _PI_BY_4 = math.pi / 4

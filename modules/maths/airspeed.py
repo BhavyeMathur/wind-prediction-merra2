@@ -1,10 +1,8 @@
 """Airspeed related functions"""
 
-
 import math
 
 from barometric import isa_pressure, PRESSURE_SEA_LEVEL, isa_density, DENSITY_SEA_LEVEL
-
 
 SONIC_SPEED_SEA_LEVEL = 340.29  # m/s
 
@@ -104,7 +102,7 @@ def expected_airspeed_(calibrated_airspeed: float,
     @return: the expected airspeed (EAS) in meters/second
     """
     return SONIC_SPEED_SEA_LEVEL * mach_number_(speed=calibrated_airspeed,
-                                                      atmospheric_pressure=atmospheric_pressure) * math.sqrt(
+                                                atmospheric_pressure=atmospheric_pressure) * math.sqrt(
         atmospheric_pressure / PRESSURE_SEA_LEVEL)
 
 
