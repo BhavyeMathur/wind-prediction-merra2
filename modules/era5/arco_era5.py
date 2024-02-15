@@ -15,9 +15,6 @@ def connect(path: str, variables: tuple[str, ...] = None, verbose: bool = True, 
         variables: tuple of variables to extract
         verbose: print debugging information?
         **kwargs: additional arguments to xarray.open_zarr() function
-
-    Returns:
-        xarray dataset with specified variables
     """
     dataset = xr.open_zarr(path, **kwargs)
 
@@ -30,8 +27,7 @@ def connect(path: str, variables: tuple[str, ...] = None, verbose: bool = True, 
 
 
 @datetime_func("dt")
-def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time,
-                      start_level: int = 150, end_level: int = 1000, verbose: bool = True) -> xr.Dataset:
+def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time, verbose: bool = True) -> xr.Dataset:
     """
     Selects a slice of the dataset at a particular date & time, across several years.
 
@@ -39,19 +35,33 @@ def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time,
         dataset: the xarray dataset
         start_year: the year to begin the slice
         end_year: the year to end the slice
-        time: 'mm-dd HH:MM' string or datetime object
+        time: 'mm-dd HH:MM' string or datetime object at which to select the data
         verbose: print debugging information?
-
-    Returns:
-        xarray dataset slice at time
     """
     time = format_datetime(time, pretty=True)
 
-    dataset = dataset.sel(level=slice(start_level, end_level),
-                          time=slice(f"{start_year}-{time}", str(end_year), 24 * 365))
+    dataset = dataset.sel(time=slice(f"{start_year}-{time}", str(end_year), 24 * 365))
 
     dataset.attrs = dataset.attrs | {"tavg_start_year": start_year, "tavg_end_year": end_year,
                                      "datetime": time, "is_tavg": 1}
+
+    if verbose:
+        print(f"Dataset TAVG slice size: {format_bytes(dataset.nbytes)} ")
+    return dataset
+
+
+def select_vertical_slice(dataset: xr.Dataset, start_level: int = 150, end_level: int = 1000, verbose: bool = True):
+    """
+    Selects a vertical slice of the dataset
+
+    Args:
+        dataset: the xarray dataset
+        start_level: in hPa
+        end_level: in hPa
+        verbose: print debugging information?
+    """
+
+    dataset = dataset.sel(level=slice(start_level, end_level))
 
     if verbose:
         print(f"Dataset TAVG slice size: {format_bytes(dataset.nbytes)} ")
@@ -65,9 +75,6 @@ def compute_tavg(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
     Args:
         dataset: the xarray dataset
         verbose: print debugging information?
-
-    Returns:
-        time-averaged xarray dataset
     """
     with ProgressBar():
         dataset = dataset.mean("time").compute()

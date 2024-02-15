@@ -10,6 +10,7 @@ from modules.datetime import datetime_range, datetime_func
 @datetime_func("dt")
 def download_at(dt, output_folder: str = "ERA5/", start_year=2012, end_year=2022, verbose=True):
     wind_slice = era5.select_tavg_slice(ml_wind, start_year, end_year, dt, verbose=verbose)
+    wind_slice = era5.select_vertical_slice(wind_slice, 150, 1000, verbose=verbose)
     wind_slice = era5.compute_tavg(wind_slice, verbose=verbose)
     wind_slice = era5.compress_dataset(wind_slice, verbose=verbose)
 
