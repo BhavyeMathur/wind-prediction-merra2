@@ -47,13 +47,19 @@ MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "
                "November", "December"]
 
 
-def date_to_index(day: int, month: int) -> int:
+def date_to_dayofyear(day: int, month: int) -> int:
+    """
+    Converts a date to day of the year (starting at 0)
+    """
     assert 1 < month <= 12
     assert 1 < day <= MONTH_DAYS[month - 1]
     return sum(MONTH_DAYS[:month - 1]) + day - 1  # -1 to convert from nth day to index
 
 
-def index_to_date(file: int) -> tuple[int, int]:
+def dayofyear_to_date(file: int) -> tuple[int, int]:
+    """
+    Converts a day of year (0 indexed) to day, month
+    """
     assert 0 <= file < 365
 
     month = 0
@@ -65,6 +71,9 @@ def index_to_date(file: int) -> tuple[int, int]:
 
 
 def date_as_number(day: int, month: int, year: int) -> int:
+    """
+    Returns a date as a number in the format 'YYYYMMDD'
+    """
     return 10000 * year + 100 * month + day
 
 
@@ -109,58 +118,23 @@ def parse_datetime(datetime: str, yavg: int = 0) -> tuple[int | None, int | None
         raise ValueError(f"Invalid time format {datetime!r}")
 
 
+def _parse_datetime(dt: str) -> datetime.datetime:
+    try:
+        return datetime.datetime.strptime(dt, "%Y-%m-%d %H:%M")
+    except ValueError:
+        return datetime.datetime.strptime(dt, "%m-%d %H:%M")
+
+
 def datetime_range(start: str, end: str, delta: datetime.timedelta) -> Generator[datetime.datetime, None, None]:
-    minute1, hour1, day1, month1, year1 = parse_datetime(start)
-    minute2, hour2, day2, month2, year2 = parse_datetime(end)
-
-    start = datetime.datetime(1981 if year1 == 0 else year1,
-                              month1 if month1 else 1,
-                              day1 if day1 else 1,
-                              hour1 if hour1 else 1,
-                              minute1 if minute1 else 30)
-
-    end = datetime.datetime(1981 if year2 == 0 else year2,
-                            month2 if month2 else 12,
-                            day2 if day2 else 31,
-                            hour2 if hour2 else 22,
-                            minute2 if minute2 else 30)
+    start = _parse_datetime(start)
+    end = _parse_datetime(end)
 
     while start <= end:
         yield start
         start += delta
 
 
-def months_in_year() -> range:
-    return range(1, 13)
-
-
-def days_in_month(month: int) -> range:
-    """
-    Parameters
-    ----------
-    month: 1 for January, 12 for December
-    """
-    return range(1, MONTH_DAYS[month - 1] + 1)
-
-
-def days_in_year() -> Generator[tuple[int, int], None, None]:
-    for month in months_in_year():
-        for day in days_in_month(month):
-            yield month, day
-
-
-def hours_in_month(month: int) -> Generator[tuple[int, int, int], None, None]:
-    """
-    Parameters
-    ----------
-    month: 1 for January, 12 for December
-    """
-    for day in days_in_month(month):
-        for hour in range(24):
-            yield day, hour
-
-
-def hours_in_year() -> Generator[tuple[int, int, int], None, None]:
-    for month in months_in_year():
-        for day, hour in hours_in_month(month):
-            yield month, day, hour
+def format_datetime(month: int, day: int, hour: int, pretty: bool = False) -> str:
+    if pretty:
+        return f"{month:02}-{day:02} {hour:02}:00"
+    return f"{month:02}{day:02}-{hour:02}00"
