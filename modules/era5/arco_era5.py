@@ -1,3 +1,4 @@
+import os
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
@@ -26,7 +27,7 @@ def connect(path: str, variables: tuple[str, ...] = None, verbose: bool = True, 
     return dataset
 
 
-@datetime_func("dt")
+@datetime_func("time")
 def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time, verbose: bool = True) -> xr.Dataset:
     """
     Selects a slice of the dataset at a particular date & time, across several years.
@@ -41,9 +42,7 @@ def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time,
     time = format_datetime(time, pretty=True)
 
     dataset = dataset.sel(time=slice(f"{start_year}-{time}", str(end_year), 24 * 365))
-
-    dataset.attrs = dataset.attrs | {"tavg_start_year": start_year, "tavg_end_year": end_year,
-                                     "datetime": time, "is_tavg": 1}
+    dataset.attrs |= {"tavg_start_year": start_year, "tavg_end_year": end_year, "datetime": time}
 
     if verbose:
         print(f"Dataset TAVG slice size: {format_bytes(dataset.nbytes)} ")
@@ -76,8 +75,12 @@ def compute_tavg(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
         dataset: the xarray dataset
         verbose: print debugging information?
     """
+    attrs = dataset.attrs
+
     with ProgressBar():
         dataset = dataset.mean("time").compute()
+
+    dataset.attrs = attrs | {"is_tavg": 1}
 
     if verbose:
         print(f"Dataset TAVG size: {format_bytes(dataset.nbytes)}")
@@ -110,11 +113,11 @@ def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = T
         compressed = dataset[var].values.astype("float16").view(view)
         variables[var] = xr.Variable(dataset.dims, compressed, attrs={"units": get_units(var)})
 
-    ds = xr.Dataset(data_vars=variables, coords=coords, attrs=dataset.attrs | {"is_float16": 1})
+    dataset = xr.Dataset(data_vars=variables, coords=coords, attrs=dataset.attrs | {"is_float16": 1})
 
     if verbose:
-        print(f"Compressed dataset size: {format_bytes(ds.nbytes)}")
-    return ds
+        print(f"Compressed dataset size: {format_bytes(dataset.nbytes)}")
+    return dataset
 
 
 def save_dataset(dataset, output_folder: str, verbose: bool = True) -> None:
@@ -144,3 +147,11 @@ def save_dataset(dataset, output_folder: str, verbose: bool = True) -> None:
             dataset.to_netcdf(f"{output_folder}/{'-'.join(file)}.nc")
     else:
         dataset.to_netcdf(f"{output_folder}/{'-'.join(file)}.nc")
+
+
+@datetime_func("time")
+def era5_file_exists(time, output_folder: str = "ERA5/"):
+    """
+    Checks if a locally saved ERA-5 file exists
+    """
+    return os.path.isfile(f"{output_folder}/ERA5-tavg-{format_datetime(time, pretty=False)}.nc")
