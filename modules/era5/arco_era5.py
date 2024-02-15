@@ -68,7 +68,7 @@ def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = T
     return ds
 
 
-def save_dataset(dataset, output_folder: str) -> None:
+def save_dataset(dataset, output_folder: str, verbose: bool = True) -> None:
     file = ["ERA5"]
 
     if dataset.attrs.get("is_tavg"):
@@ -80,5 +80,8 @@ def save_dataset(dataset, output_folder: str) -> None:
     else:
         raise NotImplementedError("Don't know how to save non-TAVG dataset")
 
-    with ProgressBar():
+    if verbose:
+        with ProgressBar():
+            dataset.to_netcdf(f"{output_folder}/{'-'.join(file)}.nc")
+    else:
         dataset.to_netcdf(f"{output_folder}/{'-'.join(file)}.nc")
