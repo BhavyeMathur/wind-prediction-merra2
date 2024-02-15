@@ -41,6 +41,9 @@ def date_as_number(day: int, month: int, year: int) -> int:
 
 
 def parse_datetime_depr(dt: str, yavg: int = 0) -> tuple[int | None, int | None, int | None, int | None, int | None]:
+    """
+    Deprecated. Use parse_datetime instead.
+    """
     time = None
     hour = None
     minute = None
@@ -82,6 +85,9 @@ def parse_datetime_depr(dt: str, yavg: int = 0) -> tuple[int | None, int | None,
 
 
 def parse_datetime(dt: DATETIME_TYPE) -> datetime:
+    """
+    Automatically parses a datetime string into a datetime object using the best-fit format.
+    """
     if isinstance(dt, datetime):
         return dt
 
@@ -122,12 +128,21 @@ def datetime_func(*args: str):
 
 @datetime_func("start", "end")
 def datetime_range(start: DATETIME_TYPE, end: DATETIME_TYPE, delta: timedelta) -> Generator[datetime, None, None]:
+    """
+    Returns a datetime range between the start and end dates with a specified interval.
+    """
     while start <= end:
         yield start
         start += delta
 
 
 def format_datetime(*args, pretty: bool = False) -> str:
+    """
+    Formats a datetime object into a string with format 'mmdd-HHMMM'
+
+    Args:
+        pretty: change format to 'mm-dd HH:MM'
+    """
     if len(args) == 1 and isinstance(args[0], datetime):
         if pretty:
             return args[0].strftime("%m-%d %H:%M")

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
@@ -8,8 +6,20 @@ from modules.datetime import format_datetime, parse_datetime, datetime_func
 from .metadata import *
 
 
-def connect(url: str, variables: tuple[str, ...] = None, verbose: bool = True, **kwargs) -> xr.Dataset:
-    dataset = xr.open_zarr(url, **kwargs)
+def connect(path: str, variables: tuple[str, ...] = None, verbose: bool = True, **kwargs) -> xr.Dataset:
+    """
+    Connects to a ZARR database and extracts certain variables
+
+    Args:
+        path: filepath or URL to ZARR file
+        variables: tuple of variables to extract
+        verbose: print debugging information?
+        **kwargs: additional arguments to xarray.open_zarr() function
+
+    Returns:
+        xarray dataset with specified variables
+    """
+    dataset = xr.open_zarr(path, **kwargs)
 
     if variables:
         dataset = dataset[list(variables)]
@@ -20,16 +30,28 @@ def connect(url: str, variables: tuple[str, ...] = None, verbose: bool = True, *
 
 
 @datetime_func("dt")
-def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, dt,
+def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, time,
                       start_level: int = 150, end_level: int = 1000, verbose: bool = True) -> xr.Dataset:
-    dt = format_datetime(dt, pretty=True)
+    """
+    Selects a slice of the dataset at a particular date & time, across several years.
+
+    Args:
+        dataset: the xarray dataset
+        start_year: the year to begin the slice
+        end_year: the year to end the slice
+        time: 'mm-dd HH:MM' string or datetime object
+        verbose: print debugging information?
+
+    Returns:
+        xarray dataset slice at time
+    """
+    time = format_datetime(time, pretty=True)
 
     dataset = dataset.sel(level=slice(start_level, end_level),
-                          time=slice(f"{start_year}-{dt}", str(end_year), 24 * 365))
+                          time=slice(f"{start_year}-{time}", str(end_year), 24 * 365))
 
-    dataset.attrs["tavg_start_year"] = start_year
-    dataset.attrs["tavg_end_year"] = end_year
-    dataset.attrs["datetime"] = dt
+    dataset.attrs = dataset.attrs | {"tavg_start_year": start_year, "tavg_end_year": end_year,
+                                     "datetime": time, "is_tavg": 1}
 
     if verbose:
         print(f"Dataset TAVG slice size: {format_bytes(dataset.nbytes)} ")
@@ -37,12 +59,18 @@ def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, dt,
 
 
 def compute_tavg(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
-    attrs = dataset.attrs
+    """
+    Computes the time-average of a xarray dataset
 
+    Args:
+        dataset: the xarray dataset
+        verbose: print debugging information?
+
+    Returns:
+        time-averaged xarray dataset
+    """
     with ProgressBar():
         dataset = dataset.mean("time").compute()
-
-    dataset.attrs = attrs | {"is_tavg": 1}
 
     if verbose:
         print(f"Dataset TAVG size: {format_bytes(dataset.nbytes)}")
@@ -50,6 +78,17 @@ def compute_tavg(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
 
 
 def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = True) -> xr.Dataset:
+    """
+    Compresses the dataset into a netCDF-valid float-16 format
+
+    Args:
+        dataset: the xarray dataset
+        view: compression dtype to use
+        verbose: print debugging information?
+
+    Returns:
+        compressed xarray dataset
+    """
     variables = {}
     coords = {}
 
@@ -72,6 +111,17 @@ def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = T
 
 
 def save_dataset(dataset, output_folder: str, verbose: bool = True) -> None:
+    """
+    Saves the ERA-5 dataset
+
+    Args:
+        dataset: the xarray dataset
+        output_folder: filepath to output directory
+        verbose: print debugging information?
+
+    Raises:
+        NotImplementedError: dataset must be time-averaged
+    """
     file = ["ERA5"]
 
     if dataset.attrs.get("is_tavg"):

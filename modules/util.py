@@ -6,18 +6,12 @@ import string
 
 
 def format_bytes(size: int, si: bool = False) -> str:
+    """Converts bytes to a printable format
+
+    Args:
+        size: number of bytes to be converted
+        si: use SI standard (KB = 1000 bytes), else use JEDEC standard (KB = 1024 bytes)
     """
-        Converts bytes to printable units
-
-        Parameters
-        ---------
-        size: int
-            Number of bytes to be converted
-
-        si: bool
-            True -> Use SI standard e.g. KB = 1000 bytes
-            False -> Use JEDEC standard e.g. KB = 1024 bytes
-        """
 
     order = 0
     while math.log10(size) > 3:
@@ -33,15 +27,24 @@ fmt = string.Formatter()
 
 
 def get_number_of_string_format_args(s: str) -> int:
+    """
+    Gets the number of format specifiers in a string
+    """
     return len([p for p in fmt.parse(s) if p[2] is not None])
 
 
 def log(*args) -> None:
+    """
+    Log a value to the console
+    """
     print(f"[{strftime('%H:%M:%S')}] LOG:", *args)
 
 
-# From Zio, https://stackoverflow.com/questions/218616/how-to-get-method-parameter-names
+# Edited from Zio, https://stackoverflow.com/questions/218616/how-to-get-method-parameter-names
 def get_function_arguments(func, args, kwargs, is_method=False):
+    """
+    Get the arguments of a function as a dictionary
+    """
     offset = 1 if is_method else 0
     specs = inspect.getfullargspec(func)
     d = {}
