@@ -1,4 +1,5 @@
 from time import strftime
+import inspect
 import math
 
 import string
@@ -37,3 +38,21 @@ def get_number_of_string_format_args(s: str) -> int:
 
 def log(*args) -> None:
     print(f"[{strftime('%H:%M:%S')}] LOG:", *args)
+
+
+# From Zio, https://stackoverflow.com/questions/218616/how-to-get-method-parameter-names
+def get_function_arguments(func, args, kwargs, is_method=False):
+    offset = 1 if is_method else 0
+    specs = inspect.getfullargspec(func)
+    d = {}
+    non_default_args = len(specs.args) - (len(specs.defaults) if specs.defaults else 0)
+
+    for i, parameter in enumerate(specs.args[offset:]):
+        i += offset
+        if i < len(args):
+            d[parameter] = args[i]
+        elif parameter in kwargs:
+            d[parameter] = kwargs[parameter]
+        else:
+            d[parameter] = specs.defaults[i - non_default_args]
+    return d

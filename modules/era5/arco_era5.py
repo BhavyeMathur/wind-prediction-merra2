@@ -4,7 +4,7 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 
 from modules.util import format_bytes
-from modules.datetime import format_datetime, parse_datetime
+from modules.datetime import format_datetime, parse_datetime, datetime_func
 from .metadata import *
 
 
@@ -19,7 +19,8 @@ def connect(url: str, variables: tuple[str, ...] = None, verbose: bool = True, *
     return dataset
 
 
-def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, dt: datetime,
+@datetime_func("dt")
+def select_tavg_slice(dataset: xr.Dataset, start_year: int, end_year: int, dt,
                       start_level: int = 150, end_level: int = 1000, verbose: bool = True) -> xr.Dataset:
     dt = format_datetime(dt, pretty=True)
 

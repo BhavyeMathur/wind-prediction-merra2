@@ -1,10 +1,13 @@
 from typing import Generator
 
 from datetime import datetime, timedelta
+from .util import get_function_arguments
 
 MONTH_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
                "November", "December"]
+
+DATETIME_TYPE = str | datetime
 
 
 def date_to_dayofyear(day: int, month: int) -> int:
@@ -78,17 +81,47 @@ def parse_datetime_depr(dt: str, yavg: int = 0) -> tuple[int | None, int | None,
         raise ValueError(f"Invalid time format {dt!r}")
 
 
-def parse_datetime(dt: str) -> datetime:
+def parse_datetime(dt: DATETIME_TYPE) -> datetime:
+    if isinstance(dt, datetime):
+        return dt
+
     try:
         return datetime.strptime(dt, "%Y-%m-%d %H:%M")
     except ValueError:
         return datetime.strptime(dt, "%m-%d %H:%M")
 
 
-def datetime_range(start: str, end: str, delta: timedelta) -> Generator[datetime, None, None]:
-    start = parse_datetime(start)
-    end = parse_datetime(end)
+def datetime_func(*args: str):
+    """
+    A decorator used to pre-process datetime arguments to functions.
+    Specify the argument names as strings that are either datetime or string objects.
+    When the decorated function is called, the datetime arguments will automatically be parsed into datetime objects
 
+    Examples:
+        .. code-block:: python
+
+            @datetime_func("datetime_object")
+            def function_using_datetime_objects(datetime_object: str | datetime.datetime):
+                # if caller calls function with a string, it will be parsed to a datetime.datetime
+                # if caller calls function with datetime.datetime, it will be passed on as-is
+    """
+    def _decorator(func):
+        def closure(*a, **kwargs):
+            function_args = get_function_arguments(func, a, kwargs)
+
+            for name, val in function_args.items():
+                if name in args:
+                    function_args[name] = parse_datetime(val)
+
+            return func(**function_args)
+
+        return closure
+
+    return _decorator
+
+
+@datetime_func("start", "end")
+def datetime_range(start: DATETIME_TYPE, end: DATETIME_TYPE, delta: timedelta) -> Generator[datetime, None, None]:
     while start <= end:
         yield start
         start += delta
