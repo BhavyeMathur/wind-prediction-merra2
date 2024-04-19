@@ -14,6 +14,8 @@ from matplotlib.ticker import FormatStrFormatter
 
 _PLATE_CARREE = projections.PlateCarree()
 
+mpl.rcParams['figure.dpi'] = 175
+
 
 class MeteorologicalPlot:
     def __init__(self, data, title: str = "Meteorological Plot", output: str = None,
