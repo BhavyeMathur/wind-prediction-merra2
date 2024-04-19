@@ -52,10 +52,13 @@ def date_as_number(day: int, month: int, year: int) -> int:
     return 10000 * year + 100 * month + day
 
 
-def parse_datetime(dt: DATETIME_TYPE) -> datetime:
+def parse_datetime(dt: DATETIME_TYPE) -> None | datetime:
     """
     Automatically parses a datetime string into a datetime object using the best-fit format.
     """
+    if dt is None:
+        return None
+
     if isinstance(dt, datetime):
         return dt
 
@@ -111,10 +114,12 @@ def format_datetime(*args, pretty: bool = False) -> str:
     Args:
         pretty: change format to 'mm-dd HH:MM'
     """
-    if len(args) == 1 and isinstance(args[0], datetime):
-        if pretty:
-            return args[0].strftime("%m-%d %H:%M")
-        return args[0].strftime("%m%d-%H%M")
+    if len(args) == 1:
+        arg = args[0]
+        if isinstance(arg, DateTime) and not pretty:
+            return f"{arg}"
+        if isinstance(arg, datetime):
+            return arg.strftime("%m-%d %H:%M" if pretty else "%m%d-%H%M")
 
     month, hour, day = args
     if pretty:
