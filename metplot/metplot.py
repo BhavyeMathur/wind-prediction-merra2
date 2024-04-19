@@ -32,6 +32,8 @@ class MeteorologicalPlot:
         self.diverging = diverging
         self.maxmin_quantile = maxmin_quantile
 
+        self._plotted = None
+
         self._plot_kwargs = kwargs
 
     def _plot_mpl(self, *args, **kwargs) -> None:
@@ -40,10 +42,13 @@ class MeteorologicalPlot:
     def _create_mpl_plot(self) -> plt.Figure:
         raise NotImplementedError()
 
+    def _draw_color_bar(self, cmap, vmin, vmax, **_) -> None:
+        return
+
     def _setup_mpl_plot(self) -> None:
         self._fig.suptitle(self._title, fontsize=self.title_size, y=0.95)
 
-    def plot(self, *args, **kwargs) -> None:
+    def plot(self) -> None:
         if "vmin" not in self._plot_kwargs and "vmax" not in self._plot_kwargs:
             vmin, vmax = self._get_vmin_and_vmax()
             self._plot_kwargs["vmin"] = vmin
@@ -52,7 +57,8 @@ class MeteorologicalPlot:
         if self._backend == "matplotlib":
             self._fig = self._create_mpl_plot()
             self._setup_mpl_plot()
-            self._plot_mpl(*args, **self._plot_kwargs, **kwargs)
+            self._plotted = self._plot_mpl(**self._plot_kwargs)
+            self._draw_color_bar(**self._plot_kwargs)
 
             if self._output:
                 plt.savefig(f"generated/contours/{self._output}.png", dpi=300)
@@ -66,6 +72,11 @@ class MeteorologicalPlot:
         else:
             raise ValueError(f"Unknown backend: {self._backend}")
 
+    def update_data(self, data):
+        self._data = data
+        self._plotted.set_data(data)
+        return self._plotted
+
     def _get_vmin_and_vmax(self):
         vmin = np.quantile(self._data, self.maxmin_quantile)
         vmax = np.quantile(self._data, 1 - self.maxmin_quantile)
@@ -76,6 +87,44 @@ class MeteorologicalPlot:
         if abs(vmin) > vmax:  # possible when vmin < 0
             return vmin, -vmin
         return -vmax, vmax
+
+    def _clean_up_artists(self) -> None:
+        axis = self._fig.gca()
+
+        for artist in self._plotted:
+            try:
+                # fist attempt: try to remove collection of contours for instance
+                while artist.collections:
+                    for col in artist.collections:
+                        artist.collections.remove(col)
+                        try:
+                            axis.collections.remove(col)
+                        except ValueError:
+                            pass
+
+                    artist.collections = []
+                    axis.collections = []
+            except AttributeError:
+                pass
+
+            # second attempt, try to remove the text
+            try:
+                artist.remove()
+            except (AttributeError, ValueError):
+                pass
+
+    @property
+    def title(self) -> str:
+        return self._title
+
+    @title.setter
+    def title(self, title: str):
+        self._title = title
+        self._fig.suptitle(self._title, fontsize=self.title_size, y=0.95)
+
+    @property
+    def fig(self):
+        return self._fig
 
 
 class GraticulePlot(MeteorologicalPlot):
@@ -201,18 +250,15 @@ class GraticulePlot(MeteorologicalPlot):
 
 
 class ContourfPlot(GraticulePlot):
-    def _plot_mpl(self, levels=25, **kwargs) -> None:
-        self._ax.contourf(*self._mesh, self._data, levels=levels, **kwargs)
-        self._draw_color_bar(**kwargs)
+    def _plot_mpl(self, levels=25, **kwargs):
+        return self._ax.contourf(*self._mesh, self._data, levels=levels, **kwargs)
 
 
 class ContourPlot(GraticulePlot):
-    def _plot_mpl(self, levels=20, **kwargs) -> None:
-        self._ax.contour(*self._mesh, self._data, levels=levels, **kwargs)
-        self._draw_color_bar(**kwargs)
+    def _plot_mpl(self, levels=20, **kwargs):
+        return self._ax.contour(*self._mesh, self._data, levels=levels, **kwargs)
 
 
 class ImagePlot(GraticulePlot):
-    def _plot_mpl(self, **kwargs) -> None:
-        self._ax.imshow(self._data, origin="lower", extent=(-180, 180, -90, 90), **kwargs)
-        self._draw_color_bar(**kwargs)
+    def _plot_mpl(self, **kwargs):
+        return self._ax.imshow(self._data, origin="lower", extent=(-180, 180, -90, 90), **kwargs)
