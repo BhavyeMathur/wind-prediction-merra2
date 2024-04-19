@@ -10,6 +10,18 @@ MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "
 DATETIME_TYPE = str | datetime
 
 
+class DateTime(datetime):
+    def __new__(cls, month: int, day: int, hour: int, year: int | str = "tavg"):
+        return datetime.__new__(cls, year=1980 if year == "tavg" else year, month=month, day=day, hour=hour)
+
+    def __init__(self, month: int, day: int, hour: int, year: int | str = "tavg"):
+        self.tavg = year == "tavg"
+        super().__init__()
+
+    def __format__(self, format_spec):
+        return f"{'tavg' if self.tavg else self.year}-{self.month:02}{self.day:02}-{self.hour:02}00"
+
+
 def date_to_dayofyear(day: int, month: int) -> int:
     """
     Converts a date to day of the year (starting at 0)
