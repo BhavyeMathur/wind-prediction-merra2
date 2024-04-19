@@ -31,18 +31,18 @@ def date_to_dayofyear(day: int, month: int) -> int:
     return sum(MONTH_DAYS[:month - 1]) + day - 1  # -1 to convert from nth day to index
 
 
-def dayofyear_to_date(file: int) -> tuple[int, int]:
+def dayofyear_to_date(i: int) -> tuple[int, int]:
     """
     Converts a day of year (0 indexed) to day, month
     """
-    assert 0 <= file < 365
+    assert 0 <= i < 365
 
     month = 0
-    while file > MONTH_DAYS[month]:
-        file -= MONTH_DAYS[month]
+    while i >= MONTH_DAYS[month]:
+        i -= MONTH_DAYS[month]
         month += 1
 
-    return file, month + 1
+    return i + 1, month + 1
 
 
 def date_as_number(day: int, month: int, year: int) -> int:
