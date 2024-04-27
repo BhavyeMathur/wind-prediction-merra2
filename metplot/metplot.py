@@ -5,7 +5,6 @@ import numpy as np
 
 import cmasher as cmr
 import cartopy.crs as projections
-from cartopy.feature.nightshade import Nightshade
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -14,7 +13,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 _PLATE_CARREE = projections.PlateCarree()
 
-mpl.rcParams['figure.dpi'] = 175
+mpl.rcParams['figure.dpi'] = 150
 
 
 class MeteorologicalPlot:
@@ -35,6 +34,7 @@ class MeteorologicalPlot:
         self._plotted = None
 
         self._plot_kwargs = kwargs
+        self._auto_vlims = False
 
     def _plot_mpl(self, *args, **kwargs) -> None:
         raise NotImplementedError()
@@ -53,6 +53,9 @@ class MeteorologicalPlot:
             vmin, vmax = self._get_vmin_and_vmax()
             self._plot_kwargs["vmin"] = vmin
             self._plot_kwargs["vmax"] = vmax
+            self._auto_vlims = True
+        else:
+            self._auto_vlims = False
 
         if self._backend == "matplotlib":
             self._fig = self._create_mpl_plot()
@@ -72,9 +75,19 @@ class MeteorologicalPlot:
         else:
             raise ValueError(f"Unknown backend: {self._backend}")
 
+    def _update_plot(self):
+        raise NotImplementedError()
+
+    def _update_clim(self, vmin, vmax):
+        raise NotImplementedError()
+
     def update_data(self, data):
         self._data = data
-        self._plotted.set_data(data)
+        self._update_plot()
+
+        if self._auto_vlims:
+            self._update_clim(*self._get_vmin_and_vmax())
+
         return self._plotted
 
     def _get_vmin_and_vmax(self):
@@ -87,31 +100,6 @@ class MeteorologicalPlot:
         if abs(vmin) > vmax:  # possible when vmin < 0
             return vmin, -vmin
         return -vmax, vmax
-
-    def _clean_up_artists(self) -> None:
-        axis = self._fig.gca()
-
-        for artist in self._plotted:
-            try:
-                # fist attempt: try to remove collection of contours for instance
-                while artist.collections:
-                    for col in artist.collections:
-                        artist.collections.remove(col)
-                        try:
-                            axis.collections.remove(col)
-                        except ValueError:
-                            pass
-
-                    artist.collections = []
-                    axis.collections = []
-            except AttributeError:
-                pass
-
-            # second attempt, try to remove the text
-            try:
-                artist.remove()
-            except (AttributeError, ValueError):
-                pass
 
     @property
     def title(self) -> str:
@@ -137,6 +125,9 @@ class GraticulePlot(MeteorologicalPlot):
         self._mesh = np.meshgrid(lons, lats)
 
         self._ax = None
+        self._cbar_ax = None
+        self._cbar = None
+        self._cmap = None
 
         self.projection = projection
 
@@ -150,14 +141,16 @@ class GraticulePlot(MeteorologicalPlot):
 
     def _create_mpl_plot(self) -> plt.Figure:
         fig = plt.figure(figsize=self._get_figsize(), layout=self._get_layout())
-        # plt.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, wspace=0, hspace=0)
 
         if self._projection is None:
             self._ax = plt.gca()
         else:
             self._ax = fig.add_subplot(projection=self._projection)
 
+        plt.subplots_adjust(left=0.06, top=0.9, right=0.9, bottom=0.07)
+
         self._ax.spines[:].set_color("#fff")
+        self._cbar_ax = fig.add_axes((0.92, 0.07, 0.02, 0.83))
 
         if self._coastlines:
             self._ax.coastlines(linewidth=1, alpha=0.2)
@@ -206,22 +199,56 @@ class GraticulePlot(MeteorologicalPlot):
         return 8, 5
 
     def _get_layout(self) -> str:
-        if isinstance(self._projection, (projections.Robinson, projections.Mollweide)):
-            return "none"
-        return "tight"
+        return "none"
 
     def _draw_color_bar(self, cmap, vmin, vmax, **_) -> None:
         if not self._colorbar:
             return
 
+        self._cmap = cmap
+
         norm = mpl.colors.Normalize(vmin, vmax)
-        plot = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+        plot = plt.cm.ScalarMappable(norm=norm, cmap=self._cmap)
         plot.set_array([])
 
-        cbar = self._fig.colorbar(plot, ax=self._ax, fraction=0.03, pad=0.03)
-        cbar.outline.set_linewidth(0.05)
+        self._cbar = self.fig.colorbar(plot, cax=self._cbar_ax, fraction=0.03, pad=0.03)
+        self._cbar.outline.set_linewidth(0.05)
 
-        cbar.ax.tick_params(labelsize=7, right=False, direction="in")
+        self._cbar.ax.tick_params(labelsize=7, right=False, direction="in")
+        self._cbar.ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.0f"))
+
+    def _clean_up_artists(self) -> None:
+        try:
+            # fist attempt: try to remove collection of contours for instance
+            while self._plotted.collections:
+                for col in self._plotted.collections:
+                    self._plotted.collections.remove(col)
+                    try:
+                        self._ax.collections.remove(col)
+                    except ValueError:
+                        pass
+
+                self._plotted.collections = []
+                self._ax.collections = []
+        except AttributeError:
+            pass
+
+        # second attempt, try to remove the text
+        try:
+            self._plotted.remove()
+        except (AttributeError, ValueError):
+            pass
+
+    def _update_plot(self):
+        self._clean_up_artists()
+        self._plotted = self._plot_mpl(**self._plot_kwargs)
+
+    def _update_clim(self, vmin, vmax):
+        self._plotted.set_clim(vmin=vmin, vmax=vmax)
+        if self._cbar:
+            self._cbar.update_normal(self._plotted)
+            self._cbar.ax.tick_params(labelsize=7, right=False, direction="in")
+            self._cbar.ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.0f"))
 
     @property
     def projection(self):
@@ -262,3 +289,6 @@ class ContourPlot(GraticulePlot):
 class ImagePlot(GraticulePlot):
     def _plot_mpl(self, **kwargs):
         return self._ax.imshow(self._data, origin="lower", extent=(-180, 180, -90, 90), **kwargs)
+
+    def _update_plot(self):
+        self._plotted.set_data(self._data)
