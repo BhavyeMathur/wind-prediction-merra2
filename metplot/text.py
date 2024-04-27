@@ -27,7 +27,7 @@ def get_long_variable_name(variable: str) -> str:
     if variable.isupper():
         default = variable
     else:
-        default = variable.replace("_", " ").capitalize()
+        default = variable.replace("_", " ").title()
 
     return _VARIABLES.get(variable, default)
 
@@ -44,7 +44,7 @@ def get_units_from_variable(variable: str) -> str | None:
             or variable.startswith("DPDT"):
         return "W/m²"
 
-    if variable in {"U", "V", "Wind Speed", "u_component_of_wind", "v_component_of_wind"}:
+    if variable in {"U", "V", "Wind Speed", "u_component_of_wind", "v_component_of_wind", "wind_speed"}:
         return "m/s"
     elif variable == "PHIS":
         return "m²/s²"
@@ -52,6 +52,10 @@ def get_units_from_variable(variable: str) -> str | None:
         return "m"
     elif variable in {"temperature", "T"}:
         return "°C"
+    elif variable == "wind_direction":
+        return "°"
+    elif variable == "vertical_velocity":
+        return "Pa/s"
 
     return None
 
