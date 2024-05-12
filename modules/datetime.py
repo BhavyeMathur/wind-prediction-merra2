@@ -98,42 +98,28 @@ def parse_datetime(dt: DATETIME_TYPE) -> None | datetime:
     if dt is None:
         return None
 
-    if isinstance(dt, datetime):
+    if isinstance(dt, (datetime, timedelta)):
         return dt
 
-    try:
-        return datetime.strptime(dt, "%Y-%m-%d %H:%M")
-    except ValueError:
-        return datetime.strptime(dt, "%m-%d %H:%M")
+    if not isinstance(dt, str):
+        raise ValueError(f"Unknown date format '{dt}'")
 
+    is_tavg = "TAVG" in dt
+    if is_tavg:
+        dt = dt.replace("TAVG", "1980")
 
-def datetime_func(*args: str):
-    """
-    A decorator used to pre-process datetime arguments to functions.
-    Specify the argument names as strings that are either datetime or string objects.
-    When the decorated function is called, the datetime arguments will automatically be parsed into datetime objects
+    if " " in dt:
+        try:
+            dt = datetime.strptime(dt, "%Y-%m-%d %H:%M")
+        except ValueError:
+            dt = datetime.strptime(dt, "%m-%d %H:%M")
+    else:
+        try:
+            dt = datetime.strptime(dt, "%Y-%m-%d")
+        except ValueError:
+            dt = datetime.strptime(dt, "%m-%d")
 
-    Examples:
-        .. code-block:: python
-
-            @datetime_func("datetime_object")
-            def function_using_datetime_objects(datetime_object: str | datetime.datetime):
-                # if caller calls function with a string, it will be parsed to a datetime.datetime
-                # if caller calls function with datetime.datetime, it will be passed on as-is
-    """
-    def _decorator(func):
-        def closure(*a, **kwargs):
-            function_args = get_function_arguments(func, a, kwargs)
-
-            for name, val in function_args.items():
-                if name in args:
-                    function_args[name] = parse_datetime(val)
-
-            return func(**function_args)
-
-        return closure
-
-    return _decorator
+    return DateTime(dt.month, dt.day, dt.hour, "tavg" if is_tavg else dt.year)
 
 
 @datetime_func("start", "end")
