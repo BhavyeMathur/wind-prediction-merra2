@@ -57,8 +57,15 @@ class DateTime(datetime):
     def __add__(self, other):
         tavg = self.tavg or (isinstance(other, DateTime) and other.tavg)
 
-        a = datetime(year=1980 if tavg else self.year, month=self.month, day=self.day, hour=self.hour) + other
-        return DateTime(month=a.month, day=a.day, hour=a.hour, year="tavg" if tavg else a.year)
+        result = datetime(year=1980 if tavg else self.year, month=self.month, day=self.day, hour=self.hour) + other
+        return DateTime(month=result.month, day=result.day, hour=result.hour, year="tavg" if tavg else result.year)
+
+    @datetime_func("other")
+    def __sub__(self, other):
+        tavg = self.tavg or (isinstance(other, DateTime) and other.tavg)
+
+        result = datetime(year=1980 if tavg else self.year, month=self.month, day=self.day, hour=self.hour) - other
+        return DateTime(month=result.month, day=result.day, hour=result.hour, year="tavg" if tavg else result.year)
 
 
 def date_to_dayofyear(day: int, month: int) -> int:
