@@ -1,12 +1,4 @@
-import xarray as xr
 import numpy as np
-
-
-ERA5 = "/Volumes/Seagate Hub/ERA5/wind"
-
-
-def open_dataset(datetime):
-    return xr.open_dataset(f"{ERA5}/ERA5-{datetime}.nc")
 
 
 def get_latlon_contour_data(variable: str, datetime, level: int = None):
