@@ -1,5 +1,4 @@
 import xarray as xr
-import numpy as np
 
 import cmasher as cmr
 from matplotlib.colors import ListedColormap
@@ -103,7 +102,8 @@ class AtmosphericVariable4D(AtmosphericVariable):
         else:
             return ds.sel(level=level, latitude=latitude, longitude=longitude)
 
-    def get_vlims(self, level: int) -> tuple[float, float]:
+    @staticmethod
+    def get_vlims(level: int) -> tuple[float, float]:
         """
         Returns 'limits' of the data at a particular level to use in plotting
         """
@@ -112,7 +112,8 @@ class AtmosphericVariable4D(AtmosphericVariable):
 
 # time, latitude, longitude
 class AtmosphericVariable3D(AtmosphericVariable):
-    def get_vlims(self) -> tuple[float, float]:
+    @staticmethod
+    def get_vlims() -> tuple[float, float]:
         """
         Returns 'limits' of the data to use in plotting
         """
@@ -121,7 +122,8 @@ class AtmosphericVariable3D(AtmosphericVariable):
 
 # latitude, longitude
 class AtmosphericVariable2D(AtmosphericVariable):
-    def get_vlims(self) -> tuple[float, float]:
+    @staticmethod
+    def get_vlims() -> tuple[float, float]:
         """
         Returns 'limits' of the data to use in plotting
         """
@@ -134,7 +136,8 @@ class Temperature(AtmosphericVariable4D):
                          cmap=["#d7e4fc", "#5fb1d4", "#4e9bc8", "#466ae1", "#6b1966",
                                "#952c5e", "#d12d3e", "#fa7532", "#f5d25f"])
 
-    def get_vlims(self, level: int):
+    @staticmethod
+    def get_vlims(level: int):
         if level == 1000:
             return -40, 40
         elif level == 150:
@@ -147,7 +150,8 @@ class UWind(AtmosphericVariable4D):
     def __init__(self):
         super().__init__(name="u_component_of_wind", unit="m/s", cmap=cmr.ocean)
 
-    def get_vlims(self, level: int):
+    @staticmethod
+    def get_vlims(level: int):
         if level == 1000:
             return -15, 15
 
@@ -158,7 +162,8 @@ class VWind(AtmosphericVariable4D):
     def __init__(self):
         super().__init__(name="v_component_of_wind", unit="m/s", cmap=cmr.ocean)
 
-    def get_vlims(self, level: int):
+    @staticmethod
+    def get_vlims(level: int):
         if level == 1000:
             return -15, 15
 
@@ -169,7 +174,8 @@ class VerticalVelocity(AtmosphericVariable4D):
     def __init__(self):
         super().__init__(name="vertical_velocity", unit="Pa/s", cmap="RdBu")
 
-    def get_vlims(self, level: int):
+    @staticmethod
+    def get_vlims(level: int):
         if level == 1000:
             return -1.5, 1.5
 
@@ -180,7 +186,8 @@ class WindDirection(AtmosphericVariable4D):
     def __init__(self):
         super().__init__(name="wind_direction", unit="°", cmap="twilight")
 
-    def get_vlims(self, _):
+    @staticmethod
+    def get_vlims(_):
         return -180, 180
 
 
@@ -188,7 +195,8 @@ class WindSpeed(AtmosphericVariable4D):
     def __init__(self):
         super().__init__(name="wind_speed", unit="m/s", cmap=cmr.ocean)
 
-    def get_vlims(self, level: int):
+    @staticmethod
+    def get_vlims(level: int):
         if level == 1000:
             return 0, 16
 

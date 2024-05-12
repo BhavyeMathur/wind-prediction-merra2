@@ -2,8 +2,6 @@ import numpy as np
 
 
 def get_latlon_contour_data(variable: str, datetime, level: int = None):
-    dataset = open_dataset(datetime)
-
     if variable == "wind_speed" or variable == "wind_direction":
         u = get_latlon_contour_data("u_component_of_wind", datetime, level)
         v = get_latlon_contour_data("v_component_of_wind", datetime, level)
