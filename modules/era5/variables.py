@@ -38,45 +38,44 @@ class AtmosphericVariable:
     def cmap(self):
         return self._cmap
 
-    def get_vlims(self, level: int) -> tuple[float, float]:
-        raise NotImplementedError()
-
     @datetime_func("datetime")
     def open(self, datetime) -> xr.DataArray:
+        """
+        Selects an xarray DataArray from a Dataset opened from a datetime
+        """
+        # Check dictionary cache. If DataArray already opened, return that.
         if datetime in self._datasets:
             return self._datasets[datetime]
 
+        # Otherwise, open the DataArray and add it to cache before returning it.
         self._datasets[datetime] = AtmosphericVariable._open_ds(datetime)[self.name]
         return self._datasets[datetime]
 
     @staticmethod
     @datetime_func("datetime")
     def _open_ds(datetime) -> xr.Dataset:
+        """
+        Opens an xarray DataSet source file from a datetime
+        """
+        # Check dictionary cache. If DataSet already opened, return that.
         if datetime in AtmosphericVariable._datasets:
             return AtmosphericVariable._datasets[datetime]
 
+        # Otherwise, open the DataSet and add it to cache before returning it.
         AtmosphericVariable._datasets[datetime] = xr.open_dataset(f"{ERA5}/ERA5-{datetime}.nc")
-        return AtmosphericVariable._datasets[datetime]
-
-    @staticmethod
-    def _get_sliced_index_iterable(values, index: slice):
-        values = list(values)
-
-        start_idx = values.index(index.start)
-        stop_idx = values.index(index.stop)
-        step = -1 if index.start > index.stop else 1
-        return values[start_idx:stop_idx:step][::index.step]
+        return AtmosphericVariable._datasets[datetime].expand_dims({"time": [datetime]})
 
 
+# time, level, latitude, longitude
 class AtmosphericVariable4D(AtmosphericVariable):
     def __getitem__(self, item):
         level = None
         latitude = None
         longitude = None
 
+        # Extract time, level, latitude, and longitude indices from argument
         if isinstance(item, tuple):
             time = item[0]
-
             if len(item) > 1:
                 level = item[1]
             if len(item) > 2:
@@ -86,52 +85,47 @@ class AtmosphericVariable4D(AtmosphericVariable):
         else:
             time = item
 
+        # If the time index is a slice, extract data from each time in slice and concatenate result
         if isinstance(time, slice):
             data = []
             for dt in datetime_range(time.start, time.stop, time.step if time.step else datetime.timedelta(hours=1)):
                 data.append(self[dt, level, latitude, longitude])
-            return np.array(data)
+            return xr.concat(data, "time")
 
+        # Open DataArray and select appropriate data before returning
         ds = self.open(time)
-
-        if isinstance(level, slice):
-            data = []
-
-            for lev in AtmosphericVariable._get_sliced_index_iterable(ds.level.values, level):
-                data.append(self[time, lev, latitude, longitude])
-            return np.array(data)
-
-        if isinstance(latitude, slice):
-            data = []
-
-            for lat in AtmosphericVariable._get_sliced_index_iterable(ds.latitude.values, latitude):
-                data.append(self[time, level, lat, longitude])
-            return np.array(data)
-
-        if isinstance(longitude, slice):
-            data = []
-
-            for lon in AtmosphericVariable._get_sliced_index_iterable(ds.longitude.values, longitude):
-                data.append(self[time, level, latitude, lon])
-            return np.array(data)
-
-        print(level, latitude)
         if level is None:
-            return ds.values
+            return ds
         elif latitude is None:
-            return ds.sel(level=level).values
+            return ds.sel(level=level)
         elif longitude is None:
-            return ds.sel(level=level, latitude=latitude).values
+            return ds.sel(level=level, latitude=latitude)
         else:
             return ds.sel(level=level, latitude=latitude, longitude=longitude)
 
+    def get_vlims(self, level: int) -> tuple[float, float]:
+        """
+        Returns 'limits' of the data at a particular level to use in plotting
+        """
+        raise NotImplementedError()
 
+
+# time, latitude, longitude
 class AtmosphericVariable3D(AtmosphericVariable):
-    pass
+    def get_vlims(self) -> tuple[float, float]:
+        """
+        Returns 'limits' of the data to use in plotting
+        """
+        raise NotImplementedError()
 
 
+# latitude, longitude
 class AtmosphericVariable2D(AtmosphericVariable):
-    pass
+    def get_vlims(self) -> tuple[float, float]:
+        """
+        Returns 'limits' of the data to use in plotting
+        """
+    raise NotImplementedError()
 
 
 class Temperature(AtmosphericVariable4D):
