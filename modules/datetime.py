@@ -10,6 +10,35 @@ MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "
 DATETIME_TYPE = str | datetime
 
 
+def datetime_func(*args: str):
+    """
+    A decorator used to pre-process datetime arguments to functions.
+    Specify the argument names as strings that are either datetime or string objects.
+    When the decorated function is called, the datetime arguments will automatically be parsed into datetime objects
+
+    Examples:
+        .. code-block:: python
+
+            @datetime_func("datetime_object")
+            def function_using_datetime_objects(datetime_object: str | datetime.datetime):
+                # if caller calls function with a string, it will be parsed to a datetime.datetime
+                # if caller calls function with datetime.datetime, it will be passed on as-is
+    """
+    def _decorator(func):
+        def closure(*a, **kwargs):
+            function_args = get_function_arguments(func, a, kwargs)
+
+            for name, val in function_args.items():
+                if name in args:
+                    function_args[name] = parse_datetime(val)
+
+            return func(**function_args)
+
+        return closure
+
+    return _decorator
+
+
 class DateTime(datetime):
     def __new__(cls, month: int, day: int, hour: int, year: int | str = "tavg"):
         return datetime.__new__(cls, year=1980 if year == "tavg" else year, month=month, day=day, hour=hour)
@@ -20,6 +49,16 @@ class DateTime(datetime):
 
     def __format__(self, format_spec):
         return f"{'tavg' if self.tavg else self.year}-{self.month:02}{self.day:02}-{self.hour:02}00"
+
+    def __hash__(self):
+        return hash((self.year, self.month, self.day, self.hour))
+
+    @datetime_func("other")
+    def __add__(self, other):
+        tavg = self.tavg or (isinstance(other, DateTime) and other.tavg)
+
+        a = datetime(year=1980 if tavg else self.year, month=self.month, day=self.day, hour=self.hour) + other
+        return DateTime(month=a.month, day=a.day, hour=a.hour, year="tavg" if tavg else a.year)
 
 
 def date_to_dayofyear(day: int, month: int) -> int:
