@@ -287,8 +287,9 @@ class ContourPlot(GraticulePlot):
 
 
 class ImagePlot(GraticulePlot):
-    def _plot_mpl(self, **kwargs):
-        return self._ax.imshow(self._data, origin="lower", extent=(-180, 180, -90, 90), **kwargs)
+    def _plot_mpl(self, interpolation="nearest", **kwargs):
+        return self._ax.imshow(self._data, origin="lower", extent=(-180, 180, -90, 90),
+                               interpolation=interpolation, **kwargs)
 
     def _update_plot(self):
         self._plotted.set_data(self._data)
