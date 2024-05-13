@@ -4,7 +4,7 @@ from dask.diagnostics import ProgressBar
 
 from modules.util import format_bytes
 from modules.datetime import format_datetime, parse_datetime, datetime_func
-from .metadata import *
+from .variables import AtmosphericVariable
 
 
 def connect(path: str, variables: tuple[str, ...] = None, verbose: bool = True, **kwargs) -> xr.Dataset:
@@ -89,7 +89,7 @@ def compute_tavg(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
 
 def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = True) -> xr.Dataset:
     """
-    Compresses the dataset into a netCDF-valid float-16 format
+    Compresses the dataset into a netCDF-valid float16 format
 
     Args:
         dataset: the xarray dataset
@@ -102,18 +102,56 @@ def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = T
     variables = {}
     coords = {}
 
+    var: str
     for var in dataset.variables:
         if var in {"level", "latitude", "longitude"}:
-            coords[var] = xr.Variable(var, dataset[var].astype(get_coord_dtype(var)),
-                                      attrs={"units": get_units(var)})
+            coords[var] = xr.Variable(var, dataset[var].astype(AtmosphericVariable.get_dtype(var)),
+                                      attrs={"units": AtmosphericVariable.get_units(var)})
             continue
         elif var == "time":
             coords[var] = dataset[var]
 
         compressed = dataset[var].values.astype("float16").view(view)
-        variables[var] = xr.Variable(dataset.dims, compressed, attrs={"units": get_units(var)})
+        variables[var] = xr.Variable(dataset.dims, compressed, attrs={"units": AtmosphericVariable.get_units(var)})
 
     dataset = xr.Dataset(data_vars=variables, coords=coords, attrs=dataset.attrs | {"is_float16": 1})
+
+    if verbose:
+        print(f"Compressed dataset size: {format_bytes(dataset.nbytes)}")
+    return dataset
+
+
+def uncompress_dataset(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
+    """
+    Uncompresses the dataset from a netCDF-valid float16 format
+
+    Args:
+        dataset: the xarray dataset
+        verbose: print debugging information?
+
+    Returns:
+        uncompressed xarray dataset
+    """
+    if not dataset.attrs.get("is_float16", False):
+        return dataset  # input dataset isn't compressed as float16
+
+    variables = {}
+    coords = {}
+
+    var: str
+    for var in dataset.variables:
+        if var in {"level", "latitude", "longitude"}:
+            coords[var] = xr.Variable(var, dataset[var].astype(AtmosphericVariable.get_dtype(var)),
+                                      attrs={"units": AtmosphericVariable.get_units(var)})
+            continue
+
+        elif var == "time":
+            coords[var] = dataset[var]
+
+        compressed = dataset[var].values.view("float16")
+        variables[var] = xr.Variable(dataset.dims, compressed, attrs={"units": AtmosphericVariable.get_units(var)})
+
+    dataset = xr.Dataset(data_vars=variables, coords=coords, attrs=dataset.attrs | {"is_float16": 0})
 
     if verbose:
         print(f"Compressed dataset size: {format_bytes(dataset.nbytes)}")
@@ -159,3 +197,7 @@ def era5_file_exists(time, output_folder: str = "ERA5/"):
     Checks if a locally saved ERA-5 file exists
     """
     return os.path.isfile(f"{output_folder}/{era5_filename(time)}")
+
+
+__all__ = [connect, select_tavg_slice, select_vertical_slice, compute_tavg, compress_dataset, uncompress_dataset,
+           era5_filename, save_dataset, era5_file_exists]

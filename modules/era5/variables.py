@@ -55,25 +55,25 @@ class AtmosphericVariable:
     @datetime_func("dt")
     def open(self, dt) -> xr.Dataset | xr.DataArray:
         """
-        Selects an xarray DataArray from a Dataset opened from a datetime
+        Selects a xarray DataArray from a Dataset opened from a datetime
         """
         # Check dictionary cache. If DataArray already opened, return that.
-        if datetime in self._datasets:
-            return self._datasets[datetime]
+        if dt in self._datasets:
+            return self._datasets[dt]
 
         # Otherwise, open the DataArray and add it to cache before returning it.
-        self._datasets[datetime] = AtmosphericVariable._open_ds(datetime)[self.name]
-        return self._datasets[datetime]
+        self._datasets[dt] = AtmosphericVariable._open_ds(dt)[self.name]
+        return self._datasets[dt]
 
     @staticmethod
     @datetime_func("datetime")
-    def _open_ds(datetime) -> xr.Dataset:
+    def _open_ds(dt) -> xr.Dataset:
         """
-        Opens an xarray DataSet source file from a datetime
+        Opens a xarray DataSet source file from a datetime
         """
         # Check dictionary cache. If DataSet already opened, return that.
-        if datetime in AtmosphericVariable._datasets:
-            return AtmosphericVariable._datasets[datetime]
+        if dt in AtmosphericVariable._datasets:
+            return AtmosphericVariable._datasets[dt]
 
         # Otherwise, open the DataSet and add it to cache before returning it.
         AtmosphericVariable._datasets[dt] = xr.open_dataset(f"{ERA5}/ERA5-{dt}.nc")
@@ -90,12 +90,33 @@ class AtmosphericVariable:
 
 # time, level, latitude, longitude
 class AtmosphericVariable4D(AtmosphericVariable):
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> xr.DataArray:
+        time, level, latitude, longitude = self._get_index(item)
+
+        # If the time index is a slice, extract data from each time in slice and concatenate result
+        if isinstance(time, slice):
+            data = []
+            for dt in datetime_range(time.start, time.stop, time.step if time.step else datetime.timedelta(hours=1)):
+                data.append(self[dt, level, latitude, longitude])
+            return xr.concat(data, "time")
+
+        # Open DataArray and select appropriate data before returning
+        ds = self.open(time)
+        if latitude is None:
+            ds = ds.sel(level=level)
+        elif longitude is None:
+            ds = ds.sel(level=level, latitude=latitude)
+        else:
+            ds = ds.sel(level=level, latitude=latitude, longitude=longitude)
+
+        return self._getitem_post(ds)
+
+    @staticmethod
+    def _get_index(item):
         level = None
         latitude = None
         longitude = None
 
-        # Extract time, level, latitude, and longitude indices from argument
         if isinstance(item, tuple):
             time = item[0]
             if len(item) > 1:
@@ -107,30 +128,10 @@ class AtmosphericVariable4D(AtmosphericVariable):
         else:
             time = item
 
-        # If the time index is a slice, extract data from each time in slice and concatenate result
-        if isinstance(time, slice):
-            data = []
-            for dt in datetime_range(time.start, time.stop, time.step if time.step else datetime.timedelta(hours=1)):
-                data.append(self[dt, level, latitude, longitude])
-            return xr.concat(data, "time")
+        return time, level, latitude, longitude
 
-        # Open DataArray and select appropriate data before returning
-        ds = self.open(time)
-        if level is None:
-            return ds
-        elif latitude is None:
-            return ds.sel(level=level)
-        elif longitude is None:
-            return ds.sel(level=level, latitude=latitude)
-        else:
-            return ds.sel(level=level, latitude=latitude, longitude=longitude)
-
-    @staticmethod
-    def get_vlims(level: int) -> tuple[float, float]:
-        """
-        Returns 'limits' of the data at a particular level to use in plotting
-        """
-        raise NotImplementedError()
+    def _getitem_post(self, ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
+        return ds
 
 
 # time, latitude, longitude
