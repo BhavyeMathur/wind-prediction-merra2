@@ -19,11 +19,5 @@ def get_latlon_contour_data(variable: str, datetime, level: int = None):
         data = data.view("float16")
         data = np.roll(data, 1440 // 2, axis=1)
 
-    if variable == "temperature":
-        data -= 273.15  # Kelvin to Celsius
-
-    if variable == "vertical_velocity":
-        data = np.sign(data) * (abs(data) ** 0.5)
-
     dataset.close()
     return data
