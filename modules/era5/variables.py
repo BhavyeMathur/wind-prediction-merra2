@@ -7,7 +7,6 @@ import cmasher as cmr
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 
 from modules.datetime import datetime_func, DateTime, datetime_range, timedelta
-from .arco_era5 import uncompress_dataset
 
 ERA5 = "/Volumes/Seagate Hub/ERA5/wind"
 
@@ -229,4 +228,7 @@ class WindSpeed(AtmosphericVariable4D, name="wind_speed", unit="m/s"):
 
 
 __all__ = ["Temperature", "UWind", "VWind", "VerticalVelocity", "WindDirection", "WindSpeed", "Level", "Latitude",
-           "Longitude"]
+           "Longitude", "AtmosphericVariable"]
+
+
+from .dataset import uncompress_dataset
