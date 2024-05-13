@@ -17,6 +17,7 @@ class Temperature(AtmosphericVariable4D, name="temperature", unit="K",
             return ds - 273.15  # Kelvin to Celsius
         return ds
 
+    # TODO make non-static and use unit to calculate vlims
     @staticmethod
     def get_vlims(level: int):
         if level == 1000:

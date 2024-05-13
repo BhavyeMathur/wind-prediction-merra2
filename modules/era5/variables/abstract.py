@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Type
 
 import cmasher as cmr
+import numpy as np
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 
 from modules.datetime import datetime_range, timedelta
@@ -22,7 +23,9 @@ class AtmosphericVariable:
         cls._name = kwargs.get("name", None)
         cls._unit = kwargs.get("unit", None)
         cls._cmap = kwargs.get("cmap", cmr.ocean)
+
         cls._dtype = kwargs.get("dtype", "float32")
+        cls._requires = kwargs.get("requires", cls._name)
 
         if isinstance(cls._cmap, list):
             cls._cmap = LinearSegmentedColormap.from_list(cls._name, cls._cmap)
@@ -66,11 +69,17 @@ class AtmosphericVariable4D(AtmosphericVariable):
                 data.append(self[dt, level, latitude, longitude])
             return xr.concat(data, "time")
 
-        ds = open_variable(self.name, time)
+        ds = open_variable(self._requires, time)
         ds = select_slice(ds, level, latitude, longitude)
         ds = uncompress_dataset(ds)
 
-        return self._getitem_post(ds)
+        vals = self._getitem_post(ds)
+        if isinstance(vals, xr.DataArray):
+            return vals
+        if isinstance(vals, xr.Dataset) and len(vals.data_vars) == 1:
+            return vals[list(vals.data_vars)[0]]
+
+        return xr.DataArray(vals, coords=ds.coords, dims=ds.dims, name=self.name, attrs=ds.attrs)
 
     @staticmethod
     def _get_index(item):
@@ -91,8 +100,8 @@ class AtmosphericVariable4D(AtmosphericVariable):
 
         return time, level, latitude, longitude
 
-    def _getitem_post(self, ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
-        return ds
+    def _getitem_post(self, ds: xr.Dataset) -> np.ndarray | xr.DataArray | xr.Dataset:
+        return ds[self.name].values
 
 
 # time, latitude, longitude
