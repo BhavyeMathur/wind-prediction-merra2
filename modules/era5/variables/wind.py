@@ -29,18 +29,29 @@ class VerticalVelocity(AtmosphericVariable4D, name="vertical_velocity", unit="Pa
 
 class WindDirection(AtmosphericVariable4D, name="wind_direction", unit="°", cmap="twilight",
                     requires=["u_component_of_wind", "v_component_of_wind"]):
-    @staticmethod
-    def get_vlims(_):
+    def __init__(self, radians: bool = False):
+        super().__init__()
+        if radians:
+            self._unit = "rad"
+        else:
+            self._unit = "°"
+        self._radians = radians
+
+    def get_vlims(self, _):
+        if self._radians:
+            return -np.pi, np.pi
         return -180, 180
 
     def _getitem_post(self, ds):
-        return np.degrees(np.arctan2(ds["u_component_of_wind"], ds["v_component_of_wind"]))
+        val = np.arctan2(ds["u_component_of_wind"], ds["v_component_of_wind"])
+        if self._radians:
+            return val
+        return np.degrees(val)
 
 
 class WindSpeed(AtmosphericVariable4D, name="wind_speed", unit="m/s",
                 requires=["u_component_of_wind", "v_component_of_wind"]):
-    @staticmethod
-    def get_vlims(level: int):
+    def get_vlims(self, level: int):
         if level == 1000:
             return 0, 16
         raise ValueError("Unknown level for value limits")

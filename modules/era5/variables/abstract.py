@@ -48,6 +48,9 @@ class AtmosphericVariable:
     def dtype(self):
         return self._dtype
 
+    def get_vlims(self, *args, **kwargs):
+        raise NotImplementedError()
+
     @staticmethod
     def get_units(variable: str):
         return AtmosphericVariable._variables[variable].unit
@@ -81,6 +84,12 @@ class AtmosphericVariable4D(AtmosphericVariable):
 
         return xr.DataArray(vals, coords=ds.coords, dims=ds.dims, name=self.name, attrs=ds.attrs)
 
+    def get_vlims(self, level: int):
+        raise NotImplementedError()
+
+    def _getitem_post(self, ds: xr.Dataset) -> np.ndarray | xr.DataArray | xr.Dataset:
+        return ds[self.name].values
+
     @staticmethod
     def _get_index(item):
         level = None
@@ -99,9 +108,6 @@ class AtmosphericVariable4D(AtmosphericVariable):
             time = item
 
         return time, level, latitude, longitude
-
-    def _getitem_post(self, ds: xr.Dataset) -> np.ndarray | xr.DataArray | xr.Dataset:
-        return ds[self.name].values
 
 
 # time, latitude, longitude

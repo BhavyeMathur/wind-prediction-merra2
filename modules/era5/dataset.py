@@ -1,23 +1,6 @@
-import numpy as np
 import xarray as xr
 
 from modules.util import format_bytes
-
-
-def get_latlon_contour_data(variable: str, datetime, level: int = None):
-    if variable == "wind_speed" or variable == "wind_direction":
-        u = get_latlon_contour_data("u_component_of_wind", datetime, level)
-        v = get_latlon_contour_data("v_component_of_wind", datetime, level)
-        if variable == "wind_speed":
-            return np.sqrt(u ** 2 + v ** 2)
-        else:
-            return np.degrees(np.arctan2(u, v))
-
-    if level is None:
-        data = dataset[variable].values[:, ::-1]
-
-    if dataset.attrs["is_float16"]:
-        data = np.roll(data, 1440 // 2, axis=1)
 
 
 def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = True) -> xr.Dataset:
