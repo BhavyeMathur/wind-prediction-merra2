@@ -49,36 +49,36 @@ class AtmosphericVariable:
     def dtype(self):
         return self._dtype
 
-    @datetime_func("dt")
-    def open(self, dt) -> xr.Dataset:
+    @datetime_func("datetime")
+    def open(self, datetime) -> xr.Dataset:
         """
         Selects a xarray DataArray from a Dataset opened from a datetime
         """
         # Check dictionary cache. If DataArray already opened, return that.
-        if dt in self._datasets:
-            return self._datasets[dt]
+        if datetime in self._datasets:
+            return self._datasets[datetime]
 
         # Otherwise, open the DataArray and add it to cache before returning it.
-        ds = AtmosphericVariable._open_ds(dt)
+        ds = AtmosphericVariable._open_ds(datetime)
         darray = ds[[self.name]]
         darray.attrs |= ds.attrs
-        self._datasets[dt] = darray
+        self._datasets[datetime] = darray
 
         return darray
 
     @staticmethod
     @datetime_func("datetime")
-    def _open_ds(dt) -> xr.Dataset:
+    def _open_ds(datetime) -> xr.Dataset:
         """
         Opens a xarray DataSet source file from a datetime
         """
         # Check dictionary cache. If DataSet already opened, return that.
-        if dt in AtmosphericVariable._datasets:
-            return AtmosphericVariable._datasets[dt]
+        if datetime in AtmosphericVariable._datasets:
+            return AtmosphericVariable._datasets[datetime]
 
         # Otherwise, open the DataSet and add it to cache before returning it.
-        AtmosphericVariable._datasets[dt] = xr.open_dataset(f"{ERA5}/ERA5-{dt}.nc")
-        return AtmosphericVariable._datasets[dt].expand_dims({"time": [dt]})
+        AtmosphericVariable._datasets[datetime] = open_dataset(datetime)
+        return AtmosphericVariable._datasets[datetime].expand_dims({"time": [datetime]})
 
     @staticmethod
     def get_units(variable: str):
@@ -147,7 +147,7 @@ class AtmosphericVariable2D(AtmosphericVariable):
 
 
 from modules.era5.dataset import uncompress_dataset
-from modules.era5.io import save_dataset
+from modules.era5.io import open_dataset
 
 
 __all__ = ["AtmosphericVariable", "AtmosphericVariable4D", "AtmosphericVariable3D", "AtmosphericVariable2D"]

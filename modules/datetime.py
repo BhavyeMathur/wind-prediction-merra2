@@ -98,15 +98,15 @@ def date_as_number(day: int, month: int, year: int) -> int:
     return 10000 * year + 100 * month + day
 
 
-def parse_datetime(dt: DATETIME_TYPE) -> None | datetime:
+def parse_datetime(dt: DATETIME_TYPE) -> None | DateTime | timedelta:
     """
     Automatically parses a datetime string into a datetime object using the best-fit format.
     """
-    if dt is None:
-        return None
-
-    if isinstance(dt, (datetime, timedelta)):
+    if dt is None or isinstance(dt, (timedelta, DateTime)):
         return dt
+
+    if isinstance(dt, datetime):
+        return DateTime(month=dt.month, day=dt.day, hour=dt.hour, year=dt.year)
 
     if not isinstance(dt, str):
         raise ValueError(f"Unknown date format '{dt}'")
@@ -153,51 +153,7 @@ def format_datetime(*args, pretty: bool = False) -> str:
         if isinstance(arg, datetime):
             return arg.strftime("%m-%d %H:%M" if pretty else "%m%d-%H%M")
 
-    month, hour, day = args
+    month, day, hour = args
     if pretty:
         return f"{month:02}-{day:02} {hour:02}:00"
     return f"{month:02}{day:02}-{hour:02}00"
-
-
-def parse_datetime_depr(dt: str, yavg: int = 0) -> tuple[int | None, int | None, int | None, int | None, int | None]:
-    """
-    Deprecated. Use parse_datetime instead.
-    """
-    time = None
-    hour = None
-    minute = None
-    year = None
-    day = None
-    month = None
-
-    if dt is None:
-        return None, None, None, None, None
-
-    try:
-        if len(segments := dt.split(" ")) == 2:
-            time, date = segments
-        elif len(segments) == 1:
-            date = segments[0]
-        else:
-            raise ValueError(f"Invalid time format {dt!r}")
-
-        if len(date := date.split("-")) == 3:
-            day, month, year = date
-        elif len(date) == 2:
-            day, month = date
-        elif len(date) == 1 and len(date[0]) == 4:
-            year = date[0]
-        else:
-            raise ValueError(f"Invalid time format {dt!r}")
-
-        if time is not None:
-            hour, minute = time.split(":")
-
-        return (None if minute is None else int(minute),
-                None if hour is None else int(hour),
-                None if day is None else int(day),
-                None if month is None else int(month),
-                yavg if (year is None or year == "YAVG") else int(year))
-
-    except Exception:
-        raise ValueError(f"Invalid time format {dt!r}")

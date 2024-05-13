@@ -1,2 +1,2 @@
-from .merra2 import *
+from .era5 import *
 from .datetime import MONTH_DAYS
