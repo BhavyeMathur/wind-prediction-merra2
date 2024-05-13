@@ -2,7 +2,7 @@ import os
 import xarray as xr
 
 from dask.diagnostics import ProgressBar
-from modules.datetime import format_datetime, datetime_func
+from modules.datetime import format_datetime, datetime_func, DateTime
 
 
 # ERA5 = "/Volumes/Seagate Hub/ERA5/wind"
@@ -39,6 +39,9 @@ def save_dataset(dataset, output_folder: str, verbose: bool = True) -> None:
         dataset.to_netcdf(filepath)
 
 
+datasets_cache: dict[str, xr.Dataset] = {}
+
+
 @datetime_func("datetime")
 def open_dataset(datetime, folder: str = ERA5) -> xr.Dataset:
     """
@@ -53,7 +56,18 @@ def open_dataset(datetime, folder: str = ERA5) -> xr.Dataset:
     """
 
     filepath = f"{folder}/{era5_filename(datetime)}"
-    return xr.open_dataset(filepath)
+
+    if filepath in datasets_cache:
+        return datasets_cache[filepath]
+
+    ds = xr.open_dataset(filepath)
+    ds = ds.expand_dims({"time": [datetime]})
+    datasets_cache[filepath] = ds
+    return ds
+
+
+def open_variable(variable: str | list[str], datetime, folder: str = ERA5) -> xr.Dataset:
+    return open_dataset(datetime, folder)[variable if isinstance(variable, list) else [variable]]
 
 
 def era5_file_exists(time, output_folder: str = "ERA5/"):
@@ -63,4 +77,4 @@ def era5_file_exists(time, output_folder: str = "ERA5/"):
     return os.path.isfile(f"{output_folder}/{era5_filename(time)}")
 
 
-__all__ = ["era5_filename", "save_dataset", "open_dataset", "era5_file_exists"]
+__all__ = ["era5_filename", "save_dataset", "open_dataset", "open_variable", "era5_file_exists"]

@@ -79,6 +79,19 @@ def uncompress_dataset(dataset: xr.Dataset) -> xr.Dataset:
     return dataset
 
 
-__all__ = ["compress_dataset", "uncompress_dataset"]
+def select_slice(dataset: xr.Dataset,
+                 level: None | int = None, latitude: None | float = None, longitude: None | float = None) -> xr.Dataset:
+    kwargs = {}
+    if level is not None:
+        kwargs["level"] = level
+    if latitude is not None:
+        kwargs["latitude"] = latitude
+    if longitude is not None:
+        kwargs["longitude"] = longitude
+
+    return dataset.sel(**kwargs)
+
+
+__all__ = ["compress_dataset", "uncompress_dataset", "select_slice"]
 
 from .variables import AtmosphericVariable
