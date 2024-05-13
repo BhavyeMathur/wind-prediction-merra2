@@ -4,7 +4,6 @@ from dask.diagnostics import ProgressBar
 
 from modules.util import format_bytes
 from modules.datetime import format_datetime, parse_datetime, datetime_func
-from .variables import AtmosphericVariable
 
 
 def connect(path: str, variables: tuple[str, ...] = None, verbose: bool = True, **kwargs) -> xr.Dataset:
@@ -121,13 +120,12 @@ def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = T
     return dataset
 
 
-def uncompress_dataset(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
+def uncompress_dataset(dataset: xr.Dataset) -> xr.Dataset:
     """
     Uncompresses the dataset from a netCDF-valid float16 format
 
     Args:
         dataset: the xarray dataset
-        verbose: print debugging information?
 
     Returns:
         uncompressed xarray dataset
@@ -140,21 +138,13 @@ def uncompress_dataset(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
 
     var: str
     for var in dataset.variables:
-        if var in {"level", "latitude", "longitude"}:
-            coords[var] = xr.Variable(var, dataset[var].astype(AtmosphericVariable.get_dtype(var)),
-                                      attrs={"units": AtmosphericVariable.get_units(var)})
-            continue
-
-        elif var == "time":
-            coords[var] = dataset[var]
-
-        compressed = dataset[var].values.view("float16")
-        variables[var] = xr.Variable(dataset.dims, compressed, attrs={"units": AtmosphericVariable.get_units(var)})
+        if var in {"time", "level", "latitude", "longitude"}:
+            variables[var] = dataset[var]
+        else:
+            uncompressed = dataset[var].values.view("float16").astype("float32")
+            variables[var] = xr.Variable(dataset.dims, uncompressed, attrs=dataset[var].attrs)
 
     dataset = xr.Dataset(data_vars=variables, coords=coords, attrs=dataset.attrs | {"is_float16": 0})
-
-    if verbose:
-        print(f"Compressed dataset size: {format_bytes(dataset.nbytes)}")
     return dataset
 
 
@@ -199,5 +189,8 @@ def era5_file_exists(time, output_folder: str = "ERA5/"):
     return os.path.isfile(f"{output_folder}/{era5_filename(time)}")
 
 
-__all__ = [connect, select_tavg_slice, select_vertical_slice, compute_tavg, compress_dataset, uncompress_dataset,
-           era5_filename, save_dataset, era5_file_exists]
+__all__ = ["connect", "select_tavg_slice", "select_vertical_slice", "compute_tavg", "compress_dataset",
+           "uncompress_dataset", "era5_filename", "save_dataset", "era5_file_exists"]
+
+
+from .variables import AtmosphericVariable

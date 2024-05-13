@@ -6,8 +6,8 @@ import xarray as xr
 import cmasher as cmr
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 
-import datetime
-from modules.datetime import datetime_func, DateTime, datetime_range
+from modules.datetime import datetime_func, DateTime, datetime_range, timedelta
+from .arco_era5 import uncompress_dataset
 
 ERA5 = "/Volumes/Seagate Hub/ERA5/wind"
 
@@ -22,7 +22,7 @@ class AtmosphericVariable:
     _dtype: str
 
     def __init__(self):
-        self._datasets: dict[DateTime, xr.DataArray] = {}
+        self._datasets: dict[DateTime, xr.DataSet] = {}
 
     # noinspection PyMethodOverriding
     def __init_subclass__(cls, **kwargs):
@@ -53,7 +53,7 @@ class AtmosphericVariable:
         return self._dtype
 
     @datetime_func("dt")
-    def open(self, dt) -> xr.Dataset | xr.DataArray:
+    def open(self, dt) -> xr.Dataset:
         """
         Selects a xarray DataArray from a Dataset opened from a datetime
         """
@@ -62,8 +62,12 @@ class AtmosphericVariable:
             return self._datasets[dt]
 
         # Otherwise, open the DataArray and add it to cache before returning it.
-        self._datasets[dt] = AtmosphericVariable._open_ds(dt)[self.name]
-        return self._datasets[dt]
+        ds = AtmosphericVariable._open_ds(dt)
+        darray = ds[[self.name]]
+        darray.attrs |= ds.attrs
+        self._datasets[dt] = darray
+
+        return darray
 
     @staticmethod
     @datetime_func("datetime")
@@ -96,7 +100,7 @@ class AtmosphericVariable4D(AtmosphericVariable):
         # If the time index is a slice, extract data from each time in slice and concatenate result
         if isinstance(time, slice):
             data = []
-            for dt in datetime_range(time.start, time.stop, time.step if time.step else datetime.timedelta(hours=1)):
+            for dt in datetime_range(time.start, time.stop, time.step if time.step else timedelta(hours=1)):
                 data.append(self[dt, level, latitude, longitude])
             return xr.concat(data, "time")
 
@@ -109,6 +113,7 @@ class AtmosphericVariable4D(AtmosphericVariable):
         else:
             ds = ds.sel(level=level, latitude=latitude, longitude=longitude)
 
+        ds = uncompress_dataset(ds)
         return self._getitem_post(ds)
 
     @staticmethod
@@ -141,6 +146,10 @@ class AtmosphericVariable3D(AtmosphericVariable):
 
 # latitude, longitude
 class AtmosphericVariable2D(AtmosphericVariable):
+    pass
+
+
+class Time(AtmosphericVariable, name="time", unit="seconds", dtype="datetime"):
     pass
 
 
@@ -219,4 +228,5 @@ class WindSpeed(AtmosphericVariable4D, name="wind_speed", unit="m/s"):
         raise ValueError("Unknown level for value limits")
 
 
-__all__ = [Temperature, UWind, VWind, VerticalVelocity, WindDirection, WindSpeed, Level, Latitude, Longitude]
+__all__ = ["Temperature", "UWind", "VWind", "VerticalVelocity", "WindDirection", "WindSpeed", "Level", "Latitude",
+           "Longitude"]
