@@ -1,14 +1,12 @@
 from __future__ import annotations
 from typing import Type
 
-import xarray as xr
-
 import cmasher as cmr
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 
 from modules.datetime import datetime_func, DateTime, datetime_range, timedelta
 
-ERA5 = "/Volumes/Seagate Hub/ERA5/wind"
+import xarray as xr
 
 
 class AtmosphericVariable:
@@ -21,7 +19,7 @@ class AtmosphericVariable:
     _dtype: str
 
     def __init__(self):
-        self._datasets: dict[DateTime, xr.DataSet] = {}
+        self._datasets: dict[DateTime, xr.Dataset] = {}
 
     # noinspection PyMethodOverriding
     def __init_subclass__(cls, **kwargs):
@@ -148,87 +146,8 @@ class AtmosphericVariable2D(AtmosphericVariable):
     pass
 
 
-class Time(AtmosphericVariable, name="time", unit="seconds", dtype="datetime"):
-    pass
+from modules.era5.dataset import uncompress_dataset
+from modules.era5.io import save_dataset
 
 
-class Level(AtmosphericVariable, name="level", unit="hPa", dtype="int16"):
-    pass
-
-
-class Latitude(AtmosphericVariable, name="latitude", unit="degrees north"):
-    pass
-
-
-class Longitude(AtmosphericVariable, name="longitude", unit="degrees east"):
-    pass
-
-
-class Temperature(AtmosphericVariable4D, name="temperature", unit="K",
-                  cmap=["#d7e4fc", "#5fb1d4", "#4e9bc8", "#466ae1", "#6b1966",
-                        "#952c5e", "#d12d3e", "#fa7532", "#f5d25f"]):
-    def __init__(self, celsius: bool = False):
-        super().__init__()
-        if celsius:
-            self._unit = "°C"
-        else:
-            self._unit = "K"
-        self._celsius = celsius
-
-    def _getitem_post(self, ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
-        if self._celsius:
-            return ds - 273.15  # Kelvin to Celsius
-        return ds
-
-    @staticmethod
-    def get_vlims(level: int):
-        if level == 1000:
-            return -40, 40
-        elif level == 150:
-            return -70, -40
-        raise ValueError("Unknown level for value limits")
-
-
-class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="m/s"):
-    @staticmethod
-    def get_vlims(level: int):
-        if level == 1000:
-            return -15, 15
-        raise ValueError("Unknown level for value limits")
-
-
-class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="m/s"):
-    @staticmethod
-    def get_vlims(level: int):
-        if level == 1000:
-            return -15, 15
-        raise ValueError("Unknown level for value limits")
-
-
-class VerticalVelocity(AtmosphericVariable4D, name="vertical_velocity", unit="Pa/s", cmap="RdBu"):
-    @staticmethod
-    def get_vlims(level: int):
-        if level == 1000:
-            return -1.5, 1.5
-        raise ValueError("Unknown level for value limits")
-
-
-class WindDirection(AtmosphericVariable4D, name="wind_direction", unit="°", cmap="twilight"):
-    @staticmethod
-    def get_vlims(_):
-        return -180, 180
-
-
-class WindSpeed(AtmosphericVariable4D, name="wind_speed", unit="m/s"):
-    @staticmethod
-    def get_vlims(level: int):
-        if level == 1000:
-            return 0, 16
-        raise ValueError("Unknown level for value limits")
-
-
-__all__ = ["Temperature", "UWind", "VWind", "VerticalVelocity", "WindDirection", "WindSpeed", "Level", "Latitude",
-           "Longitude", "AtmosphericVariable"]
-
-
-from .dataset import uncompress_dataset
+__all__ = ["AtmosphericVariable", "AtmosphericVariable4D", "AtmosphericVariable3D", "AtmosphericVariable2D"]
