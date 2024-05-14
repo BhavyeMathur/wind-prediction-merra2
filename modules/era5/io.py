@@ -61,7 +61,7 @@ def open_dataset(datetime, folder: str = ERA5) -> xr.Dataset:
         return datasets_cache[filepath]
 
     ds = xr.open_dataset(filepath)
-    ds = ds.expand_dims({"time": [datetime]})
+    ds.coords["time"] = datetime
     datasets_cache[filepath] = ds
     return ds
 
