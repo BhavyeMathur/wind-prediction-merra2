@@ -30,31 +30,36 @@ class AtmosphericVariable:
         if isinstance(cls._cmap, list):
             cls._cmap = LinearSegmentedColormap.from_list(cls._name, cls._cmap)
 
+        if cls._name is None:
+            return
         if cls._name in AtmosphericVariable._variables:
             raise RuntimeError(f"Cannot create multiple instances of variable '{cls._name}'")
         AtmosphericVariable._variables[cls._name] = cls
 
+    def __getitem__(self, item) -> xr.Dataset:
+        raise NotImplementedError()
+
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def unit(self):
+    def unit(self) -> str:
         return self._unit
 
     @property
-    def cmap(self):
+    def cmap(self) -> Colormap | str:
         return self._cmap
 
     @property
-    def dtype(self):
+    def dtype(self) -> str:
         return self._dtype
 
     def get_vlims(self, *args, **kwargs):
         raise NotImplementedError()
 
     @staticmethod
-    def get(variable: str):
+    def get(variable: str) -> AtmosphericVariable:
         return AtmosphericVariable._variables[variable]
 
 
@@ -105,6 +110,9 @@ class AtmosphericVariable4D(AtmosphericVariable):
                 longitude = item[3]
         else:
             time = item
+
+        if isinstance(longitude, (int, float)) and longitude < 0:
+            longitude %= 360
 
         return time, level, latitude, longitude
 
