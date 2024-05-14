@@ -1,66 +1,64 @@
 from __future__ import annotations
-from typing import Type
+from typing import Type, Hashable, Final
+
+import numpy as np
+import xarray as xr
 
 import cmasher as cmr
-import numpy as np
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 
 from modules.datetime import datetime_range, timedelta
 
-import xarray as xr
+
+class _AtmosphericVariableMetaclass(type):
+    _variables: dict[Hashable, _AtmosphericVariableMetaclass]
+
+    name: Final[str | None] = None
+    unit: Final[str | None] = None
+    cmap: Final[Colormap | str] = cmr.ocean
+    dtype: Final[str] = "float32"
+
+    axes_unit: Final[str] = ""
+
+    def __getitem__(self, item) -> _AtmosphericVariableMetaclass:
+        return self._variables[item]
 
 
-class AtmosphericVariable:
-    _variables: dict[str, Type[AtmosphericVariable]] = {}
+class AtmosphericVariable(metaclass=_AtmosphericVariableMetaclass):
+    _variables: dict[Hashable, Type[AtmosphericVariable]] = {}
+    _instances: dict[Hashable, AtmosphericVariable] = {}
 
-    _name: str | None
-    _unit: str | None
-    _cmap: Colormap | str
-    _dtype: str
+    def __init__(self):
+        AtmosphericVariable._instances[self.name] = self
 
-    # noinspection PyMethodOverriding
+    # noinspection PyMethodOverriding, PyFinal
     def __init_subclass__(cls, **kwargs):
-        cls._name = kwargs.get("name", None)
-        cls._unit = kwargs.get("unit", None)
-        cls._cmap = kwargs.get("cmap", cmr.ocean)
+        cls.name = kwargs.get("name", None)
+        cls.unit = kwargs.get("unit", None)
+        cls.axes_unit = kwargs.get("axes_unit", cls.unit)
+        cls.cmap = kwargs.get("cmap", cmr.ocean)
 
-        cls._dtype = kwargs.get("dtype", "float32")
-        cls._requires = kwargs.get("requires", cls._name)
+        cls.dtype = kwargs.get("dtype", "float32")
+        cls._requires = kwargs.get("requires", cls.name)
 
-        if isinstance(cls._cmap, list):
-            cls._cmap = LinearSegmentedColormap.from_list(cls._name, cls._cmap)
+        if isinstance(cls.cmap, list):
+            cls.cmap = LinearSegmentedColormap.from_list(cls.name, cls.cmap)
 
-        if cls._name is None:
+        if cls.name is None:
             return
-        if cls._name in AtmosphericVariable._variables:
-            raise RuntimeError(f"Cannot create multiple instances of variable '{cls._name}'")
-        AtmosphericVariable._variables[cls._name] = cls
+        if cls.name in AtmosphericVariable._variables:
+            raise RuntimeError(f"Cannot create multiple instances of variable '{cls.name}'")
+        AtmosphericVariable._variables[cls.name] = cls
 
     def __getitem__(self, item) -> xr.Dataset:
         raise NotImplementedError()
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def unit(self) -> str:
-        return self._unit
-
-    @property
-    def cmap(self) -> Colormap | str:
-        return self._cmap
-
-    @property
-    def dtype(self) -> str:
-        return self._dtype
 
     def get_vlims(self, *args, **kwargs):
         raise NotImplementedError()
 
     @staticmethod
-    def get(variable: str) -> AtmosphericVariable:
-        return AtmosphericVariable._variables[variable]
+    def get(variable: Hashable) -> AtmosphericVariable:
+        return AtmosphericVariable._instances[variable]
 
 
 # time, level, latitude, longitude
