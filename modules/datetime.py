@@ -1,6 +1,9 @@
 from typing import Generator
 
 from datetime import datetime, timedelta
+
+import numpy as np
+
 from .util import get_function_arguments
 
 MONTH_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
@@ -104,6 +107,10 @@ def parse_datetime(dt: DATETIME_TYPE) -> None | DateTime | timedelta:
     """
     if dt is None or isinstance(dt, (timedelta, DateTime)):
         return dt
+
+    if isinstance(dt, np.datetime64):
+        dt = ((dt - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's'))
+        dt = datetime.utcfromtimestamp(dt)
 
     if isinstance(dt, datetime):
         return DateTime(month=dt.month, day=dt.day, hour=dt.hour, year=dt.year)
