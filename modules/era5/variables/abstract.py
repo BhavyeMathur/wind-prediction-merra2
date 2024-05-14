@@ -62,7 +62,7 @@ class AtmosphericVariable:
 
 # time, level, latitude, longitude
 class AtmosphericVariable4D(AtmosphericVariable):
-    def __getitem__(self, item) -> xr.DataArray:
+    def __getitem__(self, item) -> xr.Dataset:
         time, level, latitude, longitude = self._get_index(item)
 
         # If the time index is a slice, extract data from each time in slice and concatenate result
@@ -77,12 +77,13 @@ class AtmosphericVariable4D(AtmosphericVariable):
         ds = uncompress_dataset(ds)
 
         vals = self._getitem_post(ds)
-        if isinstance(vals, xr.DataArray):
-            return vals
-        if isinstance(vals, xr.Dataset) and len(vals.data_vars) == 1:
-            return vals[list(vals.data_vars)[0]]
 
-        return xr.DataArray(vals, coords=ds.coords, dims=ds.dims, name=self.name, attrs=ds.attrs)
+        if isinstance(vals, xr.Dataset):
+            return vals
+        if not isinstance(vals, dict):
+            vals = {self.name: vals}
+
+        return xr.Dataset(vals, coords=ds.coords, attrs=ds.attrs)
 
     def get_vlims(self, level: int):
         raise NotImplementedError()
