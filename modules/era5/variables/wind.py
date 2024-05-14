@@ -4,24 +4,25 @@ from .abstract import AtmosphericVariable4D
 
 
 class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="m/s"):
-    @staticmethod
-    def get_vlims(level: int):
+    def get_vlims(self, level: int):
         if level == 1000:
             return -15, 15
+        elif level == 150:
+            return -40, 70
         raise ValueError("Unknown level for value limits")
 
 
 class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="m/s"):
-    @staticmethod
-    def get_vlims(level: int):
+    def get_vlims(self, level: int):
         if level == 1000:
             return -15, 15
+        elif level == 150:
+            return -20, 20
         raise ValueError("Unknown level for value limits")
 
 
 class VerticalVelocity(AtmosphericVariable4D, name="vertical_velocity", unit="Pa/s", cmap="RdBu"):
-    @staticmethod
-    def get_vlims(level: int):
+    def get_vlims(self, level: int):
         if level == 1000:
             return -1.5, 1.5
         raise ValueError("Unknown level for value limits")
