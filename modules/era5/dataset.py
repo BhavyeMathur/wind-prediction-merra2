@@ -21,14 +21,14 @@ def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = T
     var: str
     for var in dataset.variables:
         if var in {"level", "latitude", "longitude"}:
-            coords[var] = xr.Variable(var, dataset[var].astype(AtmosphericVariable.get_dtype(var)),
-                                      attrs={"units": AtmosphericVariable.get_units(var)})
+            coords[var] = xr.Variable(var, dataset[var].astype(AtmosphericVariable.get(var).dtype),
+                                      attrs={"units": AtmosphericVariable.get(var).units})
             continue
         elif var == "time":
             coords[var] = dataset[var]
 
         compressed = dataset[var].values.astype("float16").view(view)
-        variables[var] = xr.Variable(dataset.dims, compressed, attrs={"units": AtmosphericVariable.get_units(var)})
+        variables[var] = xr.Variable(dataset.dims, compressed, attrs={"units": AtmosphericVariable.get(var).units})
 
     dataset = xr.Dataset(data_vars=variables, coords=coords, attrs=dataset.attrs | {"is_float16": 1})
 

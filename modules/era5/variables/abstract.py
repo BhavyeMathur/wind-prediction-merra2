@@ -30,6 +30,8 @@ class AtmosphericVariable:
         if isinstance(cls._cmap, list):
             cls._cmap = LinearSegmentedColormap.from_list(cls._name, cls._cmap)
 
+        if cls._name in AtmosphericVariable._variables:
+            raise RuntimeError(f"Cannot create multiple instances of variable '{cls._name}'")
         AtmosphericVariable._variables[cls._name] = cls
 
     @property
@@ -52,12 +54,8 @@ class AtmosphericVariable:
         raise NotImplementedError()
 
     @staticmethod
-    def get_units(variable: str):
-        return AtmosphericVariable._variables[variable].unit
-
-    @staticmethod
-    def get_dtype(variable: str):
-        return AtmosphericVariable._variables[variable].dtype
+    def get(variable: str):
+        return AtmosphericVariable._variables[variable]
 
 
 # time, level, latitude, longitude
