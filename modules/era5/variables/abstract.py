@@ -14,6 +14,7 @@ class _AtmosphericVariableMetaclass(type):
     _variables: dict[Hashable, _AtmosphericVariableMetaclass]
 
     name: Final[str | None] = None
+    title: Final[str | None] = None
     unit: Final[str | None] = None
     cmap: Final[Colormap | str] = cmr.ocean
     dtype: Final[str] = "float32"
@@ -34,6 +35,7 @@ class AtmosphericVariable(metaclass=_AtmosphericVariableMetaclass):
     # noinspection PyMethodOverriding, PyFinal
     def __init_subclass__(cls, **kwargs):
         cls.name = kwargs.get("name", None)
+        cls.title = kwargs.get("title", None if cls.name is None else cls.name.replace("_", " ".title()))
         cls.unit = kwargs.get("unit", None)
         cls.axes_unit = kwargs.get("axes_unit", cls.unit)
         cls.cmap = kwargs.get("cmap", cmr.ocean)
@@ -90,7 +92,7 @@ class AtmosphericVariable4D(AtmosphericVariable):
         raise NotImplementedError()
 
     def _getitem_post(self, ds: xr.Dataset) -> np.ndarray | xr.DataArray | xr.Dataset:
-        return ds[self.name].values
+        return ds
 
     @staticmethod
     def _get_index(item):

@@ -3,7 +3,7 @@ import numpy as np
 from .abstract import AtmosphericVariable4D
 
 
-class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="m/s"):
+class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="m/s", title="East Wind"):
     def get_vlims(self, level: int):
         if level == 1000:
             return -15, 15
@@ -12,7 +12,7 @@ class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="m/s"):
         raise ValueError("Unknown level for value limits")
 
 
-class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="m/s"):
+class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="m/s", title="North Wind"):
     def get_vlims(self, level: int):
         if level == 1000:
             return -15, 15
