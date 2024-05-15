@@ -35,7 +35,7 @@ class AtmosphericVariable(metaclass=_AtmosphericVariableMetaclass):
     # noinspection PyMethodOverriding, PyFinal
     def __init_subclass__(cls, **kwargs):
         cls.name = kwargs.get("name", None)
-        cls.title = kwargs.get("title", None if cls.name is None else cls.name.replace("_", " ".title()))
+        cls.title = kwargs.get("title", None if cls.name is None else cls.name.replace("_", " ").title())
         cls.unit = kwargs.get("unit", None)
         cls.axes_unit = kwargs.get("axes_unit", cls.unit)
         cls.cmap = kwargs.get("cmap", cmr.ocean)
