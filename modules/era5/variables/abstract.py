@@ -55,6 +55,10 @@ class AtmosphericVariable(metaclass=_AtmosphericVariableMetaclass):
     def __getitem__(self, item) -> xr.Dataset:
         raise NotImplementedError()
 
+    def slice(self, indices: list | tuple) -> np.ndarray:
+        data = self[*indices]
+        return data.to_dataarray().values
+
     def get_vlims(self, *args, **kwargs):
         raise NotImplementedError()
 

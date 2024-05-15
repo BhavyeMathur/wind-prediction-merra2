@@ -25,7 +25,8 @@ class ImagePlot2D:
     def __init__(self, variable: AtmosphericVariable, indices: list, projection=None):
         self._variable = variable
         self._dset = variable[*indices]
-        self._data = self._dset.to_dataarray().values[0, ::-1]
+        self._data = self._dset.to_dataarray().values
+        self._indices = indices.copy()
 
         assert len(self._dset.dims) == 2, "Only 2D slices of data are supported"
 
@@ -42,6 +43,7 @@ class ImagePlot2D:
 
         self.show = plt.show
         self._reorder_axes()
+        self._data = self._reshape_data(self._data)
 
     def _get_title(self) -> str:
         title = f"{self._variable.title} ({self._variable.axes_unit})"
@@ -67,13 +69,18 @@ class ImagePlot2D:
             self._axes = ("latitude", "level")
             self._reorder_axes()
 
-        if self._axes[0] == "longitude":
-            self._data = np.roll(self._data, self._data.shape[1] // 2, axis=1)
-        if self._axes[0] == "latitude":
-            self._data = self._data[:, ::-1]
-
         assert (self._projection is not None and self._axes == ("longitude", "latitude")) or self._projection is None, \
             "Invalid projection for data type"
+
+    def _reshape_data(self, data):
+        data = data[0, ::-1]
+
+        if self._axes[0] == "longitude":
+            return np.roll(data, data.shape[1] // 2, axis=1)
+        if self._axes[0] == "latitude":
+            return data[:, ::-1]
+
+        return data
 
     def _get_figsize(self) -> tuple[float, float]:
         if self._axes == ("longitude", "latitude"):
@@ -196,6 +203,25 @@ class ImagePlot2D:
         kwargs = dict(extent=(*xlims, *ylims), origin="lower", interpolation="nearest") | kwargs
         return self._ax.imshow(self._data, **kwargs)
 
+    def _get_x(self):
+        xlims, _ = self._get_axes_lims()
+        return np.linspace(*xlims, self._data.shape[1])
+
+    def _get_y(self):
+        _, ylims, = self._get_axes_lims()
+        return np.linspace(*ylims, self._data.shape[0])
+
+    def _get_mesh(self):
+        x = self._get_x()
+        y = self._get_y()
+        return np.meshgrid(x, y)
+
+    def add_streamlines(self, u, v, **kwargs):
+        u = self._reshape_data(u.slice(self._indices))
+        v = self._reshape_data(v.slice(self._indices))
+        self._ax.streamplot(sorted(self._get_x()), sorted(self._get_y()), u, v,
+                            **(dict(linewidth=0.2, color="#fff", density=3, arrowsize=0.5) | kwargs))
+
     @property
     def projection(self) -> None | projections.Projection:
         return self._projection
@@ -222,22 +248,15 @@ class ImagePlot2D:
 class Contour2D(ImagePlot2D):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        xlims, ylims = self._get_axes_lims()
-
-        x = np.linspace(*xlims, self._data.shape[1])
-        y = np.linspace(*ylims, self._data.shape[0])
-        self._mesh = np.meshgrid(x, y)
-
         self._kwargs["levels"] = 20
 
     def _plot_data(self, **kwargs):
-        return self._ax.contour(*self._mesh, self._data, **kwargs)
+        return self._ax.contour(*self._get_mesh(), self._data, **kwargs)
 
 
 class Contourf2D(Contour2D):
     def _plot_data(self, **kwargs):
-        return self._ax.contourf(*self._mesh, self._data, **kwargs)
+        return self._ax.contourf(*self._get_mesh(), self._data, **kwargs)
 
 
 __all__ = ["ImagePlot2D", "Contour2D", "Contourf2D"]
