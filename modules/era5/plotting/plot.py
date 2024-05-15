@@ -7,6 +7,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import cartopy.crs as projections
+from cartopy.mpl.geoaxes import GeoAxes
 
 from modules.maths.barometric import height_from_pressure
 from modules.era5.variables import AtmosphericVariable
@@ -104,7 +105,7 @@ class ImagePlot2D:
         return ((round(float(self._dset[self._axes[0]].min())), round(float(self._dset[self._axes[0]].max()))),
                 (round(float(self._dset[self._axes[1]].min())), round(float(self._dset[self._axes[1]].max()))))
 
-    def plot(self, **kwargs) -> None:
+    def plot(self, colorbar=True, map_=True, **kwargs) -> None:
         self._fig = plt.figure(figsize=self._get_figsize())
         self._fig.suptitle(self._get_title(), fontsize=9, y=0.9 if self._has_secondary_axis else 0.95)
 
@@ -112,12 +113,16 @@ class ImagePlot2D:
         self._fig.tight_layout()
 
         obj = self._plot_data(**(self._kwargs | {"cmap": self._variable.cmap} | kwargs))
-        self._draw_colorbar(obj)
+
+        if colorbar:
+            self._draw_colorbar(obj)
+        if map_:
+            self.add_map()
 
     def _draw_colorbar(self, obj) -> None:
         if self._has_secondary_axis:
             cbar = self._fig.colorbar(obj, fraction=0.06, pad=0.02, anchor=(0, 0), aspect=12, location="top",
-                                      format=f"%.1f")
+                                      format=f"%.{2 - round(np.log10(np.max(self._data) - np.min(self._data)))}f")
             cbar.ax.tick_params(labelsize=5)
         else:
             cbar = self._fig.colorbar(obj, fraction=0.06, pad=0.02, format=f"%.0f{self._variable.unit}")
@@ -261,6 +266,39 @@ class ImagePlot2D:
     def add_quiver(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution: int = None, **kwargs) -> None:
         self._ax.quiver(*self._get_uv_plot_data("quiver", u, v, resolution),
                         **(dict(linewidth=0.2, color="#fff") | kwargs))
+
+    def add_map(self) -> None:
+        if self._axes == ("longitude", "latitude"):
+            return
+
+        elif self._axes == ("latitude", "level"):
+            lon = float(self._dset["longitude"].values)
+            coords = [lon, lon], [-90, 90]
+            proj = projections.Robinson(central_longitude=lon)
+            extent = "global"
+
+        elif self._axes == ("longitude", "level"):
+            lat = float(self._dset["latitude"].values)
+            coords = [-180, 180], [lat, lat]
+            proj = projections.Robinson()
+            extent = "global" if lat == 0 else ([-180, 180, 0, 90] if lat > 0 else [-180, 180, -90, 0])
+
+        else:
+            raise NotImplementedError()
+
+        ax: GeoAxes = plt.axes((0.81, 0.82, 0.13, 0.13), projection=proj)
+        ax.coastlines(linewidth=0.1)
+        ax.gridlines(xlocs=[-150, -100, -50, 0, 50, 100, 150], linewidth=0.15)
+
+        ax.spines[:].set_linewidth(0.1)
+        ax.spines[:].set_color("#000")
+
+        if extent == "global":
+            ax.set_global()
+        else:
+            ax.set_extent(extent, crs=_PLATE_CARREE)
+
+        ax.plot(*coords, transform=_PLATE_CARREE, linewidth=0.4, color="red")
 
     @property
     def projection(self) -> None | projections.Projection:
