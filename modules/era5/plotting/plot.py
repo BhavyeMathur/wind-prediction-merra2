@@ -49,15 +49,18 @@ class ImagePlot2D:
         title = f"{self._variable.title} ({self._variable.axes_unit})"
         if self._axes == ("longitude", "latitude"):
             lev = int(self._dset['level'].values)
-            return f"{title} at {lev} hPa {format_pressure(lev)} on {format_time(self._dset['time'].values)}"
+            title = f"{title} at {lev} hPa {format_pressure(lev)} on {format_time(self._dset['time'].values)}"
 
         elif self._axes == ("longitude", "level"):
-            return (f"{title} at {format_latitude(float(self._dset['latitude'].values))}"
-                    f" on {format_time(self._dset['time'].values)}")
+            title = (f"{title} at {format_latitude(float(self._dset['latitude'].values))}"
+                     f" on {format_time(self._dset['time'].values)}")
 
         elif self._axes == ("latitude", "level"):
-            return (f"{title} at {format_longitude(float(self._dset['longitude'].values))}"
-                    f" on {format_time(self._dset['time'].values)}")
+            title = (f"{title} at {format_longitude(float(self._dset['longitude'].values))}"
+                     f" on {format_time(self._dset['time'].values)}")
+
+        if isinstance(self._indices[0], str) and "TAVG" in self._indices[0]:
+            title = title.replace(", 1980", "")
         return title
 
     def _reorder_axes(self) -> None:
@@ -307,8 +310,8 @@ class ImagePlot2D:
         def _closure(event):
             a = event.inaxes
             if a == ax:
-                lat, lon, _ = _PLATE_CARREE.transform_points(proj,  event.xdata, event.ydata)[0]
-                print(lat, lon)
+                lat, lon, _ = _PLATE_CARREE.transform_points(proj, event.xdata, event.ydata)[0]
+                # TODO update graphs based on mouse click
 
         return _closure
 
