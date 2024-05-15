@@ -120,12 +120,13 @@ class ImagePlot2D:
             self.add_map()
 
     def _draw_colorbar(self, obj) -> None:
+        fmt = f"%.{max(0, 2 - round(np.log10(np.max(self._data) - np.min(self._data))))}f"
         if self._has_secondary_axis:
             cbar = self._fig.colorbar(obj, fraction=0.06, pad=0.02, anchor=(0, 0), aspect=12, location="top",
-                                      format=f"%.{2 - round(np.log10(np.max(self._data) - np.min(self._data)))}f")
+                                      format=fmt)
             cbar.ax.tick_params(labelsize=5)
         else:
-            cbar = self._fig.colorbar(obj, fraction=0.06, pad=0.02, format=f"%.0f{self._variable.unit}")
+            cbar = self._fig.colorbar(obj, fraction=0.06, pad=0.02, format=f"{fmt}{self._variable.unit}")
             cbar.ax.tick_params(labelsize=6)
 
         cbar.outline.set_linewidth(0)
@@ -299,6 +300,17 @@ class ImagePlot2D:
             ax.set_extent(extent, crs=_PLATE_CARREE)
 
         ax.plot(*coords, transform=_PLATE_CARREE, linewidth=0.4, color="red")
+
+        self._fig.canvas.mpl_connect("button_press_event", self._on_mouse_press(ax, proj))
+
+    def _on_mouse_press(self, ax, proj):
+        def _closure(event):
+            a = event.inaxes
+            if a == ax:
+                lat, lon, _ = _PLATE_CARREE.transform_points(proj,  event.xdata, event.ydata)[0]
+                print(lat, lon)
+
+        return _closure
 
     @property
     def projection(self) -> None | projections.Projection:
