@@ -2,6 +2,7 @@ import sys
 from typing import Callable
 
 import numpy as np
+import xarray as xr
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -21,13 +22,25 @@ mpl.rcParams["figure.dpi"] = 150
 _PLATE_CARREE = projections.PlateCarree()
 
 
+def _min_max_norm(arr):
+    return (arr - arr.min()) / (arr.max() - arr.min())
+
+
 class ImagePlot2D:
-    def __init__(self, variable: AtmosphericVariable, indices: list, projection=None):
+    def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list, projection=None):
+        if isinstance(variable, tuple) and len(variable) == 1:
+            variable = variable[0]
+
         self._variable = variable
-        self._dset = variable[*indices]
-        self._data = self._dset.to_dataarray().values
         self._indices = indices.copy()
 
+        if isinstance(variable, tuple):
+            self._dset = {var.name: var[*indices][var.name] for var in variable}
+            self._dset = xr.Dataset(self._dset)
+        else:
+            self._dset = variable[*indices]
+
+        self._data = self._dset.to_dataarray().values
         assert len(self._dset.dims) == 2, "Only 2D slices of data are supported"
 
         self._axes = tuple(self._dset.dims)[::-1]
@@ -46,7 +59,11 @@ class ImagePlot2D:
         self._data = self._reshape_data(self._data)
 
     def _get_title(self) -> str:
-        title = f"{self._variable.title} ({self._variable.axes_unit})"
+        if isinstance(self._variable, tuple):
+            title = ", ".join(var.title for var in self._variable)
+        else:
+            title = f"{self._variable.title} ({self._variable.axes_unit})"
+
         if self._axes == ("longitude", "latitude"):
             lev = int(self._dset['level'].values)
             title = f"{title} at {lev} hPa {format_pressure(lev)} on {format_time(self._dset['time'].values)}"
@@ -76,8 +93,11 @@ class ImagePlot2D:
             "Invalid projection for data type"
 
     def _reshape_data(self, data):
-        data = data[0, ::-1]
+        data = data.squeeze()
+        if data.ndim == 3:
+            return np.dstack([self._reshape_data(_min_max_norm(var)) for var in data])
 
+        data = data[::-1]
         if self._axes[0] == "longitude":
             return np.roll(data, data.shape[1] // 2, axis=1)
         if self._axes[0] == "latitude":
@@ -115,9 +135,10 @@ class ImagePlot2D:
         self._create_axes()
         self._fig.tight_layout()
 
-        obj = self._plot_data(**(self._kwargs | {"cmap": self._variable.cmap} | kwargs))
+        kwargs = {} if isinstance(self._variable, tuple) else {"cmap": self._variable.cmap} | kwargs
+        obj = self._plot_data(**(self._kwargs | kwargs))
 
-        if colorbar:
+        if colorbar and isinstance(self._variable, AtmosphericVariable):
             self._draw_colorbar(obj)
         if map_:
             self.add_map()
@@ -209,7 +230,12 @@ class ImagePlot2D:
     def _plot_data(self, **kwargs):
         xlims, ylims = self._get_axes_lims()
         kwargs = dict(extent=(*xlims, *ylims), origin="lower", interpolation="nearest") | kwargs
-        return self._ax.imshow(self._data, **kwargs)
+
+        if self._data.shape[-1] == 2:
+            data = np.dstack([np.zeros(self._data.shape[:-1]), self._data])
+        else:
+            data = self._data
+        return self._ax.imshow(data, **kwargs)
 
     def _get_x(self):
         xlims, _ = self._get_axes_lims()
