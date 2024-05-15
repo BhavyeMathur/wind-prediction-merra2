@@ -16,7 +16,6 @@ wandb/
 # Media files
 *.gif
 *.mp4
-*.png
 
 # IDE-specific ignores
 # TODO move to global gitignore
