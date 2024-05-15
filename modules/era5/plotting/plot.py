@@ -222,6 +222,13 @@ class ImagePlot2D:
         self._ax.streamplot(sorted(self._get_x()), sorted(self._get_y()), u, v,
                             **(dict(linewidth=0.2, color="#fff", density=3, arrowsize=0.5) | kwargs))
 
+    def add_barbs(self, u, v, resolution=25, **kwargs):
+        u = self._reshape_data(u.slice(self._indices))[::resolution, ::resolution]
+        v = self._reshape_data(v.slice(self._indices))[::resolution, ::resolution]
+        x = sorted(self._get_x())[::resolution]
+        y = sorted(self._get_y())[::resolution]
+        self._ax.barbs(x, y, u, v, **(dict(linewidth=0.2, color="#fff", length=3.5) | kwargs))
+
     @property
     def projection(self) -> None | projections.Projection:
         return self._projection
