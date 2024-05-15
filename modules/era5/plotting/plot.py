@@ -13,7 +13,6 @@ from modules.era5.variables import AtmosphericVariable
 
 from .text import format_pressure, format_time, format_latitude, format_longitude
 
-
 if sys.platform == "darwin":
     mpl.use("TkAgg")
 mpl.rcParams["figure.dpi"] = 150
@@ -216,18 +215,27 @@ class ImagePlot2D:
         y = self._get_y()
         return np.meshgrid(x, y)
 
-    def add_streamlines(self, u, v, **kwargs):
-        u = self._reshape_data(u.slice(self._indices))
-        v = self._reshape_data(v.slice(self._indices))
-        self._ax.streamplot(sorted(self._get_x()), sorted(self._get_y()), u, v,
-                            **(dict(linewidth=0.2, color="#fff", density=3, arrowsize=0.5) | kwargs))
+    def _get_uv_plot_data(self, u, v, resolution: int = 1) -> tuple[list[float], list[float], np.ndarray, np.ndarray]:
+        assert resolution > 0, "Resolution must be greater than 0"
 
-    def add_barbs(self, u, v, resolution=25, **kwargs):
         u = self._reshape_data(u.slice(self._indices))[::resolution, ::resolution]
         v = self._reshape_data(v.slice(self._indices))[::resolution, ::resolution]
         x = sorted(self._get_x())[::resolution]
         y = sorted(self._get_y())[::resolution]
-        self._ax.barbs(x, y, u, v, **(dict(linewidth=0.2, color="#fff", length=3.5) | kwargs))
+
+        return x, y, u, v
+
+    def add_streamlines(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution: int = 25, **kwargs) -> None:
+        self._ax.streamplot(*self._get_uv_plot_data(u, v, resolution),
+                            **(dict(linewidth=0.2, color="#fff", density=3, arrowsize=0.5) | kwargs))
+
+    def add_barbs(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution: int = 25, **kwargs) -> None:
+        self._ax.barbs(*self._get_uv_plot_data(u, v, resolution),
+                       **(dict(linewidth=0.2, color="#fff", length=3.5) | kwargs))
+
+    def add_quiver(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution: int = 10, **kwargs) -> None:
+        self._ax.quiver(*self._get_uv_plot_data(u, v, resolution),
+                        **(dict(linewidth=0.2, color="#fff") | kwargs))
 
     @property
     def projection(self) -> None | projections.Projection:
