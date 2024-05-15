@@ -215,26 +215,51 @@ class ImagePlot2D:
         y = self._get_y()
         return np.meshgrid(x, y)
 
-    def _get_uv_plot_data(self, u, v, resolution: int = 1) -> tuple[list[float], list[float], np.ndarray, np.ndarray]:
-        assert resolution > 0, "Resolution must be greater than 0"
+    def _get_uv_resolution(self, type_: str) -> tuple[int, int]:
+        if type_ == "barb":
+            if self._axes == ("longitude", "latitude"):
+                return 60, 30
+            return 100, 20
 
-        u = self._reshape_data(u.slice(self._indices))[::resolution, ::resolution]
-        v = self._reshape_data(v.slice(self._indices))[::resolution, ::resolution]
-        x = sorted(self._get_x())[::resolution]
-        y = sorted(self._get_y())[::resolution]
+        elif type_ == "stream":
+            if self._axes == ("longitude", "latitude"):
+                return 120, 60
+            raise NotImplementedError("Streamplot only implemented for longitude & latitude plots")
 
+        elif type_ == "quiver":
+            if self._axes == ("longitude", "latitude"):
+                return 120, 60
+            return 40, 25
+
+    def _get_uv_plot_data(self, type_: str, u, v, resolution: int | tuple[int, int] | None = None) -> tuple:
+        if resolution is None:
+            resolution = self._get_uv_resolution(type_)
+        if isinstance(resolution, int):
+            resolution = (resolution, resolution)
+
+        xres, yres = resolution
+
+        x = sorted(self._get_x())
+        y = sorted(self._get_y())
+        xstep = len(x) // xres
+        ystep = len(y) // yres
+
+        u = self._reshape_data(u.slice(self._indices))[::ystep, ::xstep]
+        v = self._reshape_data(v.slice(self._indices))[::ystep, ::xstep]
+        x = x[::xstep]
+        y = y[::ystep]
         return x, y, u, v
 
-    def add_streamlines(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution: int = 25, **kwargs) -> None:
-        self._ax.streamplot(*self._get_uv_plot_data(u, v, resolution),
+    def add_streamlines(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution=None, **kwargs) -> None:
+        self._ax.streamplot(*self._get_uv_plot_data("stream", u, v, resolution),
                             **(dict(linewidth=0.2, color="#fff", density=3, arrowsize=0.5) | kwargs))
 
-    def add_barbs(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution: int = 25, **kwargs) -> None:
-        self._ax.barbs(*self._get_uv_plot_data(u, v, resolution),
+    def add_barbs(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution=None, **kwargs) -> None:
+        self._ax.barbs(*self._get_uv_plot_data("barb", u, v, resolution),
                        **(dict(linewidth=0.2, color="#fff", length=3.5) | kwargs))
 
-    def add_quiver(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution: int = 10, **kwargs) -> None:
-        self._ax.quiver(*self._get_uv_plot_data(u, v, resolution),
+    def add_quiver(self, u: AtmosphericVariable, v: AtmosphericVariable, resolution: int = None, **kwargs) -> None:
+        self._ax.quiver(*self._get_uv_plot_data("quiver", u, v, resolution),
                         **(dict(linewidth=0.2, color="#fff") | kwargs))
 
     @property
