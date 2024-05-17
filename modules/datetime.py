@@ -50,7 +50,13 @@ class DateTime(datetime):
         self.tavg = year == "tavg"
         super().__init__()
 
-    def __format__(self, format_spec):
+    def __repr__(self) -> str:
+        return f"DateTime({'TAVG' if self.tavg else self.year}-{self.month:02}{self.day:02} {self.hour:02}:00:00)"
+
+    def __str__(self) -> str:
+        return f"{'TAVG' if self.tavg else self.year}-{self.month:02}-{self.day:02} {self.hour:02}:00:00"
+
+    def __format__(self, format_spec) -> str:
         return f"{'tavg' if self.tavg else self.year}-{self.month:02}{self.day:02}-{self.hour:02}00"
 
     def __hash__(self):
