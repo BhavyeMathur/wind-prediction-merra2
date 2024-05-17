@@ -79,36 +79,38 @@ class AtmosphericVariable4D(AtmosphericVariable):
         # If the time index is a slice, extract data from each time in slice and concatenate result
         if isinstance(time, slice):
             threads = []
-            data = []
+            data = {}
             dsets = []
 
+            # TODO restructure some of this code
             dts = datetime_range(time.start, time.stop, time.step if time.step else timedelta(hours=1))
             for dt in dts:
                 dsets.append(open_variable(self._requires, dt))
 
-            def read_file_thread(dset):
+            def read_file_thread(i):
+                dset = dsets[i]
                 dset = select_slice(dset, level, latitude, longitude)
                 dset = uncompress_dataset(dset)
 
                 val = self._getitem_post(dset)
 
                 if isinstance(val, xr.Dataset):
-                    data.append(val)
+                    data[i] = val
                     return
                 if not isinstance(val, dict):
                     val = {self.name: val}
 
-                data.append(xr.Dataset(val, coords=ds.coords, attrs=ds.attrs))
+                data[i] = xr.Dataset(val, coords=dset.coords, attrs=dset.attrs)
 
-            for ds in tqdm(dsets):
+            for ds in range(len(dsets)):
                 thread = threading.Thread(target=read_file_thread, args=(ds,))
                 threads.append(thread)
                 thread.start()
 
-            for thread in threads:
+            for thread in tqdm(threads):
                 thread.join()
 
-            return xr.concat(data, "time")
+            return xr.concat([data[i] for i in range(len(dsets))], "time")
 
         if time is None:
             return self["TAVG-01-01 00:00":"TAVG-12-31 23:00", level, latitude, longitude]

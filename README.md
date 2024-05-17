@@ -9,3 +9,5 @@
 ![ozone.png](generated/contours/merra2/DOXDT_ANA-19800101-00:30.png)
 
 ![rain.png](generated/contours/merra2/COLCNVRN-19800101-00:30.png)
+
+![temperature.png](generated/contours/T-1000hPa-lon0.png)
