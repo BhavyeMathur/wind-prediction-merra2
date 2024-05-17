@@ -9,6 +9,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 from modules.maths.barometric import height_from_pressure
 from modules.era5.variables import AtmosphericVariable
 from modules.maths.util import minmax_norm
+from modules.datetime import timedelta
 
 from .text import format_altitude, format_time, format_latitude, format_longitude
 from .plotter import *
@@ -294,7 +295,14 @@ class _LonLev2D(_Lev2D):
 
 
 class _TimeLon(_Contour2D):
-    pass
+    _axes_lims = ("1980-01-01", "1980-12-31"), (-180, 180)
+
+    def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list):
+        super().__init__(variable, indices)
+        self._lat = float(self._dset["latitude"].values)
+
+    def _plot_map_slice(self, ax) -> None:
+        ax.plot([-180, 180], [self._lat, self._lat], transform=_PLATE_CARREE, linewidth=0.4, color="red")
 
 
 def plot_contour2D(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list) -> _Contour2D:
@@ -311,6 +319,7 @@ def plot_contour2D(variable: AtmosphericVariable | tuple[AtmosphericVariable, ..
         if lon is not None:   # lev and lat are None
             return _LatLev2D(variable, indices)
 
+    indices[0] = slice("TAVG-01-01 00:00", "TAVG-12-31 12:00", timedelta(days=1))
     if lev is not None:  # time is None
         if lat is not None:
             return _TimeLon(variable, indices)
