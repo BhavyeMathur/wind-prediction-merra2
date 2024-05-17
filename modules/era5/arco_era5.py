@@ -2,8 +2,8 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 
 from modules.util import format_bytes
-from modules.datetime import format_datetime, datetime_func
-from .io import save_dataset
+from modules.datetime import format_datetime, datetime_func, DateTime, datetime_range, timedelta
+from .io import save_dataset, open_dataset
 from .dataset import compress_dataset
 
 
@@ -87,4 +87,14 @@ def compute_tavg(dataset: xr.Dataset, verbose: bool = True) -> xr.Dataset:
     return dataset
 
 
-__all__ = ["connect", "select_tavg_slice", "select_vertical_slice", "compute_tavg", "save_dataset", "compress_dataset"]
+@datetime_func("day")
+def concatenate_hour_to_day_dsets(day: str | DateTime):
+    dsets = [open_dataset(dt) for dt in datetime_range(f"{day:date} 00:00", f"{day:date} 23:00", timedelta(hours=1))]
+    dset = xr.concat(dsets, dim="time")
+    dset.attrs["datetime"] = f"{day.month:02}-{day.day:02}"
+
+    save_dataset(dset)
+
+
+__all__ = ["connect", "select_tavg_slice", "select_vertical_slice", "compute_tavg", "save_dataset", "compress_dataset",
+           "concatenate_hour_to_day_dsets"]

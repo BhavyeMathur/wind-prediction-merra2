@@ -2,23 +2,60 @@ import os
 import xarray as xr
 
 from dask.diagnostics import ProgressBar
-from modules.datetime import format_datetime, datetime_func
+from modules.datetime import datetime_func
 
 
-# ERA5 = "/Volumes/Seagate Hub/ERA5/wind"
-ERA5 = "~/Downloads"
+ERA5 = "/Volumes/Seagate Hub/ERA5/wind/"
+# ERA5 = "~/Downloads/"
+
+
+def get_datalevel_from_datetime(datetime: str) -> str:
+    if ":" in datetime:  # HH:MM
+        return "hour"
+
+    parts = datetime.split("-")
+    if len(parts[0]) == 4:
+        parts.pop(0)  # remove YYYY
+
+    if len(parts) == 2:  # mm-DD
+        return "day"
+    if len(datetime) == 2:  # mm
+        return "month"
+    else:
+        return "year"
+
+
+def datalevel_to_folder(datalevel: str) -> str:
+    if datalevel == "hour":
+        return "hourly"
+    if datalevel == "day":
+        return "daily"
+    if datalevel == "month":
+        return "monthly"
+    if datalevel == "year":
+        return ""
 
 
 @datetime_func("datetime")
-def era5_filename(datetime, is_tavg: bool = False) -> str:
-    if is_tavg and not datetime.tavg:
-        datetime.tavg = True
+def era5_filename(datetime, is_tavg: bool = False, datalevel: str = "hour") -> str:
+    if is_tavg or datetime.tavg:
+        year = "tavg"
+    else:
+        year = datetime.year
 
-    file = ["ERA5", format_datetime(datetime, pretty=False)]
-    return "-".join(file) + ".nc"
+    file = ["ERA5"]
+
+    if datalevel == "hour":
+        file.append(datetime.strftime(f"{year}-%m%d-%H%M"))
+    elif datalevel == "day":
+        file.append(datetime.strftime(f"{year}-%m%d"))
+    elif datalevel == "month":
+        file.append(datetime.strftime(f"{year}-%m"))
+
+    return datalevel_to_folder(datalevel) + "/" + "-".join(file) + ".nc"
 
 
-def save_dataset(dataset, output_folder: str, verbose: bool = True) -> None:
+def save_dataset(dataset, output_folder: str = ERA5, verbose: bool = True) -> None:
     """
     Saves the ERA-5 dataset
 
@@ -31,7 +68,8 @@ def save_dataset(dataset, output_folder: str, verbose: bool = True) -> None:
         NotImplementedError: dataset must be time-averaged
     """
 
-    filepath = f"{output_folder}/{era5_filename(dataset.attrs['datetime'], dataset.attrs.get('is_tavg'))}"
+    filepath = f"""{output_folder}/{era5_filename(dataset.attrs['datetime'], dataset.attrs.get('is_tavg'), 
+                                                datalevel=get_datalevel_from_datetime(dataset.attrs['datetime']))}"""
     if verbose:
         with ProgressBar():
             dataset.to_netcdf(filepath)
@@ -70,11 +108,11 @@ def open_variable(variable: str | list[str], datetime, folder: str = ERA5) -> xr
     return open_dataset(datetime, folder)[variable if isinstance(variable, list) else [variable]]
 
 
-def era5_file_exists(time, output_folder: str = "ERA5/"):
+def era5_file_exists(time, folder: str = ERA5, datalevel: str = "hour"):
     """
     Checks if a locally saved ERA-5 file exists
     """
-    return os.path.isfile(f"{output_folder}/{era5_filename(time)}")
+    return os.path.isfile(f"{folder}/{era5_filename(time, datalevel=datalevel)}")
 
 
-__all__ = ["era5_filename", "save_dataset", "open_dataset", "open_variable", "era5_file_exists"]
+__all__ = ["era5_filename", "save_dataset", "open_dataset", "open_variable", "era5_file_exists", "ERA5"]
