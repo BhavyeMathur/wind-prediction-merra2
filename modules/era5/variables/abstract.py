@@ -19,8 +19,6 @@ class _AtmosphericVariableMetaclass(type):
     cmap: Final[Colormap | str] = cmr.ocean
     dtype: Final[str] = "float32"
 
-    axes_unit: Final[str] = ""
-
     def __getitem__(self, item) -> _AtmosphericVariableMetaclass:
         return self._variables[item]
 
@@ -37,7 +35,6 @@ class AtmosphericVariable(metaclass=_AtmosphericVariableMetaclass):
         cls.name = kwargs.get("name", None)
         cls.title = kwargs.get("title", None if cls.name is None else cls.name.replace("_", " ").title())
         cls.unit = kwargs.get("unit", None)
-        cls.axes_unit = kwargs.get("axes_unit", cls.unit)
         cls.cmap = kwargs.get("cmap", cmr.ocean)
 
         cls.dtype = kwargs.get("dtype", "float32")

@@ -5,15 +5,15 @@ class Time(AtmosphericVariable, name="time", unit="seconds", dtype="datetime"):
     pass
 
 
-class Level(AtmosphericVariable, name="level", unit="hPa", dtype="int16", axes_unit=" mb"):
+class Level(AtmosphericVariable, name="level", unit="hPa", dtype="int16"):
     pass
 
 
-class Latitude(AtmosphericVariable, name="latitude", unit="degrees north", axes_unit="°"):
+class Latitude(AtmosphericVariable, name="latitude", unit="degrees north"):
     pass
 
 
-class Longitude(AtmosphericVariable, name="longitude", unit="degrees east", axes_unit="°"):
+class Longitude(AtmosphericVariable, name="longitude", unit="degrees east"):
     pass
 
 
