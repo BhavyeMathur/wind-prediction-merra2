@@ -57,6 +57,8 @@ class DateTime(datetime):
         return f"{'TAVG' if self.tavg else self.year}-{self.month:02}-{self.day:02} {self.hour:02}:00:00"
 
     def __format__(self, format_spec) -> str:
+        if format_spec == "date":
+            return f"{'TAVG' if self.tavg else self.year}-{self.month:02}-{self.day:02}"
         return f"{'tavg' if self.tavg else self.year}-{self.month:02}{self.day:02}-{self.hour:02}00"
 
     def __hash__(self):
@@ -66,14 +68,14 @@ class DateTime(datetime):
     def __add__(self, other):
         tavg = self.tavg or (isinstance(other, DateTime) and other.tavg)
 
-        result = datetime(year=1980 if tavg else self.year, month=self.month, day=self.day, hour=self.hour) + other
+        result = datetime(year=1981 if tavg else self.year, month=self.month, day=self.day, hour=self.hour) + other
         return DateTime(month=result.month, day=result.day, hour=result.hour, year="tavg" if tavg else result.year)
 
     @datetime_func("other")
     def __sub__(self, other):
         tavg = self.tavg or (isinstance(other, DateTime) and other.tavg)
 
-        result = datetime(year=1980 if tavg else self.year, month=self.month, day=self.day, hour=self.hour) - other
+        result = datetime(year=1981 if tavg else self.year, month=self.month, day=self.day, hour=self.hour) - other
         return DateTime(month=result.month, day=result.day, hour=result.hour, year="tavg" if tavg else result.year)
 
 
@@ -149,6 +151,10 @@ def datetime_range(start: DATETIME_TYPE, end: DATETIME_TYPE, delta: timedelta) -
     """
     while start <= end:
         yield start
+
+        if start + delta < start:
+            return
+
         start += delta
 
 
