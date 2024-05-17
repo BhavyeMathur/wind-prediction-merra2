@@ -130,16 +130,17 @@ def parse_datetime(dt: DATETIME_TYPE) -> None | DateTime | timedelta:
     if is_tavg:
         dt = dt.replace("TAVG", "1980")
 
-    if " " in dt:
+    fmts = ["%Y-%m-%d %H:%M", "%m-%d %H:%M", "%Y-%m-%d", "%m-%d", "%Y-%m"]
+
+    for fmt in fmts:
         try:
-            dt = datetime.strptime(dt, "%Y-%m-%d %H:%M")
+            dt = datetime.strptime(dt, fmt)
+            break
         except ValueError:
-            dt = datetime.strptime(dt, "%m-%d %H:%M")
+            continue
+
     else:
-        try:
-            dt = datetime.strptime(dt, "%Y-%m-%d")
-        except ValueError:
-            dt = datetime.strptime(dt, "%m-%d")
+        raise ValueError(f"Unknown date format '{dt}'")
 
     return DateTime(dt.month, dt.day, dt.hour, "tavg" if is_tavg else dt.year)
 
