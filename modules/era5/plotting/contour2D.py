@@ -26,7 +26,8 @@ class _Contour2D:
     _yunit = "°"
     _grid = "both"
 
-    def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list):
+    def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
+                 transform=lambda data: data):
         if isinstance(variable, tuple) and len(variable) == 1:
             variable = variable[0]
 
@@ -42,6 +43,8 @@ class _Contour2D:
         self._data = self._dset.to_dataarray().values
         self._data = self._reshape_data(self._data)
         self._plotter = ImagePlot2D(self._axes_lims)
+
+        self._transform = transform
 
         self._fig: None | plt.Figure = None
         self._ax: None | plt.Axes = None
@@ -96,7 +99,7 @@ class _Contour2D:
         self._fig.tight_layout()
 
         kwargs = {} if isinstance(self._variable, tuple) else {"cmap": self._variable.cmap} | kwargs
-        obj = self._plotter.plot(self._ax, self._data, **kwargs)
+        obj = self._plotter.plot(self._ax, self._transform(self._data), **kwargs)
 
         if isinstance(self._variable, AtmosphericVariable):
             self._draw_colorbar(obj)
@@ -250,8 +253,8 @@ class _Lev2D(_Contour2D):
 class _LatLev2D(_Lev2D):
     _axes_lims = (-90, 90), (1000, 150)
 
-    def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list):
-        super().__init__(variable, indices)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._lon = float(self._dset["longitude"].values)
 
     def _get_title_slice_substring(self) -> str:
@@ -271,8 +274,8 @@ class _LatLev2D(_Lev2D):
 class _LonLev2D(_Lev2D):
     _axes_lims = (-180, 180), (1000, 150)
 
-    def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list):
-        super().__init__(variable, indices)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._lat = float(self._dset["latitude"].values)
 
     def _get_title_slice_substring(self) -> str:
@@ -307,8 +310,8 @@ class _Time2D(_Contour2D):
 class _TimeLon(_Time2D):
     _axes_lims = (DateTime(1, 1, 0), DateTime(12, 31, 23)), (-180, 180)
 
-    def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list):
-        super().__init__(variable, indices)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._lat = float(self._dset["latitude"].values)
 
     def _get_title_slice_substring(self) -> str:
@@ -327,8 +330,8 @@ class _TimeLon(_Time2D):
 class _TimeLat(_Time2D):
     _axes_lims = (DateTime(1, 1, 0), DateTime(12, 31, 23)), (-90, 90)
 
-    def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list):
-        super().__init__(variable, indices)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._lon = float(self._dset["longitude"].values)
 
     def _get_title_slice_substring(self) -> str:
@@ -346,7 +349,8 @@ class _TimeLat(_Time2D):
         return super()._reshape_data(data).T[::-1]
 
 
-def plot_contour2D(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list) -> _Contour2D:
+def plot_contour2D(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
+                   transform=lambda data: data) -> _Contour2D:
     if isinstance(variable, AtmosphericVariable):
         time, lev, lat, lon = variable.get_full_index(indices)
     else:
@@ -354,18 +358,18 @@ def plot_contour2D(variable: AtmosphericVariable | tuple[AtmosphericVariable, ..
 
     if time is not None:
         if lev is not None:  # lat and lon are None
-            return _LatLon2D(variable, indices)
+            return _LatLon2D(variable, indices, transform)
         if lat is not None:  # lev and lon are None
-            return _LonLev2D(variable, indices)
+            return _LonLev2D(variable, indices, transform)
         if lon is not None:   # lev and lat are None
-            return _LatLev2D(variable, indices)
+            return _LatLev2D(variable, indices, transform)
 
     indices[0] = slice("TAVG-01-01 00:00", "TAVG-12-31 12:00", timedelta(days=1))
     if lev is not None:  # time is None
         if lat is not None:
-            return _TimeLon(variable, indices)
+            return _TimeLon(variable, indices, transform)
         if lon is not None:
-            return _TimeLat(variable, indices)
+            return _TimeLat(variable, indices, transform)
 
     raise NotImplementedError()
 
