@@ -63,16 +63,20 @@ class AtmosphericVariable(metaclass=_AtmosphericVariableMetaclass):
     def get(variable: Hashable) -> AtmosphericVariable:
         return AtmosphericVariable._instances[variable]
 
+    @staticmethod
+    def get_full_index(item) -> tuple[int, int, int, int]:
+        raise NotImplementedError()
+
 
 # time, level, latitude, longitude
 class AtmosphericVariable4D(AtmosphericVariable):
     def __getitem__(self, item) -> xr.Dataset:
-        time, level, latitude, longitude = self._get_index(item)
+        time, level, latitude, longitude = self.get_full_index(item)
 
         # If the time index is a slice, extract data from each time in slice and concatenate result
         if isinstance(time, slice):
             data = []
-            for dt in datetime_range(time.start, time.stop, time.step if time.step else timedelta(hours=1)):
+            for dt in tqdm(datetime_range(time.start, time.stop, time.step if time.step else timedelta(hours=1))):
                 data.append(self[dt, level, latitude, longitude])
             return xr.concat(data, "time")
 
@@ -96,12 +100,12 @@ class AtmosphericVariable4D(AtmosphericVariable):
         return ds
 
     @staticmethod
-    def _get_index(item):
+    def get_full_index(item):
         level = None
         latitude = None
         longitude = None
 
-        if isinstance(item, tuple):
+        if isinstance(item, (tuple, list)):
             time = item[0]
             if len(item) > 1:
                 level = item[1]

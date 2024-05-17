@@ -2,7 +2,7 @@ import os
 import xarray as xr
 
 from dask.diagnostics import ProgressBar
-from modules.datetime import format_datetime, datetime_func, DateTime
+from modules.datetime import format_datetime, datetime_func
 
 
 # ERA5 = "/Volumes/Seagate Hub/ERA5/wind"
