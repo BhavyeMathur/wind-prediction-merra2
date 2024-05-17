@@ -19,7 +19,7 @@ def get_datalevel_from_datetime(datetime: str) -> str:
 
     if len(parts) == 2:  # mm-DD
         return "day"
-    if len(datetime) == 2:  # mm
+    if len(parts) == 1:  # mm
         return "month"
     else:
         return "year"
@@ -63,9 +63,6 @@ def save_dataset(dataset, output_folder: str = ERA5, verbose: bool = True) -> No
         dataset: the xarray dataset
         output_folder: filepath to output directory
         verbose: print debugging information?
-
-    Raises:
-        NotImplementedError: dataset must be time-averaged
     """
 
     filepath = f"""{output_folder}/{era5_filename(dataset.attrs['datetime'], dataset.attrs.get('is_tavg'), 
@@ -81,31 +78,36 @@ datasets_cache: dict[str, xr.Dataset] = {}
 
 
 @datetime_func("datetime")
-def open_dataset(datetime, folder: str = ERA5) -> xr.Dataset:
+def open_dataset(datetime, folder: str = ERA5, datalevel: str = "hour") -> xr.Dataset:
     """
     Opens an ERA-5 dataset
 
     Args:
         datetime: datetime corresponding to dataset file
         folder: filepath to ERA5 directory
-
-    Raises:
-        NotImplementedError: dataset must be time-averaged
+        datalevel:
     """
 
-    filepath = f"{folder}/{era5_filename(datetime)}"
+    filepath = f"{folder}/{era5_filename(datetime, datalevel=datalevel)}"
 
     if filepath in datasets_cache:
         return datasets_cache[filepath]
 
     ds = xr.open_dataset(filepath)
-    ds.coords["time"] = datetime
+    if datalevel == "hour":
+        ds.coords["time"] = datetime
+    else:
+        try:
+            ds = ds.sel(time=datetime)
+        except TypeError:
+            print(ds)
+            raise
     datasets_cache[filepath] = ds
     return ds
 
 
-def open_variable(variable: str | list[str], datetime, folder: str = ERA5) -> xr.Dataset:
-    return open_dataset(datetime, folder)[variable if isinstance(variable, list) else [variable]]
+def open_variable(variable: str | list[str], datetime, folder: str = ERA5, datalevel: str = "day") -> xr.Dataset:
+    return open_dataset(datetime, folder, datalevel)[variable if isinstance(variable, list) else [variable]]
 
 
 def era5_file_exists(time, folder: str = ERA5, datalevel: str = "hour"):

@@ -65,6 +65,7 @@ def uncompress_dataset(dataset: xr.Dataset) -> xr.Dataset:
 def select_slice(dataset: xr.Dataset,
                  level: None | int = None, latitude: None | float = None, longitude: None | float = None) -> xr.Dataset:
     kwargs = {}
+
     if level is not None:
         kwargs["level"] = level
     if latitude is not None:

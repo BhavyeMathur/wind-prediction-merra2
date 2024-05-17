@@ -4,6 +4,9 @@ from typing import Type, Hashable, Final
 import numpy as np
 import xarray as xr
 
+import threading
+from tqdm import tqdm
+
 import cmasher as cmr
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 
@@ -75,10 +78,40 @@ class AtmosphericVariable4D(AtmosphericVariable):
 
         # If the time index is a slice, extract data from each time in slice and concatenate result
         if isinstance(time, slice):
+            threads = []
             data = []
-            for dt in tqdm(datetime_range(time.start, time.stop, time.step if time.step else timedelta(hours=1))):
-                data.append(self[dt, level, latitude, longitude])
+            dsets = []
+
+            dts = datetime_range(time.start, time.stop, time.step if time.step else timedelta(hours=1))
+            for dt in dts:
+                dsets.append(open_variable(self._requires, dt))
+
+            def read_file_thread(dset):
+                dset = select_slice(dset, level, latitude, longitude)
+                dset = uncompress_dataset(dset)
+
+                val = self._getitem_post(dset)
+
+                if isinstance(val, xr.Dataset):
+                    data.append(val)
+                    return
+                if not isinstance(val, dict):
+                    val = {self.name: val}
+
+                data.append(xr.Dataset(val, coords=ds.coords, attrs=ds.attrs))
+
+            for ds in tqdm(dsets):
+                thread = threading.Thread(target=read_file_thread, args=(ds,))
+                threads.append(thread)
+                thread.start()
+
+            for thread in threads:
+                thread.join()
+
             return xr.concat(data, "time")
+
+        if time is None:
+            return self["TAVG-01-01 00:00":"TAVG-12-31 23:00", level, latitude, longitude]
 
         ds = open_variable(self._requires, time)
         ds = select_slice(ds, level, latitude, longitude)
