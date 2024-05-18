@@ -19,6 +19,7 @@ class MetPlot:
     _xunit = "°"
     _yunit = "°"
     _grid = "both"
+    _plotter = ImagePlot2D
 
     def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
                  transform=lambda data: data):
@@ -32,11 +33,10 @@ class MetPlot:
             self._dset = xr.Dataset({var.name: var[*indices][var.name] for var in variable})
         else:
             self._dset = variable[*indices]
-        assert len(self._dset.dims) == 2, "Only 2D slices of data are supported"
 
         self._data = self._dset.to_dataarray().values
         self._data = self._reshape_data(self._data)
-        self._plotter = ImagePlot2D(self._axes_lims)
+        self._plotter = self._plotter(self._axes_lims)
 
         self._transform = transform
 
@@ -95,7 +95,7 @@ class MetPlot:
         kwargs = {} if isinstance(self._variable, tuple) else {"cmap": self._variable.cmap} | kwargs
         obj = self._plotter.plot(self._ax, self._transform(self._data), **kwargs)
 
-        if isinstance(self._variable, AtmosphericVariable):
+        if isinstance(self._variable, AtmosphericVariable) and len(self._dset.dims) == 2:
             self._draw_colorbar(obj)
         self._add_map()
 
@@ -144,3 +144,32 @@ class MetPlot:
 
     def _get_y(self):
         return np.linspace(*self._axes_lims[1], self._data.shape[0])
+
+
+class PlotVersusLongitude(MetPlot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._lat = float(self._dset["latitude"].values)
+
+    def _plot_map_slice(self, ax) -> None:
+        ax.plot([-180, 180], [self._lat, self._lat], transform=projections.PlateCarree(), linewidth=0.4, color="red")
+
+    def _get_map_extent(self) -> str | tuple[float, float, float, float]:
+        if self._lat == 0:
+            return "global"
+        elif self._lat > 0:
+            return -180, 180, 0, 90
+        else:
+            return -180, 180, -90, 0
+
+
+class PlotVersusLatitude(MetPlot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._lon = float(self._dset["longitude"].values)
+
+    def _plot_map_slice(self, ax) -> None:
+        ax.plot([self._lon, self._lon], [-90, 90], transform=projections.PlateCarree(), linewidth=0.4, color="red")
+
+    def _get_map_projection(self) -> projections.Projection:
+        return projections.Robinson(central_longitude=self._lon)
