@@ -44,7 +44,7 @@ class _Lev2D(MetPlot):
         ax2.yaxis.set_tick_params(width=0, labelsize=5)
 
 
-class _LatLev2D(_Lev2D, PlotVersusLatitude):
+class _LatLev2D(PlotVersusLatitude, _Lev2D):
     _axes_lims = (-90, 90), (1000, 150)
 
     def _get_title_slice_substring(self) -> str:
@@ -55,7 +55,7 @@ class _LatLev2D(_Lev2D, PlotVersusLatitude):
         return super()._reshape_data(data)[::-1, ::-1]
 
 
-class _LonLev2D(_Lev2D, PlotVersusLongitude):
+class _LonLev2D(PlotVersusLongitude, _Lev2D):
     _axes_lims = (-180, 180), (1000, 150)
 
     def _get_title_slice_substring(self) -> str:

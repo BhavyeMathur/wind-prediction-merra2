@@ -17,7 +17,7 @@ class _Time2D(MetPlot):
         self._ax.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
 
 
-class _TimeLon2D(_Time2D, PlotVersusLongitude):
+class _TimeLon2D(PlotVersusLongitude, _Time2D):
     _axes_lims = (DateTime(1, 1, 0), DateTime(12, 31, 23)), (-180, 180)
 
     def _get_title_slice_substring(self) -> str:
@@ -30,7 +30,7 @@ class _TimeLon2D(_Time2D, PlotVersusLongitude):
         return np.roll(data, data.shape[0] // 2, axis=0)
 
 
-class _TimeLat2D(_Time2D, PlotVersusLatitude):
+class _TimeLat2D(PlotVersusLatitude, _Time2D):
     _axes_lims = (DateTime(1, 1, 0), DateTime(12, 31, 23)), (-90, 90)
 
     def _get_title_slice_substring(self) -> str:
