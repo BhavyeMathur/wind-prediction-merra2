@@ -20,6 +20,7 @@ class MetPlot:
     _yunit = "°"
     _grid = "both"
     _plotter = ImagePlot2D
+    _colorbar = True
 
     def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
                  transform=lambda data: data):
@@ -96,7 +97,7 @@ class MetPlot:
         kwargs = {} if isinstance(self._variable, tuple) else {"cmap": self._variable.cmap} | kwargs
         obj = self._plotter.plot(self._ax, self._transform(self._data), **kwargs)
 
-        if isinstance(self._variable, AtmosphericVariable) and len(self._dset.dims) == 2:
+        if isinstance(self._variable, AtmosphericVariable) and self._colorbar:
             self._draw_colorbar(obj)
         self._add_map()
 
@@ -157,12 +158,15 @@ class MetPlot:
 class PlotVersusLongitude(MetPlot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._lat = float(self._dset["latitude"].values)
+        self._lat = self._dset["latitude"].values
 
     def _plot_map_slice(self, ax) -> None:
-        ax.plot([-180, 180], [self._lat, self._lat], transform=projections.PlateCarree(), linewidth=0.4, color="red")
+        ax.plot([-180, 180], [self._lat, self._lat], transform=projections.PlateCarree(), linewidth=0.4)
 
     def _get_map_extent(self) -> str | tuple[float, float, float, float]:
+        if isinstance(self._lat, np.ndarray):
+            return "global"
+
         if self._lat == 0:
             return "global"
         elif self._lat > 0:
@@ -182,7 +186,7 @@ class PlotVersusLatitude(MetPlot):
         self._lon = float(self._dset["longitude"].values)
 
     def _plot_map_slice(self, ax) -> None:
-        ax.plot([self._lon, self._lon], [-90, 90], transform=projections.PlateCarree(), linewidth=0.4, color="red")
+        ax.plot([self._lon, self._lon], [-90, 90], transform=projections.PlateCarree(), linewidth=0.4)
 
     def _get_map_projection(self) -> projections.Projection:
         return projections.Robinson(central_longitude=self._lon)

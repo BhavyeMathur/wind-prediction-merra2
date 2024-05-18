@@ -7,6 +7,7 @@ from .metplot import MetPlot
 from .lev2D import _LonLev2D, _LatLev2D
 from .time2D import _TimeLon2D, _TimeLat2D
 from .latlon import _MapContour
+from .plot1D import _Lon1D
 
 
 def plot(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,

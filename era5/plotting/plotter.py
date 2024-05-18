@@ -7,6 +7,18 @@ class _Plotter:
         raise NotImplementedError()
 
 
+class LinePlot(_Plotter):
+    def __init__(self, extent: tuple[tuple[float, float], tuple[float, float]]):
+        self._xlim, _ = extent
+
+    def plot(self, ax, data, **kwargs):
+        if data.ndim == 2:
+            for series in data:
+                self.plot(ax, series, **kwargs)
+            return
+        return ax.plot(np.linspace(self._xlim[0], self._xlim[1], len(data)), data)
+
+
 class ImagePlot2D(_Plotter):
     def __init__(self, extent: tuple[tuple[float, float], tuple[float, float]]):
         self._extent = *extent[0], *extent[1]
@@ -31,4 +43,4 @@ class Contourf2D(Contour2D):
         return ax.contour(*self._mesh, data, **kwargs)
 
 
-__all__ = ["ImagePlot2D", "Contour2D", "Contourf2D"]
+__all__ = ["ImagePlot2D", "Contour2D", "Contourf2D", "LinePlot"]
