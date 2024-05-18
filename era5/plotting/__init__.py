@@ -6,4 +6,4 @@ if sys.platform == "darwin":
 
 mpl.rcParams["figure.dpi"] = 150
 
-from .contour2D import *
+from .plot import *

@@ -97,8 +97,10 @@ class AtmosphericVariable4D(AtmosphericVariable):
                 if isinstance(val, xr.Dataset):
                     data[i] = val
                     return
-                if not isinstance(val, dict):
+                elif isinstance(val, xr.DataArray):
                     val = {self.name: val}
+                elif not isinstance(val, dict):
+                    val = {self.name: (ds.dims, val)}
 
                 data[i] = xr.Dataset(val, coords=dset.coords, attrs=dset.attrs)
 
@@ -123,7 +125,9 @@ class AtmosphericVariable4D(AtmosphericVariable):
 
         if isinstance(vals, xr.Dataset):
             return vals
-        if not isinstance(vals, dict):
+        elif isinstance(vals, xr.DataArray):
+            vals = {self.name: vals}
+        elif not isinstance(vals, dict):
             vals = {self.name: (ds.dims, vals)}
 
         return xr.Dataset(vals, coords=ds.coords, attrs=ds.attrs)
