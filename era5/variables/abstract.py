@@ -10,7 +10,7 @@ from tqdm import tqdm
 import cmasher as cmr
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 
-from modules.datetime import datetime_range, timedelta
+from era5.util.datetime import datetime_range, timedelta
 
 
 class _AtmosphericVariableMetaclass(type):
@@ -167,8 +167,8 @@ class AtmosphericVariable2D(AtmosphericVariable):
     pass
 
 
-from modules.era5.dataset import uncompress_dataset, select_slice
-from modules.era5.io import open_variable
+from era5.dataset import uncompress_dataset, select_slice
+from era5.io import open_variable
 
 
 __all__ = ["AtmosphericVariable", "AtmosphericVariable4D", "AtmosphericVariable3D", "AtmosphericVariable2D"]

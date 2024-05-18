@@ -1,6 +1,6 @@
 import xarray as xr
 
-from modules.util import format_bytes
+from era5.util import format_bytes
 
 
 def compress_dataset(dataset: xr.Dataset, view: str = "int16", verbose: bool = True) -> xr.Dataset:

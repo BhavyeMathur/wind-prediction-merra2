@@ -1,5 +1,5 @@
-from modules.datetime import datetime_func, DateTime
-from modules.maths.barometric import height_from_pressure
+from era5.util.datetime import datetime_func, DateTime
+from era5.maths.barometric import height_from_pressure
 
 
 @datetime_func("time")

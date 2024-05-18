@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-from .util import get_function_arguments
+from era5.util import get_function_arguments
 
 MONTH_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",

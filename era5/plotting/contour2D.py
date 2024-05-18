@@ -7,10 +7,10 @@ import matplotlib.dates as mdates
 import cartopy.crs as projections
 from cartopy.mpl.geoaxes import GeoAxes
 
-from modules.maths.barometric import height_from_pressure
-from modules.era5.variables import AtmosphericVariable
-from modules.maths.util import minmax_norm
-from modules.datetime import timedelta, DateTime
+from era5.maths.barometric import height_from_pressure
+from era5.variables import AtmosphericVariable
+from era5.maths.util import minmax_norm
+from era5.util.datetime import timedelta, DateTime
 
 from .text import format_altitude, format_time, format_latitude, format_longitude
 from .plotter import *
@@ -18,7 +18,7 @@ from .plotter import *
 _PLATE_CARREE = projections.PlateCarree()
 
 
-class _Contour2D:
+class _Plot:
     _has_secondary_axis = False
     _figsize = 9, 3
     _axes_lims: tuple[tuple[float, float], tuple[float, float]]
@@ -151,8 +151,31 @@ class _Contour2D:
     def _get_y(self):
         return np.linspace(*self._axes_lims[1], self._data.shape[0])
 
-    def _get_uv_resolution(self, type_: str) -> tuple[int, int]:
-        raise NotImplementedError()
+
+class _LatLon2D(_Plot):
+    _figsize = 8, 5
+    _axes_lims = (-180, 180), (-90, 90)
+
+    def _get_title_slice_substring(self) -> str:
+        lev = int(self._dset['level'].values)
+        return (f" at {lev} hPa {format_altitude(lev)}"
+                f" on {format_time(self._dset['time'].values)}")
+
+    def _reshape_data(self, data):
+        data = super()._reshape_data(data)[::-1]
+        return np.roll(data, data.shape[1] // 2, axis=1)
+
+    def _add_map(self) -> None:
+        return
+
+    @staticmethod
+    def _get_uv_resolution(type_: str) -> tuple[int, int]:
+        if type_ == "barb":
+            return 60, 30
+        elif type_ == "stream":
+            return 120, 60
+        elif type_ == "quiver":
+            return 120, 60
 
     def _get_uv_plot_data(self, type_: str, u, v, resolution: int | tuple[int, int] | None = None) -> tuple:
         if resolution is None:
@@ -186,32 +209,7 @@ class _Contour2D:
                         **(dict(linewidth=0.2, color="#fff") | kwargs))
 
 
-class _LatLon2D(_Contour2D):
-    _figsize = 8, 5
-    _axes_lims = (-180, 180), (-90, 90)
-
-    def _get_title_slice_substring(self) -> str:
-        lev = int(self._dset['level'].values)
-        return (f" at {lev} hPa {format_altitude(lev)}"
-                f" on {format_time(self._dset['time'].values)}")
-
-    def _reshape_data(self, data):
-        data = super()._reshape_data(data)[::-1]
-        return np.roll(data, data.shape[1] // 2, axis=1)
-
-    def _add_map(self) -> None:
-        return
-
-    def _get_uv_resolution(self, type_: str) -> tuple[int, int]:
-        if type_ == "barb":
-            return 60, 30
-        elif type_ == "stream":
-            return 120, 60
-        elif type_ == "quiver":
-            return 120, 60
-
-
-class _Lev2D(_Contour2D):
+class _Lev2D(_Plot):
     _has_secondary_axis = True
     _xunit = "°"
     _yunit = "mb"
@@ -245,9 +243,6 @@ class _Lev2D(_Contour2D):
 
         ax2.set_frame_on(False)
         ax2.yaxis.set_tick_params(width=0, labelsize=5)
-
-    def _get_uv_resolution(self, type_: str) -> tuple[int, int]:
-        raise NotImplementedError("UV Stream/barb/quiver plots only implemented for longitude & latitude plots")
 
 
 class _LatLev2D(_Lev2D):
@@ -298,7 +293,7 @@ class _LonLev2D(_Lev2D):
         ax.plot([-180, 180], [self._lat, self._lat], transform=_PLATE_CARREE, linewidth=0.4, color="red")
 
 
-class _Time2D(_Contour2D):
+class _Time2D(_Plot):
     _has_secondary_axis = True
     _grid = "y"
 
@@ -350,28 +345,34 @@ class _TimeLat(_Time2D):
 
 
 def plot_contour2D(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
-                   transform=lambda data: data) -> _Contour2D:
+                   transform=lambda data: data) -> _Plot:
     if isinstance(variable, AtmosphericVariable):
         time, lev, lat, lon = variable.get_full_index(indices)
     else:
         time, lev, lat, lon = variable[0].get_full_index(indices)
 
-    if time is not None:
-        if lev is not None:  # lat and lon are None
-            return _LatLon2D(variable, indices, transform)
-        if lat is not None:  # lev and lon are None
-            return _LonLev2D(variable, indices, transform)
-        if lon is not None:   # lev and lat are None
-            return _LatLev2D(variable, indices, transform)
+    idx = np.array(["time", "lev", "lat", "lon"])[[bool(time), bool(lev), bool(lat), bool(lon)]]
 
-    indices[0] = slice("TAVG-01-01 00:00", "TAVG-12-31 12:00", timedelta(days=1))
-    if lev is not None:  # time is None
-        if lat is not None:
-            return _TimeLon(variable, indices, transform)
-        if lon is not None:
-            return _TimeLat(variable, indices, transform)
+    match tuple(idx):
+        case ("time", "lev"):
+            graph = _LatLon2D
+        case ("time", "lat"):
+            graph = _LonLev2D
+        case ("time", "lon"):
+            graph = _LatLev2D
+        case ("lev", "lat"):
+            graph = _TimeLon
+        case ("lev", "lon"):
+            graph = _TimeLat
+        case ("time", "lev", "lat"):
+            graph = _Lon1D
+        case _:
+            raise NotImplementedError()
 
-    raise NotImplementedError()
+    if time is None:
+        indices[0] = slice("TAVG-01-01 00:00", "TAVG-12-31 12:00", timedelta(days=1))
+
+    return graph(variable, indices, transform)
 
 
 __all__ = ["plot_contour2D"]

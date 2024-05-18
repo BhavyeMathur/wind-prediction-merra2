@@ -3,8 +3,8 @@ from datetime import timedelta
 
 from tqdm import tqdm
 
-import modules.era5 as era5
-from modules.datetime import datetime_range, datetime_func
+import era5
+from era5.util.datetime import datetime_range, datetime_func
 
 
 @datetime_func("dt")

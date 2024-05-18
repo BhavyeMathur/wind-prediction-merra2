@@ -1,8 +1,8 @@
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
-from modules.util import format_bytes
-from modules.datetime import format_datetime, datetime_func, DateTime, datetime_range, timedelta
+from era5.util import format_bytes
+from era5.util.datetime import format_datetime, datetime_func, DateTime, datetime_range, timedelta
 from .io import save_dataset, open_dataset
 from .dataset import compress_dataset
 

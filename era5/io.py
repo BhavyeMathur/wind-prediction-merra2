@@ -2,11 +2,11 @@ import os
 import xarray as xr
 
 from dask.diagnostics import ProgressBar
-from modules.datetime import datetime_func
+from era5.util.datetime import datetime_func
 
 
-ERA5 = "/Volumes/Seagate Hub/ERA5/wind/"
-# ERA5 = "~/Downloads/"
+# ERA5 = "/Volumes/Seagate Hub/ERA5/wind/"
+ERA5 = "~/Downloads/"
 
 
 def get_datalevel_from_datetime(datetime: str) -> str:
