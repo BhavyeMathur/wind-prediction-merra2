@@ -87,15 +87,21 @@ class MetPlot:
         self._ax.xaxis.set_major_formatter(mticker.FormatStrFormatter(f"%d{self._xunit}"))
         self._ax.yaxis.set_major_formatter(mticker.FormatStrFormatter(f"%d{self._yunit}"))
 
-    def plot(self, **kwargs):
-        self._fig = plt.figure(figsize=self._figsize)
-        self._fig.suptitle(self._get_title(), fontsize=9, y=self._get_title_position())
+    def plot(self, data=None, **kwargs):
+        if self._fig is None:
+            self._fig = plt.figure(figsize=self._figsize)
+            self._fig.suptitle(self._get_title(), fontsize=9, y=self._get_title_position())
 
-        self._create_axes()
-        self._fig.tight_layout()
+            self._create_axes()
+            self._fig.tight_layout()
 
         kwargs = {} if isinstance(self._variable, tuple) else {"cmap": self._variable.cmap} | kwargs
-        obj = self._plotter.plot(self._ax, self._transform(self._data), **kwargs)
+
+        if data is None:
+            data = self._data
+        else:
+            data = self._reshape_data(data)
+        obj = self._plotter.plot(self._ax, self._transform(data), **kwargs)
 
         if isinstance(self._variable, AtmosphericVariable) and self._colorbar:
             self._draw_colorbar(obj)
