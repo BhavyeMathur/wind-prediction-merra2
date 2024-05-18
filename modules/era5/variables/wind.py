@@ -21,13 +21,6 @@ class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="m/s", title
         raise ValueError("Unknown level for value limits")
 
 
-class VerticalVelocity(AtmosphericVariable4D, name="vertical_velocity", unit="Pa/s", cmap="RdBu"):
-    def get_vlims(self, level: int):
-        if level == 1000:
-            return -1.5, 1.5
-        raise ValueError("Unknown level for value limits")
-
-
 class WindDirection(AtmosphericVariable4D, name="wind_direction", unit="°", cmap="twilight",
                     requires=["u_component_of_wind", "v_component_of_wind"]):
     def __init__(self, radians: bool = False):
@@ -61,4 +54,13 @@ class WindSpeed(AtmosphericVariable4D, name="wind_speed", unit="m/s",
         return np.sqrt(ds["u_component_of_wind"] ** 2 + ds["v_component_of_wind"] ** 2)
 
 
-__all__ = ["UWind", "VWind", "VerticalVelocity", "WindDirection", "WindSpeed"]
+class Divergence(AtmosphericVariable4D, name="divergence", unit="s⁻¹",
+                 requires=["u_component_of_wind", "v_component_of_wind"]):
+    def _getitem_post(self, ds):
+        dudx, _ = np.gradient(ds["u_component_of_wind"])
+        _, dvdy = np.gradient(ds["v_component_of_wind"])
+
+        return dudx + dvdy
+
+
+__all__ = ["UWind", "VWind", "WindDirection", "WindSpeed", "Divergence"]

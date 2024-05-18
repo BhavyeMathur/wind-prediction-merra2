@@ -29,4 +29,11 @@ class Temperature(AtmosphericVariable4D, name="temperature", unit="K",
         return self._getitem_post(min_), self._getitem_post(max_)
 
 
-__all__ = ["Temperature"]
+class VerticalVelocity(AtmosphericVariable4D, name="vertical_velocity", unit="Pa/s", cmap="RdBu"):
+    def get_vlims(self, level: int):
+        if level == 1000:
+            return -1.5, 1.5
+        raise ValueError("Unknown level for value limits")
+
+
+__all__ = ["Temperature", "VerticalVelocity"]

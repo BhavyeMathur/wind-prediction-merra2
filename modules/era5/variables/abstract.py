@@ -124,7 +124,7 @@ class AtmosphericVariable4D(AtmosphericVariable):
         if isinstance(vals, xr.Dataset):
             return vals
         if not isinstance(vals, dict):
-            vals = {self.name: vals}
+            vals = {self.name: (ds.dims, vals)}
 
         return xr.Dataset(vals, coords=ds.coords, attrs=ds.attrs)
 
