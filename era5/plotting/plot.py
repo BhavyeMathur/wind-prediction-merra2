@@ -9,8 +9,8 @@ from .time2D import _TimeLon2D, _TimeLat2D
 from .latlon import _MapContour
 
 
-def plot_contour2D(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
-                   transform=lambda data: data) -> MetPlot:
+def plot(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
+         transform=lambda data: data) -> MetPlot:
     if isinstance(variable, AtmosphericVariable):
         time, lev, lat, lon = variable.get_full_index(indices)
     else:
@@ -40,4 +40,4 @@ def plot_contour2D(variable: AtmosphericVariable | tuple[AtmosphericVariable, ..
     return graph(variable, indices, transform)
 
 
-__all__ = ["plot_contour2D"]
+__all__ = ["plot"]

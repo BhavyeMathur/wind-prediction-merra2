@@ -43,8 +43,8 @@ class MetPlot:
         self._fig: None | plt.Figure = None
         self._ax: None | plt.Axes = None
 
-        self.show = plt.show
         self.save = plt.savefig
+        self._plotted = False
 
     def _get_title(self) -> str:
         if isinstance(self._variable, tuple):
@@ -98,6 +98,13 @@ class MetPlot:
         if isinstance(self._variable, AtmosphericVariable) and len(self._dset.dims) == 2:
             self._draw_colorbar(obj)
         self._add_map()
+
+        self._plotted = True
+
+    def show(self):
+        if not self._plotted:
+            self.plot()
+        plt.show()
 
     def _get_map_projection(self) -> projections.Projection:
         return projections.Robinson()
