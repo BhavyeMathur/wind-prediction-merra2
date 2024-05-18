@@ -3,11 +3,11 @@ from era5.maths.barometric import height_from_pressure
 
 
 @datetime_func("time")
-def format_time(time) -> str:
-    if isinstance(time, DateTime) and time.tavg:
-        return time.strftime("at %H:%M on %d %B")
+def format_time(time, is_tavg: bool = False) -> str:
+    if (isinstance(time, DateTime) and time.tavg) or is_tavg:
+        return time.strftime("at %H:%M on %-d %B")
     else:
-        return time.strftime("at %H:%M on %d %B, %Y")
+        return time.strftime("at %H:%M on %-d %B, %Y")
 
 
 def format_altitude(level: int) -> str:

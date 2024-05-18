@@ -13,7 +13,7 @@ class _MapContour(MetPlot):
     def _get_title_slice_substring(self) -> str:
         lev = int(self._dset['level'].values)
         return (f" at {lev} hPa {format_altitude(lev)}"
-                f" on {format_time(self._dset['time'].values)}")
+                f" on {format_time(self._dset['time'].values, self._dset.attrs['is_tavg'])}")
 
     def _reshape_data(self, data):
         data = super()._reshape_data(data)[::-1]

@@ -1,5 +1,3 @@
-import numpy as np
-
 import matplotlib.dates as mdates
 
 from era5.util.datetime import DateTime
@@ -26,8 +24,7 @@ class _TimeLon2D(PlotVersusLongitude, _Time2D):
                 f" along {format_latitude(self._lat)}")
 
     def _reshape_data(self, data):
-        data = super()._reshape_data(data).T
-        return np.roll(data, data.shape[0] // 2, axis=0)
+        return super()._reshape_data(data).T
 
 
 class _TimeLat2D(PlotVersusLatitude, _Time2D):

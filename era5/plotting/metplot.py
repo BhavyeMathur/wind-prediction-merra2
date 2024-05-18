@@ -30,7 +30,8 @@ class MetPlot:
         self._indices = indices.copy()
 
         if isinstance(variable, tuple):
-            self._dset = xr.Dataset({var.name: var[*indices][var.name] for var in variable})
+            self._dset = xr.Dataset({var.name: (dset := var[*indices])[var.name] for var in variable})
+            self._dset.attrs = dset.attrs
         else:
             self._dset = variable[*indices]
 
@@ -168,6 +169,11 @@ class PlotVersusLongitude(MetPlot):
             return -180, 180, 0, 90
         else:
             return -180, 180, -90, 0
+
+    def _reshape_data(self, data):
+        axis = list(self._dset.dims).index("longitude")
+        data = super()._reshape_data(data)
+        return np.roll(data, data.shape[axis] // 2, axis=axis)
 
 
 class PlotVersusLatitude(MetPlot):

@@ -49,7 +49,7 @@ class _LatLev2D(PlotVersusLatitude, _Lev2D):
 
     def _get_title_slice_substring(self) -> str:
         return (f" at {format_longitude(float(self._dset['longitude'].values))}"
-                f" on {format_time(self._dset['time'].values)}")
+                f" on {format_time(self._dset['time'].values, self._dset.attrs['is_tavg'])}")
 
     def _reshape_data(self, data):
         return super()._reshape_data(data)[::-1, ::-1]
@@ -60,8 +60,7 @@ class _LonLev2D(PlotVersusLongitude, _Lev2D):
 
     def _get_title_slice_substring(self) -> str:
         return (f" at {format_latitude(float(self._dset['latitude'].values))}"
-                f" on {format_time(self._dset['time'].values)}")
+                f" on {format_time(self._dset['time'].values, self._dset.attrs['is_tavg'])}")
 
     def _reshape_data(self, data):
-        data = super()._reshape_data(data)[::-1]
-        return np.roll(data, data.shape[1] // 2, axis=1)
+        return super()._reshape_data(data)[::-1]
