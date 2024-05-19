@@ -15,6 +15,9 @@ class FourierRegression:
         self._data = self._dset.to_dataarray().values.squeeze()
 
         self._std = self._data.std()
+        if self._std == 0:
+            self._std = 1
+
         self._mean = self._data.mean()
         self._data = (self._data - self._mean) / self._std
 
@@ -59,7 +62,7 @@ class FourierRegression:
 
         print(f"""
         Fourier Regression 1D:
-            Data stdev: {self._std:.4f} {unit}
+            Data stdev: {data.std():.4f} {unit}
             MAE: {mae(data, prediction):.4f} {unit}
             RMSE: {rmse(data, prediction):.4f} {unit}
             
