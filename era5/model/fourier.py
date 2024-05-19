@@ -3,7 +3,7 @@ import numpy as np
 import era5
 from era5.util.util import format_bytes
 from era5.util.encoding import *
-from era5.maths.error import mae, rmse
+from era5.maths.error import mae, rmse, mse
 
 
 class FourierRegression:
@@ -55,21 +55,17 @@ class FourierRegression:
         return self._fft_real.nbytes + self._fft_imag.nbytes + sum(ar.nbytes for ar in self._fft_idxs)
 
     def describe(self):
-        prediction = self.predict()
-        data = self._data
-
         total_bytes = 2 * 24 * 365 * 25 * 721 * 1440
-        input_bytes = self._data.nbytes // 2
-        ratio = self.nbytes / input_bytes
+        ratio = self.nbytes / self.input_bytes
         unit = self._variable.unit
 
         print(f"""
         Fourier Regression {len(self._data.shape)}D:
-            Data stdev: {data.std():.4f} {unit}
-            MAE: {mae(data, prediction):.4f} {unit}
-            RMSE: {rmse(data, prediction):.4f} {unit}
+            Data stdev: {self.std():.4f} {unit}
+            MAE: {self.mae():.4f} {unit}
+            RMSE: {self.rmse():.4f} {unit}
             
-            Input size: {format_bytes(input_bytes)}
+            Input size: {format_bytes(self.input_bytes)}
             Model size: {format_bytes(self.nbytes)}
             Size Ratio: {100 * ratio:.2f}%
             
@@ -77,3 +73,67 @@ class FourierRegression:
             Original size: {format_bytes(total_bytes)}
             Compressed size: {format_bytes(int(ratio * total_bytes))}
         """)
+
+    def std(self) -> float:
+        return self._data.std()
+
+    def var(self) -> float:
+        return self._data.var()
+
+    def mae(self) -> float:
+        prediction = self.predict()
+        return mae(self._data, prediction)
+
+    def rmse(self) -> float:
+        prediction = self.predict()
+        return rmse(self._data, prediction)
+
+    def mse(self) -> float:
+        prediction = self.predict()
+        return mse(self._data, prediction)
+
+    @property
+    def input_bytes(self) -> int:
+        return len(self._data.ravel()) * 2
+
+    @property
+    def variable(self) -> era5.AtmosphericVariable:
+        return self._variable
+
+
+def evaluate_ft(models: list[FourierRegression]) -> np.ndim:
+    _mae = 0
+    _mse = 0
+    _var = 0
+    model_size = 0
+    input_size = 0
+
+    predictions = []
+
+    for model in models:
+        model.fft()
+        predictions.append(model.predict())
+
+        _mae += model.mae()
+        _mse += model.mse()
+        _var += model.var()
+
+        model_size += model.nbytes
+        input_size += model.input_bytes
+
+    n = len(models)
+    variable = models[0].variable
+
+    total_bytes = 2 * 24 * 365 * 25 * 721 * 1440
+
+    print(
+        f"""
+    Data stdev: {np.sqrt(_var / n):.4f} {variable.unit}
+    MAE: {_mae / n:.4f} {variable.unit}
+    RMSE: {np.sqrt(_mse / n):.4f} {variable.unit}
+    
+    Original size: {format_bytes(total_bytes)}
+    Compressed size: {format_bytes(int(model_size / input_size * total_bytes))}
+    """)
+
+    return np.array(predictions)
