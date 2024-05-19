@@ -14,20 +14,14 @@ class FourierRegression:
         self._dset = variable[*indices]
         self._data = self._dset.to_dataarray().values.squeeze()
 
-        self._std = self._data.std()
-        if self._std == 0:
-            self._std = 1
-
-        self._mean = self._data.mean()
-        self._data = (self._data - self._mean) / self._std
-
         self._prediction = None
         self._fft_idxs = None
         self._fft_real = None
         self._fft_imag = None
 
     def fft(self):
-        fft = np.fft.rfft(self._data)
+        fft = np.fft.rfftn(self._data, norm="forward")
+
         amplitudes = np.abs(fft)
 
         cutoff_amp = np.quantile(amplitudes, self._quantile)
@@ -42,10 +36,10 @@ class FourierRegression:
     def predict(self) -> np.ndarray:
         if self._prediction is None:
             fft = np.zeros(self._data.shape, dtype="complex64")
-            fft[self._fft_idxs] = self._fft_real.astype("float32") + 1j * self._fft_imag.astype("float32")
-            self._prediction = np.fft.irfft(fft, self._data.shape[0])
+            fft[*self._fft_idxs] = self._fft_real.astype("float32") + 1j * self._fft_imag.astype("float32")
+            self._prediction = np.fft.irfftn(fft, self._data.shape, norm="forward")
 
-        return self._prediction * self._std + self._mean
+        return self._prediction
 
     def data(self) -> np.ndarray:
         return self._data
@@ -56,7 +50,7 @@ class FourierRegression:
 
     def describe(self):
         prediction = self.predict()
-        data = self._data * self._std + self._mean
+        data = self._data
 
         total_bytes = 2 * 24 * 365 * 25 * 721 * 1440
         input_bytes = self._data.nbytes // 2
