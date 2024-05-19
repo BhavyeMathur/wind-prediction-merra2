@@ -12,6 +12,7 @@ from era5.variables import AtmosphericVariable
 from era5.maths.util import minmax_norm
 
 from .plotter import *
+from .text import format_unit
 
 
 _SHARE = Literal["none", "all", "row", "col"] | bool
@@ -100,10 +101,10 @@ class MetPlot:
         self._ax.xaxis.set_tick_params(width=0, labelsize=7)
         self._ax.yaxis.set_tick_params(width=0, labelsize=7)
 
-        self._ax.xaxis.set_major_formatter(mticker.FormatStrFormatter(f"%d{self._xunit}"))
-        self._ax.yaxis.set_major_formatter(mticker.FormatStrFormatter(f"%d{self._yunit}"))
+        self._ax.xaxis.set_major_formatter(mticker.FormatStrFormatter(f"%d{format_unit(self._xunit)}"))
+        self._ax.yaxis.set_major_formatter(mticker.FormatStrFormatter(f"%d{format_unit(self._yunit)}"))
 
-    def plot(self, data=None, colorbar: bool = True, **kwargs):
+    def plot(self, data=None, colorbar: bool = True, auto_vlim: bool = True, **kwargs):
         if self._fig is None:
             self._fig = plt.figure(figsize=self._figsize)
 
@@ -114,7 +115,7 @@ class MetPlot:
             self._fig.tight_layout()
 
         if isinstance(self._variable, AtmosphericVariable):
-            vmin, vmax = self._variable.get_vlims(self._indices)
+            vmin, vmax = self._variable.get_vlims(self._indices) if auto_vlim else None, None
             kwgs = {"cmap": self._variable.cmap, "vmin": vmin, "vmax": vmax}
         else:
             kwgs = {}
@@ -128,7 +129,7 @@ class MetPlot:
 
         if isinstance(self._variable, AtmosphericVariable) and self._colorbar and colorbar:
             self._draw_colorbar(obj)
-        self._add_map()
+        self.add_map(**kwargs)
 
         self._plotted = True
 
@@ -146,10 +147,10 @@ class MetPlot:
     def _get_map_extent(self) -> str | tuple[float, float, float, float]:
         return "global"
 
-    def _plot_map_slice(self, ax) -> None:
+    def _plot_map_slice(self, ax, **kwargs) -> None:
         raise NotImplementedError()
 
-    def _add_map(self) -> None:
+    def add_map(self, **kwargs) -> None:
         ax: GeoAxes = plt.axes((0.81, 0.82, 0.13, 0.13), projection=self._get_map_projection())
 
         # noinspection PyTypeChecker
@@ -164,7 +165,7 @@ class MetPlot:
         else:
             ax.set_extent(extent, crs=projections.PlateCarree())
 
-        self._plot_map_slice(ax)
+        self._plot_map_slice(ax, **kwargs)
 
     def _draw_colorbar(self, obj) -> None:
         fmt = f"%.{max(0, 2 - np.ceil(np.log10(np.max(self._data) - np.min(self._data))))}f"
@@ -174,7 +175,7 @@ class MetPlot:
                                       format=fmt)
             labelsize = 5
         else:
-            cbar = self._fig.colorbar(obj, fraction=0.06, pad=0.02, format=f"{fmt}{self._variable.unit}")
+            cbar = self._fig.colorbar(obj, fraction=0.06, pad=0.02, format=f"{fmt}{format_unit(self._variable.unit)}")
             labelsize = 6
 
         cbar.outline.set_linewidth(0)
@@ -200,8 +201,9 @@ class PlotVersusLongitude(MetPlot):
         super().__init__(*args, **kwargs)
         self._lat = self._dset["latitude"].values
 
-    def _plot_map_slice(self, ax) -> None:
-        ax.plot([-180, 180], [self._lat, self._lat], transform=projections.PlateCarree(), linewidth=0.4)
+    def _plot_map_slice(self, ax, **kwargs) -> None:
+        ax.plot([-180, 180], [self._lat, self._lat], transform=projections.PlateCarree(),
+                **(kwargs | {"linewidth": 0.4}))
 
     def _get_map_extent(self) -> str | tuple[float, float, float, float]:
         if isinstance(self._lat, np.ndarray):
@@ -225,8 +227,9 @@ class PlotVersusLatitude(MetPlot):
         super().__init__(*args, **kwargs)
         self._lon = float(self._dset["longitude"].values)
 
-    def _plot_map_slice(self, ax) -> None:
-        ax.plot([self._lon, self._lon], [-90, 90], transform=projections.PlateCarree(), linewidth=0.4)
+    def _plot_map_slice(self, ax, **kwargs) -> None:
+        ax.plot([self._lon, self._lon], [-90, 90], transform=projections.PlateCarree(),
+                **(kwargs | {"linewidth": 0.4}))
 
     def _get_map_projection(self) -> projections.Projection:
         return projections.Robinson(central_longitude=self._lon)

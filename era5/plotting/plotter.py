@@ -11,12 +11,12 @@ class LinePlot(_Plotter):
     def __init__(self, extent: tuple[tuple[float, float], tuple[float, float]]):
         self._xlim, _ = extent
 
-    def plot(self, ax, data, **kwargs):
+    def plot(self, ax, data, cmap=None, vmin=None, vmax=None, **kwargs):
         if data.ndim == 2:
             for series in data:
                 self.plot(ax, series, **kwargs)
             return
-        return ax.plot(np.linspace(self._xlim[0], self._xlim[1], len(data)), data)
+        return ax.plot(np.linspace(self._xlim[0], self._xlim[1], len(data)), data, **kwargs)
 
 
 class ImagePlot2D(_Plotter):

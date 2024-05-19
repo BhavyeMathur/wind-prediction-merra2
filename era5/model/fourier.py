@@ -47,6 +47,9 @@ class FourierRegression:
 
         return self._prediction * self._std + self._mean
 
+    def data(self) -> np.ndarray:
+        return self._data
+
     @property
     def nbytes(self) -> int:
         return self._fft_real.nbytes + self._fft_imag.nbytes + self._fft_idxs.nbytes

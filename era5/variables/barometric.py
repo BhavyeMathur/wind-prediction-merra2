@@ -31,6 +31,8 @@ class Temperature(AtmosphericVariable4D, name="temperature", unit="K",
 
 
 class VerticalVelocity(AtmosphericVariable4D, name="vertical_velocity", unit="Pa/s", cmap="RdBu"):
+    _diverging = True
+
     def get_vlims(self, indices):
         time, lev, lat, lon = self.get_full_index(indices)
         if lev == 1000:

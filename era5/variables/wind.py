@@ -4,6 +4,8 @@ from .abstract import AtmosphericVariable4D
 
 
 class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="ms⁻¹", title="East Wind"):
+    _diverging = True
+
     def get_vlims(self, indices):
         time, lev, lat, lon = self.get_full_index(indices)
         if lev == 1000:
@@ -14,6 +16,8 @@ class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="ms⁻¹", t
 
 
 class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="ms⁻¹", title="North Wind"):
+    _diverging = True
+
     def get_vlims(self, indices):
         time, lev, lat, lon = self.get_full_index(indices)
         if lev == 1000:
@@ -25,6 +29,8 @@ class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="ms⁻¹", t
 
 class WindDirection(AtmosphericVariable4D, name="wind_direction", unit="°", cmap="twilight",
                     requires=["u_component_of_wind", "v_component_of_wind"]):
+    _diverging = True
+
     def __init__(self, radians: bool = False):
         super().__init__()
         if radians:

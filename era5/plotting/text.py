@@ -28,3 +28,9 @@ def format_longitude(lon: float) -> str:
     if lon < 0:
         return f"{round(abs(lon), 1)}°W"
     return f"{round(lon, 1)}°E"
+
+
+def format_unit(unit: str) -> str:
+    if unit.startswith("°"):
+        return unit
+    return f" {unit}"

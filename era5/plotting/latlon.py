@@ -19,7 +19,7 @@ class _MapContour(MetPlot):
         data = super()._reshape_data(data)[::-1]
         return np.roll(data, data.shape[1] // 2, axis=1)
 
-    def _add_map(self) -> None:
+    def add_map(self) -> None:
         return
 
     @staticmethod
