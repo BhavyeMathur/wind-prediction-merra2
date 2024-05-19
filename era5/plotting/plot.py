@@ -11,7 +11,7 @@ from .plot1D import _Lon1D
 
 
 def plot(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
-         transform=lambda data: data) -> MetPlot:
+         transform=lambda data: data, **kwargs) -> MetPlot:
     if isinstance(variable, AtmosphericVariable):
         time, lev, lat, lon = variable.get_full_index(indices)
     else:
@@ -38,7 +38,7 @@ def plot(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indice
     if time is None:
         indices[0] = slice("TAVG-01-01 00:00", "TAVG-12-31 12:00", timedelta(days=1))
 
-    return graph(variable, indices, transform)
+    return graph(variable, indices, transform, **kwargs)
 
 
 __all__ = ["plot"]

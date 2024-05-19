@@ -63,6 +63,8 @@ class MetPlot:
         return ""
 
     def _reshape_data(self, data: np.ndarray) -> np.ndarray:
+        if not isinstance(data, np.ndarray):
+            data = np.array(data)
         data = data.squeeze()
 
         if data.ndim == 3:  # If image data, normalise all channels to [0, 1]
