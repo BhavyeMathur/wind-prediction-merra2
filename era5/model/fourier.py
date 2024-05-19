@@ -2,6 +2,7 @@ import numpy as np
 
 import era5
 from era5.util.util import format_bytes
+from era5.util.encoding import *
 from era5.maths.error import mae, rmse
 
 
@@ -29,14 +30,19 @@ class FourierRegression:
 
         fft = fft[mask]
 
-        self._fft_real = fft.real.astype("float16")
-        self._fft_imag = fft.imag.astype("float16")
-        self._fft_idxs = np.argwhere(mask).T.astype("uint16")
+        self._fft_real = encode_zlib(fft.real.astype("float16"))
+        self._fft_imag = encode_zlib(fft.imag.astype("float16"))
+        self._fft_idxs = np.argwhere(mask).T
+        self._fft_idxs = tuple(map(encode, self._fft_idxs))
 
     def predict(self) -> np.ndarray:
         if self._prediction is None:
+            fft_idxs = np.array(list(map(decode, self._fft_idxs)))
+            fft_real = decode_zlib(self._fft_real).view("float16")
+            fft_imag = decode_zlib(self._fft_imag).view("float16")
+
             fft = np.zeros(self._data.shape, dtype="complex64")
-            fft[*self._fft_idxs] = self._fft_real.astype("float32") + 1j * self._fft_imag.astype("float32")
+            fft[*fft_idxs] = fft_real + 1j * fft_imag.astype("float32")
             self._prediction = np.fft.irfftn(fft, self._data.shape, norm="forward")
 
         return self._prediction
@@ -46,7 +52,7 @@ class FourierRegression:
 
     @property
     def nbytes(self) -> int:
-        return self._fft_real.nbytes + self._fft_imag.nbytes + self._fft_idxs.nbytes
+        return self._fft_real.nbytes + self._fft_imag.nbytes + sum(ar.nbytes for ar in self._fft_idxs)
 
     def describe(self):
         prediction = self.predict()
@@ -58,7 +64,7 @@ class FourierRegression:
         unit = self._variable.unit
 
         print(f"""
-        Fourier Regression 1D:
+        Fourier Regression {len(self._data.shape)}D:
             Data stdev: {data.std():.4f} {unit}
             MAE: {mae(data, prediction):.4f} {unit}
             RMSE: {rmse(data, prediction):.4f} {unit}
