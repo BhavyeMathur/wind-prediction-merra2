@@ -113,13 +113,18 @@ class MetPlot:
             self._create_axes()
             self._fig.tight_layout()
 
-        kwargs = {} if isinstance(self._variable, tuple) else {"cmap": self._variable.cmap} | kwargs
+        if isinstance(self._variable, AtmosphericVariable):
+            vmin, vmax = self._variable.get_vlims(self._indices)
+            kwgs = {"cmap": self._variable.cmap, "vmin": vmin, "vmax": vmax}
+        else:
+            kwgs = {}
+        kwgs = kwgs | kwargs
 
         if data is None:
             data = self._data
         else:
             data = self._reshape_data(data)
-        obj = self._plotter.plot(self._ax, self._transform(data), **kwargs)
+        obj = self._plotter.plot(self._ax, self._transform(data), **kwgs)
 
         if isinstance(self._variable, AtmosphericVariable) and self._colorbar and colorbar:
             self._draw_colorbar(obj)

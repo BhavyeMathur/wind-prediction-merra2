@@ -17,23 +17,25 @@ class Temperature(AtmosphericVariable4D, name="temperature", unit="K",
             return ds - 273.15  # Kelvin to Celsius
         return ds
 
-    def get_vlims(self, level: int):
-        if level == 1000:
-            min_, max_ = -40, 40
-        elif level == 150:
-            min_, max_ = -70, -40
+    def get_vlims(self, indices):
+        time, lev, lat, lon = self.get_full_index(indices)
+        if lev == 1000:
+            min_, max_ = 230, 310
+        elif lev == 150:
+            min_, max_ = 200, 230
         else:
-            raise ValueError("Unknown level for value limits")
+            return super().get_vlims(indices)
 
         # unit conversions
         return self._getitem_post(min_), self._getitem_post(max_)
 
 
 class VerticalVelocity(AtmosphericVariable4D, name="vertical_velocity", unit="Pa/s", cmap="RdBu"):
-    def get_vlims(self, level: int):
-        if level == 1000:
+    def get_vlims(self, indices):
+        time, lev, lat, lon = self.get_full_index(indices)
+        if lev == 1000:
             return -1.5, 1.5
-        raise ValueError("Unknown level for value limits")
+        return super().get_vlims(indices)
 
 
 __all__ = ["Temperature", "VerticalVelocity"]

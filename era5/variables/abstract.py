@@ -29,6 +29,7 @@ class _AtmosphericVariableMetaclass(type):
 class AtmosphericVariable(metaclass=_AtmosphericVariableMetaclass):
     _variables: dict[Hashable, Type[AtmosphericVariable]] = {}
     _instances: dict[Hashable, AtmosphericVariable] = {}
+    _diverging: bool = False
 
     def __init__(self):
         AtmosphericVariable._instances[self.name] = self
@@ -59,8 +60,27 @@ class AtmosphericVariable(metaclass=_AtmosphericVariableMetaclass):
         data = self[*indices]
         return data.to_dataarray().values
 
-    def get_vlims(self, *args, **kwargs):
-        raise NotImplementedError()
+    def get_vlims(self, indices: list | tuple) -> tuple[float, float]:
+        data = self.slice(indices)
+        vmin = data.min()
+        vmax = data.max()
+
+        if self._diverging:
+            return self._get_diverging_vlims(vmin, vmax)
+        return vmin, vmax
+
+    @staticmethod
+    def _get_diverging_vlims(vmin: float, vmax: float) -> tuple[float, float]:
+        if vmin < 0 < vmax:
+            if abs(vmin) > vmax:
+                return vmin, -vmin
+            elif vmax > abs(vmin):
+                return -vmax, vmax
+
+        if vmin >= 0:
+            return -vmax, vmax
+        if vmax <= 0:
+            return vmin, -vmin
 
     @staticmethod
     def get(variable: Hashable) -> AtmosphericVariable:
@@ -131,9 +151,6 @@ class AtmosphericVariable4D(AtmosphericVariable):
             vals = {self.name: (ds.dims, vals)}
 
         return xr.Dataset(vals, coords=ds.coords, attrs=ds.attrs)
-
-    def get_vlims(self, level: int):
-        raise NotImplementedError()
 
     def _getitem_post(self, ds: xr.Dataset) -> np.ndarray | xr.DataArray | xr.Dataset:
         return ds

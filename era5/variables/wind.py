@@ -4,21 +4,23 @@ from .abstract import AtmosphericVariable4D
 
 
 class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="m/s", title="East Wind"):
-    def get_vlims(self, level: int):
-        if level == 1000:
+    def get_vlims(self, indices):
+        time, lev, lat, lon = self.get_full_index(indices)
+        if lev == 1000:
             return -15, 15
-        elif level == 150:
+        elif lev == 150:
             return -40, 70
-        raise ValueError("Unknown level for value limits")
+        return super().get_vlims(indices)
 
 
 class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="m/s", title="North Wind"):
-    def get_vlims(self, level: int):
-        if level == 1000:
+    def get_vlims(self, indices):
+        time, lev, lat, lon = self.get_full_index(indices)
+        if lev == 1000:
             return -15, 15
-        elif level == 150:
+        elif lev == 150:
             return -20, 20
-        raise ValueError("Unknown level for value limits")
+        return super().get_vlims(indices)
 
 
 class WindDirection(AtmosphericVariable4D, name="wind_direction", unit="°", cmap="twilight",
@@ -45,10 +47,11 @@ class WindDirection(AtmosphericVariable4D, name="wind_direction", unit="°", cma
 
 class WindSpeed(AtmosphericVariable4D, name="wind_speed", unit="m/s",
                 requires=["u_component_of_wind", "v_component_of_wind"]):
-    def get_vlims(self, level: int):
-        if level == 1000:
+    def get_vlims(self, indices):
+        time, lev, lat, lon = self.get_full_index(indices)
+        if lev == 1000:
             return 0, 16
-        raise ValueError("Unknown level for value limits")
+        return super().get_vlims(indices)
 
     def _getitem_post(self, ds):
         return np.sqrt(ds["u_component_of_wind"] ** 2 + ds["v_component_of_wind"] ** 2)
