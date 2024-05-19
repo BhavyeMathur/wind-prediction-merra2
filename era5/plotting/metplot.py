@@ -167,7 +167,7 @@ class MetPlot:
         self._plot_map_slice(ax)
 
     def _draw_colorbar(self, obj) -> None:
-        fmt = f"%.{max(0, 2 - round(np.log10(np.max(self._data) - np.min(self._data))))}f"
+        fmt = f"%.{max(0, 2 - np.ceil(np.log10(np.max(self._data) - np.min(self._data))))}f"
 
         if self._has_secondary_axis:
             cbar = self._fig.colorbar(obj, fraction=0.06, pad=0.02, anchor=(0, 0), aspect=12, location="top",

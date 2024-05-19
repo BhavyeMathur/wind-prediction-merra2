@@ -3,7 +3,7 @@ import numpy as np
 from .abstract import AtmosphericVariable4D
 
 
-class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="m/s", title="East Wind"):
+class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="ms⁻¹", title="East Wind"):
     def get_vlims(self, indices):
         time, lev, lat, lon = self.get_full_index(indices)
         if lev == 1000:
@@ -13,7 +13,7 @@ class UWind(AtmosphericVariable4D, name="u_component_of_wind", unit="m/s", title
         return super().get_vlims(indices)
 
 
-class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="m/s", title="North Wind"):
+class VWind(AtmosphericVariable4D, name="v_component_of_wind", unit="ms⁻¹", title="North Wind"):
     def get_vlims(self, indices):
         time, lev, lat, lon = self.get_full_index(indices)
         if lev == 1000:
@@ -45,7 +45,7 @@ class WindDirection(AtmosphericVariable4D, name="wind_direction", unit="°", cma
         return np.degrees(val)
 
 
-class WindSpeed(AtmosphericVariable4D, name="wind_speed", unit="m/s",
+class WindSpeed(AtmosphericVariable4D, name="wind_speed", unit="ms⁻¹",
                 requires=["u_component_of_wind", "v_component_of_wind"]):
     def get_vlims(self, indices):
         time, lev, lat, lon = self.get_full_index(indices)
