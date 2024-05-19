@@ -22,7 +22,7 @@ def format_bytes(size: int, si: bool = False) -> str:
     return f"{size:.2f} {unit_name if si else unit_name.replace('B', 'iB')}{'' if size == 1 else 's'}"
 
 
-size_units = ("bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+size_units = ("byte", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
 fmt = string.Formatter()
 
 
