@@ -3,7 +3,7 @@ import numpy as np
 from era5.variables import AtmosphericVariable
 from era5.util.datetime import timedelta
 
-from .metplot import MetPlot
+from .metplot import MetFigure, MetPlot
 from .lev2D import _LonLev2D, _LatLev2D
 from .time2D import _TimeLon2D, _TimeLat2D
 from .latlon import _MapContour
@@ -41,4 +41,4 @@ def plot(variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indice
     return graph(variable, indices, transform, **kwargs)
 
 
-__all__ = ["plot"]
+__all__ = ["plot", "MetFigure"]

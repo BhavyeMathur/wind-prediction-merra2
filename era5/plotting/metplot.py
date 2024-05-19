@@ -1,3 +1,5 @@
+from typing import Literal
+
 import numpy as np
 import xarray as xr
 
@@ -12,6 +14,17 @@ from era5.maths.util import minmax_norm
 from .plotter import *
 
 
+_SHARE = Literal["none", "all", "row", "col"] | bool
+
+
+class MetFigure:
+    def __init__(self, rows=1, cols=1, figsize=(9, 3), sharex: _SHARE = False, sharey: _SHARE = False):
+        self._fig, self._axes = plt.subplots(rows, cols, sharex=sharex, sharey=sharey, figsize=figsize)
+
+    def __getitem__(self, item) -> plt.Axes | list[plt.Axes]:
+        return self._axes[item]
+
+
 class MetPlot:
     _has_secondary_axis = False
     _figsize = 9, 3
@@ -23,7 +36,7 @@ class MetPlot:
     _colorbar = True
 
     def __init__(self, variable: AtmosphericVariable | tuple[AtmosphericVariable, ...], indices: list,
-                 transform=lambda data: data):
+                 transform=lambda data: data, axes: plt.Axes | None = None):
         if isinstance(variable, tuple) and len(variable) == 1:
             variable = variable[0]
 
@@ -42,8 +55,8 @@ class MetPlot:
 
         self._transform = transform
 
-        self._fig: None | plt.Figure = None
-        self._ax: None | plt.Axes = None
+        self._fig: None | plt.Figure = None if axes is None else axes.get_figure()
+        self._ax: None | plt.Axes = axes
 
         self.save = plt.savefig
         self._plotted = False
@@ -75,7 +88,8 @@ class MetPlot:
         return data
 
     def _create_axes(self) -> None:
-        self._ax = plt.gca()
+        if self._ax is None:
+            self._ax = plt.gca()
         self._ax.set_frame_on(False)
 
         self._ax.grid(True, which="both", axis=self._grid, linestyle=":", linewidth=0.15)
@@ -89,9 +103,11 @@ class MetPlot:
         self._ax.xaxis.set_major_formatter(mticker.FormatStrFormatter(f"%d{self._xunit}"))
         self._ax.yaxis.set_major_formatter(mticker.FormatStrFormatter(f"%d{self._yunit}"))
 
-    def plot(self, data=None, **kwargs):
+    def plot(self, data=None, colorbar: bool = True, **kwargs):
         if self._fig is None:
             self._fig = plt.figure(figsize=self._figsize)
+
+        if not self._plotted:
             self._fig.suptitle(self._get_title(), fontsize=9, y=self._get_title_position())
 
             self._create_axes()
@@ -105,11 +121,14 @@ class MetPlot:
             data = self._reshape_data(data)
         obj = self._plotter.plot(self._ax, self._transform(data), **kwargs)
 
-        if isinstance(self._variable, AtmosphericVariable) and self._colorbar:
+        if isinstance(self._variable, AtmosphericVariable) and self._colorbar and colorbar:
             self._draw_colorbar(obj)
         self._add_map()
 
         self._plotted = True
+
+    def set_ax_title(self, title: str) -> None:
+        self._ax.set_title(title, fontsize=6)
 
     def show(self):
         if not self._plotted:
@@ -162,6 +181,14 @@ class MetPlot:
     def _get_y(self):
         return np.linspace(*self._axes_lims[1], self._data.shape[0])
 
+    @property
+    def ax(self) -> plt.Axes:
+        return self._ax
+
+    @property
+    def fig(self) -> plt.Figure:
+        return self._fig
+
 
 class PlotVersusLongitude(MetPlot):
     def __init__(self, *args, **kwargs):
@@ -198,3 +225,6 @@ class PlotVersusLatitude(MetPlot):
 
     def _get_map_projection(self) -> projections.Projection:
         return projections.Robinson(central_longitude=self._lon)
+
+
+__all__ = ["MetFigure", "MetPlot", "PlotVersusLongitude", "PlotVersusLatitude"]
