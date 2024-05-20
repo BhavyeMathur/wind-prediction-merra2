@@ -3,7 +3,7 @@ import matplotlib.dates as mdates
 from era5.util.datetime import DateTime
 
 from .metplot import MetPlot, PlotVersusLongitude, PlotVersusLatitude
-from .text import format_altitude, format_latitude, format_longitude
+from era5.variables.text import format_altitude, format_latitude, format_longitude
 
 
 class _Time2D(MetPlot):

@@ -1,6 +1,6 @@
 from .metplot import MetPlot, PlotVersusLongitude
 from .plotter import LinePlot
-from .text import format_altitude, format_latitude, format_time
+from era5.variables.text import format_altitude, format_latitude, format_time
 
 
 class _Lon1D(PlotVersusLongitude, MetPlot):

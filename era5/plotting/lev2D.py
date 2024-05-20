@@ -5,7 +5,7 @@ import matplotlib.ticker as mticker
 from era5.maths.barometric import height_from_pressure
 
 from .metplot import MetPlot, PlotVersusLongitude, PlotVersusLatitude
-from .text import format_time, format_latitude, format_longitude
+from era5.variables.text import format_time, format_latitude, format_longitude
 
 
 class _Lev2D(MetPlot):

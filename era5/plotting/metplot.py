@@ -12,7 +12,7 @@ from era5.variables import AtmosphericVariable
 from era5.maths.util import minmax_norm
 
 from .plotter import *
-from .text import format_unit
+from era5.variables.text import format_unit
 
 
 _SHARE = Literal["none", "all", "row", "col"] | bool

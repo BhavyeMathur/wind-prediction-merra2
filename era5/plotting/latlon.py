@@ -2,7 +2,7 @@ import numpy as np
 
 from era5.variables import AtmosphericVariable
 
-from .text import format_altitude, format_time
+from era5.variables.text import format_altitude, format_time
 from .metplot import MetPlot
 
 
