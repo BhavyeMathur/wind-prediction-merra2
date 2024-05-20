@@ -54,23 +54,7 @@ class FourierRegression:
         return self._fft_real.nbytes + self._fft_imag.nbytes + sum(ar.nbytes for ar in self._fft_idxs)
 
     def describe(self):
-        total_bytes = 2 * 24 * 365 * 25 * 721 * 1440
-        ratio = self.nbytes / self.input_bytes
-
-        print(f"""
-        Fourier Regression {len(self._data.shape)}D:
-            Data stdev: {self.std():.4f}{format_unit(self._variable.unit)}
-            MAE: {self.mae():.4f}{format_unit(self._variable.unit)}
-            RMSE: {self.rmse():.4f}{format_unit(self._variable.unit)}
-            
-            Input size: {format_bytes(self.input_bytes)}
-            Model size: {format_bytes(self.nbytes)}
-            Size Ratio: {100 * ratio:.2f}%
-            
-            Frequencies: {len(self._fft_real.flatten())}
-            Original size: {format_bytes(total_bytes)}
-            Compressed size: {format_bytes(int(ratio * total_bytes))}
-        """)
+        evaluate_ft([self])
 
     def std(self) -> float:
         return self._data.std()
